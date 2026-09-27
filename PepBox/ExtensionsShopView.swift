@@ -109,8 +109,8 @@ struct ExtensionsShopView: View {
                     category: "",
                     title: "Remove Backgrounds",
                     subtitle: "Local AI processing",
-                    iconURL: "https://getdroppy.app/assets/icons/ai-bg.jpg",
-                    screenshotURL: "https://getdroppy.app/assets/images/ai-bg-screenshot.png",
+                    iconURL: "pepbox-media://icons/ai-bg.jpg",
+                    screenshotURL: "pepbox-media://images/ai-bg-screenshot.png",
                     accentColor: .cyan,
                     isInstalled: isAIInstalled
                 ) {
@@ -124,8 +124,8 @@ struct ExtensionsShopView: View {
                     category: "",
                     title: "Voice Transcribe",
                     subtitle: "Speech to text",
-                    iconURL: "https://getdroppy.app/assets/icons/voice-transcribe.jpg",
-                    screenshotURL: "https://getdroppy.app/assets/images/voice-transcribe-screenshot.png",
+                    iconURL: "pepbox-media://icons/voice-transcribe.jpg",
+                    screenshotURL: "pepbox-media://images/voice-transcribe-screenshot.png",
                     accentColor: .cyan,
                     isInstalled: isVoiceTranscribeInstalled
                 ) {
@@ -141,8 +141,8 @@ struct ExtensionsShopView: View {
                 FeaturedExtensionCardWide(
                     title: "PepBox Quickshare",
                     subtitle: "Share files instantly",
-                    iconURL: "https://getdroppy.app/assets/icons/quickshare.jpg",
-                    screenshotURL: "https://getdroppy.app/assets/images/quickshare-screenshot.png",
+                    iconURL: "pepbox-media://icons/quickshare.jpg",
+                    screenshotURL: "pepbox-media://images/quickshare-screenshot.png",
                     accentColor: .cyan,
                     isInstalled: true,
                     features: ["Instant upload", "Auto-copy link", "Track expiry"]
@@ -160,10 +160,10 @@ struct ExtensionsShopView: View {
                     category: "COMMUNITY",
                     title: "Reminders",
                     subtitle: "Tasks & Notes",
-                    iconURL: "https://getdroppy.app/assets/icons/reminders.png",
+                    iconURL: "pepbox-media://icons/reminders.png",
                     iconPlaceholder: "checklist",
                     iconPlaceholderColor: .blue,
-                    screenshotURL: "https://getdroppy.app/assets/images/reminders-screenshot.gif",
+                    screenshotURL: "pepbox-media://images/reminders-screenshot.gif",
                     accentColor: .blue,
                     isInstalled: isTodoInstalled,
                     isNew: true,
@@ -179,8 +179,8 @@ struct ExtensionsShopView: View {
                     category: "COMMUNITY",
                     title: "Notify me!",
                     subtitle: "Show notifications",
-                    iconURL: "https://getdroppy.app/assets/icons/notification-hud.png",
-                    screenshotURL: "https://getdroppy.app/assets/images/notification-hud-screenshot.png",
+                    iconURL: "pepbox-media://icons/notification-hud.png",
+                    screenshotURL: "pepbox-media://images/notification-hud-screenshot.png",
                     accentColor: .red,
                     isInstalled: isNotificationHUDInstalled,
                     isCommunity: true
@@ -192,8 +192,8 @@ struct ExtensionsShopView: View {
                     category: "COMMUNITY",
                     title: "High Alert",
                     subtitle: "Keep Mac awake",
-                    iconURL: "https://getdroppy.app/assets/icons/high-alert.jpg",
-                    screenshotURL: "https://getdroppy.app/assets/images/high-alert-screenshot.gif",
+                    iconURL: "pepbox-media://icons/high-alert.jpg",
+                    screenshotURL: "pepbox-media://images/high-alert-screenshot.gif",
                     accentColor: .orange,
                     isInstalled: isCaffeineInstalled,
                     isCommunity: true
@@ -299,7 +299,7 @@ struct ExtensionsShopView: View {
             // AI Extensions
             ExtensionListItem(
                 id: "aiBackgroundRemoval",
-                iconURL: "https://getdroppy.app/assets/icons/ai-bg.jpg",
+                iconURL: "pepbox-media://icons/ai-bg.jpg",
                 title: "AI Background Removal",
                 subtitle: "Remove backgrounds instantly",
                 category: .ai,
@@ -314,7 +314,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "voiceTranscribe",
-                iconURL: "https://getdroppy.app/assets/icons/voice-transcribe.jpg",
+                iconURL: "pepbox-media://icons/voice-transcribe.jpg",
                 title: "Voice Transcribe",
                 subtitle: "Speech to text with AI",
                 category: .ai,
@@ -330,7 +330,7 @@ struct ExtensionsShopView: View {
             // Media Extensions
             ExtensionListItem(
                 id: "ffmpegVideoCompression",
-                iconURL: "https://getdroppy.app/assets/icons/targeted-video-size.jpg",
+                iconURL: "pepbox-media://icons/targeted-video-size.jpg",
                 title: "Video Target Size",
                 subtitle: "Compress videos to size",
                 category: .media,
@@ -346,7 +346,7 @@ struct ExtensionsShopView: View {
             // Productivity Extensions
             ExtensionListItem(
                 id: "alfred",
-                iconURL: "https://getdroppy.app/assets/icons/alfred.png",
+                iconURL: "pepbox-media://icons/alfred.png",
                 title: "Alfred Workflow",
                 subtitle: "Push files via keyboard",
                 category: .productivity,
@@ -367,7 +367,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "elementCapture",
-                iconURL: "https://getdroppy.app/assets/icons/element-capture.jpg",
+                iconURL: "pepbox-media://icons/element-capture.jpg",
                 title: "Element Capture",
                 subtitle: "Screenshot UI elements",
                 category: .productivity,
@@ -382,7 +382,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "finder",
-                iconURL: "https://getdroppy.app/assets/icons/finder.png",
+                iconURL: "pepbox-media://icons/finder.png",
                 title: "Finder Services",
                 subtitle: "Right-click integration",
                 category: .productivity,
@@ -404,7 +404,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "spotify",
-                iconURL: "https://getdroppy.app/assets/icons/spotify.png",
+                iconURL: "pepbox-media://icons/spotify.png",
                 title: "Spotify Integration",
                 subtitle: "Control music playback",
                 category: .media,
@@ -425,7 +425,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "appleMusic",
-                iconURL: "https://getdroppy.app/assets/icons/apple-music.png",
+                iconURL: "pepbox-media://icons/apple-music.png",
                 title: "Apple Music",
                 subtitle: "Native music controls",
                 category: .media,
@@ -448,7 +448,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "windowSnap",
-                iconURL: "https://getdroppy.app/assets/icons/window-snap.jpg",
+                iconURL: "pepbox-media://icons/window-snap.jpg",
                 title: "Window Snap",
                 subtitle: "Snap with shortcuts",
                 category: .productivity,
@@ -463,7 +463,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "terminalNotch",
-                iconURL: "https://getdroppy.app/assets/icons/terminotch.jpg",
+                iconURL: "pepbox-media://icons/terminotch.jpg",
                 title: "Termi-Notch",
                 subtitle: "Quick terminal access",
                 category: .productivity,
@@ -478,7 +478,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "camera",
-                iconURL: "https://getdroppy.app/assets/icons/snap-camera-v2.png",
+                iconURL: "pepbox-media://icons/snap-camera-v2.png",
                 title: "Notchface",
                 subtitle: "Live notch camera preview",
                 category: .productivity,
@@ -493,7 +493,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "quickshare",
-                iconURL: "https://getdroppy.app/assets/icons/quickshare.jpg",
+                iconURL: "pepbox-media://icons/quickshare.jpg",
                 title: "PepBox Quickshare",
                 subtitle: "Share files via 0x0.st",
                 category: .productivity,
@@ -508,7 +508,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "notificationHUD",
-                iconURL: "https://getdroppy.app/assets/icons/notification-hud.png",
+                iconURL: "pepbox-media://icons/notification-hud.png",
                 title: "Notify me!",
                 subtitle: "Show notifications in notch",
                 category: .productivity,
@@ -521,7 +521,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "caffeine",
-                iconURL: "https://getdroppy.app/assets/icons/high-alert.jpg",
+                iconURL: "pepbox-media://icons/high-alert.jpg",
                 title: "High Alert",
                 subtitle: "Keep your Mac awake",
                 category: .productivity,
@@ -537,7 +537,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "menuBarManager",
-                iconURL: "https://getdroppy.app/assets/icons/menubarmanager.png",
+                iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",
                 subtitle: "Organize your menu bar",
                 category: .productivity,
@@ -552,7 +552,7 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "todo",
-                iconURL: "https://getdroppy.app/assets/icons/reminders.png",
+                iconURL: "pepbox-media://icons/reminders.png",
                 title: "Reminders",
                 subtitle: "Natural language tasks",
                 category: .productivity,
@@ -1425,7 +1425,7 @@ struct AIBackgroundRemovalSettingsRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
-                CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/ai-bg.jpg")) { image in
+                CachedAsyncImage(url: URL(string: "pepbox-media://icons/ai-bg.jpg")) { image in
                     image.pepboxExtensionIcon(contentMode: .fill)
                 } placeholder: {
                     Image(systemName: "brain.head.profile").font(.system(size: 24)).foregroundStyle(.blue)

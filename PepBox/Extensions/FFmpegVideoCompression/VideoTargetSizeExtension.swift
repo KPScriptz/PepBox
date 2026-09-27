@@ -24,11 +24,11 @@ struct VideoTargetSizeExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/video-target-size-screenshot.png")
+        URL(string: "pepbox-media://images/video-target-size-screenshot.png")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/targeted-video-size.jpg")
+        URL(string: "pepbox-media://icons/targeted-video-size.jpg")
     }
     
     static let iconPlaceholder = "film"

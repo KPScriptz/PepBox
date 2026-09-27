@@ -24,11 +24,11 @@ struct AppleMusicExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/applemusic-screenshot.jpg")
+        URL(string: "pepbox-media://images/applemusic-screenshot.jpg")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/apple-music.png")
+        URL(string: "pepbox-media://icons/apple-music.png")
     }
     
     static let iconPlaceholder = "music.note"

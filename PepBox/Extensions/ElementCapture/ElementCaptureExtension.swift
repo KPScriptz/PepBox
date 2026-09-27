@@ -26,11 +26,11 @@ struct ElementCaptureExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/element-capture-screenshot.gif")
+        URL(string: "pepbox-media://images/element-capture-screenshot.gif")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/element-capture.jpg")
+        URL(string: "pepbox-media://icons/element-capture.jpg")
     }
     
     static let iconPlaceholder = "viewfinder"

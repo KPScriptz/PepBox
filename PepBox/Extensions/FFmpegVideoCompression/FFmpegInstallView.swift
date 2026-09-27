@@ -140,7 +140,7 @@ struct FFmpegInstallView: View {
                 }
                 
                 // Main icon
-                CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/targeted-video-size.jpg")) { image in
+                CachedAsyncImage(url: URL(string: "pepbox-media://icons/targeted-video-size.jpg")) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Image(systemName: "film").font(.system(size: 32)).foregroundStyle(.blue)
@@ -336,7 +336,7 @@ struct FFmpegInstallView: View {
             }
             
             // Screenshot loaded from web
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/video-target-size-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/video-target-size-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

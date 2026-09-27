@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PepBox — The free native productivity layer macOS is missing</title>
+    <meta name="description"
+        content="PepBox: The ultimate drag-and-drop productivity companion for macOS. Free, open-source, and built entirely in Swift.">
+    <link rel="icon" type="image/png" href="assets/app-icon.png">
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --bg: #0a0a0a;
+            --bg-card: rgba(38, 38, 38, 0.92);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #fafafa;
+            --secondary: #a1a1aa;
+            --muted: #71717a;
+            --gray-100: #f4f4f5;
+            --gray-200: #e4e4e7;
+            --gray-800: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .page.fade-in {
+            opacity: 0;
+        }
+
+        .page.fade-out {
+            opacity: 0;
+        }
+
+        .card {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 22px;
+            min-width: 175px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+            touch-action: none;
+        }
+
+        .card.visible {
+            opacity: var(--op, 0.7);
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.dragging {
+            z-index: 200 !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            opacity: 1 !important;
+            transition: none;
+        }
+
+        .card:hover:not(.dragging) {
+            z-index: 100;
+        }
+
+        .card.main {
+            min-width: 200px;
+            padding: 18px 26px;
+            border-radius: 18px;
+        }
+
+        .card.main .card-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .card.main .card-sub {
+            font-size: 13px;
+        }
+
+        .card.main .checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checkbox.checked {
+            background: var(--muted);
+            border-color: var(--muted);
+        }
+
+        .checkbox svg {
+            width: 11px;
+            height: 11px;
+            stroke: var(--bg);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: none;
+        }
+
+        .checkbox.checked svg {
+            display: block;
+        }
+
+        .card.main .checkbox svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        /* Positions */
+        .t1 {
+            top: -15px;
+            left: -20px;
+        }
+
+        .t2 {
+            top: -8px;
+            left: 10%;
+        }
+
+        .t3 {
+            top: -12px;
+            left: 20%;
+        }
+
+        .t4 {
+            top: -8px;
+            left: 30%;
+        }
+
+        .t5 {
+            top: -10px;
+            left: 40%;
+        }
+
+        .t6 {
+            top: -10px;
+            right: 40%;
+        }
+
+        .t7 {
+            top: -8px;
+            right: 30%;
+        }
+
+        .t8 {
+            top: -12px;
+            right: 20%;
+        }
+
+        .t9 {
+            top: -8px;
+            right: 10%;
+        }
+
+        .t10 {
+            top: -15px;
+            right: -20px;
+        }
+
+        .l1 {
+            top: 10%;
+            left: -25px;
+        }
+
+        .l2 {
+            top: 20%;
+            left: -20px;
+        }
+
+        .l3 {
+            top: 30%;
+            left: -25px;
+        }
+
+        .l4 {
+            top: 40%;
+            left: -20px;
+        }
+
+        .l5 {
+            top: 52%;
+            left: -25px;
+        }
+
+        .l6 {
+            top: 62%;
+            left: -20px;
+        }
+
+        .l7 {
+            top: 72%;
+            left: -25px;
+        }
+
+        .l8 {
+            top: 82%;
+            left: -20px;
+        }
+
+        .r1 {
+            top: 10%;
+            right: -25px;
+        }
+
+        .r2 {
+            top: 20%;
+            right: -20px;
+        }
+
+        .r3 {
+            top: 30%;
+            right: -25px;
+        }
+
+        .r4 {
+            top: 40%;
+            right: -20px;
+        }
+
+        .r5 {
+            top: 52%;
+            right: -25px;
+        }
+
+        .r6 {
+            top: 62%;
+            right: -20px;
+        }
+
+        .r7 {
+            top: 72%;
+            right: -25px;
+        }
+
+        .r8 {
+            top: 82%;
+            right: -20px;
+        }
+
+        .b1 {
+            bottom: -15px;
+            left: -20px;
+        }
+
+        .b2 {
+            bottom: -8px;
+            left: 10%;
+        }
+
+        .b3 {
+            bottom: -12px;
+            left: 20%;
+        }
+
+        .b4 {
+            bottom: -8px;
+            left: 30%;
+        }
+
+        .b5 {
+            bottom: -10px;
+            left: 40%;
+        }
+
+        .b6 {
+            bottom: -10px;
+            right: 40%;
+        }
+
+        .b7 {
+            bottom: -8px;
+            right: 30%;
+        }
+
+        .b8 {
+            bottom: -12px;
+            right: 20%;
+        }
+
+        .b9 {
+            bottom: -8px;
+            right: 10%;
+        }
+
+        .b10 {
+            bottom: -15px;
+            right: -20px;
+        }
+
+        /* Center content */
+        .center {
+            position: relative;
+            min-height: 80vh;
+            text-align: center;
+            z-index: 50;
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 60px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .logo {
+            width: 130px;
+            height: 130px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 80px rgba(59, 130, 246, 0.3));
+            animation: float 6s ease-in-out infinite;
+            pointer-events: auto;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .headline {
+            font-size: 36px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .headline .dim {
+            color: var(--secondary);
+        }
+
+        .headline .free {
+            position: relative;
+            display: inline-block;
+        }
+
+        .headline .free::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 2px;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: scribble 0.8s ease-out 1s forwards;
+            border-radius: 2px;
+        }
+
+        @keyframes scribble {
+            0% {
+                transform: scaleX(0) translateY(0);
+            }
+
+            20% {
+                transform: scaleX(0.3) translateY(1px);
+            }
+
+            40% {
+                transform: scaleX(0.5) translateY(-1px);
+            }
+
+            60% {
+                transform: scaleX(0.7) translateY(1px);
+            }
+
+            80% {
+                transform: scaleX(0.9) translateY(-0.5px);
+            }
+
+            100% {
+                transform: scaleX(1) translateY(0);
+            }
+        }
+
+        .video-box {
+            width: 100%;
+            max-width: 680px;
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+
+        .video-box video {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            border-radius: 0;
+        }
+
+        .video-box iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .credits-btn {
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .credits-btn:hover {
+            opacity: 0.8;
+        }
+
+        .credits-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .credits-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .credits-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            max-width: 340px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .credits-modal-overlay.active .credits-modal {
+            transform: scale(1);
+        }
+
+        .credits-modal h2 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .credits-section {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .credits-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .credits-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--primary);
+        }
+
+        .credits-section p {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .credits-section a {
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 10px;
+        }
+
+        .credits-section a:hover {
+            text-decoration: underline;
+        }
+
+        .cta-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(23, 23, 23, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .cta-bar.fade-in {
+            opacity: 0;
+        }
+
+        .cta-bar.fade-out {
+            opacity: 0;
+        }
+
+        .cta-bar .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 999px;
+            color: var(--secondary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .cta-bar .btn:hover {
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .cta-bar .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .cta-bar .btn-main {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .cta-bar .btn-main:hover {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .cta-bar .btn-donate {
+            background: #FFDD00;
+            color: #000;
+        }
+
+        .cta-bar .btn-donate:hover {
+            background: #e6c700;
+            color: #000;
+        }
+
+        /* Donation Modal */
+        .donate-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .donate-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .donate-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .donate-modal-overlay.active .donate-modal {
+            transform: scale(1);
+        }
+
+        .donate-modal-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .donate-modal h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .donate-modal p {
+            font-size: 15px;
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .donate-modal p:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .donate-modal .highlight {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .donate-modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .donate-modal-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 18px 28px;
+            border-radius: 999px;
+            font-family: var(--font-sans);
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .donate-modal-btn.primary {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb800 100%);
+            color: #000;
+        }
+
+        .donate-modal-btn.primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .donate-perks-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            margin-bottom: 8px;
+        }
+
+        .donate-perk {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .donate-modal-btn.secondary {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .donate-modal-btn.secondary.ready {
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .donate-modal-btn.secondary.ready:hover {
+            color: var(--secondary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .donate-modal-btn.secondary .fill-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0%;
+            background: rgba(255, 255, 255, 0.08);
+            transition: width 5s linear;
+            pointer-events: none;
+        }
+
+        .donate-modal-btn.secondary.filling .fill-bar {
+            width: 100%;
+        }
+
+        .donate-modal-btn.secondary span {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .video-box {
+                max-width: 90%;
+            }
+
+            .center {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .card {
+                min-width: 145px;
+                padding: 14px 18px;
+            }
+
+            .card.main {
+                min-width: 170px;
+            }
+
+            .card-title {
+                font-size: 14px;
+            }
+
+            .card.main .card-title {
+                font-size: 16px;
+            }
+
+            .headline {
+                font-size: 32px;
+            }
+
+            .logo {
+                width: 100px;
+                height: 100px;
+            }
+
+            .video-box {
+                max-width: 85%;
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                min-width: 125px;
+                padding: 12px 16px;
+                display: none;
+                /* Hide floating cards on mobile */
+            }
+
+            .card.main {
+                min-width: 150px;
+            }
+
+            .card-title {
+                font-size: 13px;
+            }
+
+            .card.main .card-title {
+                font-size: 15px;
+            }
+
+            .card-sub {
+                font-size: 10px;
+            }
+
+            .headline {
+                font-size: 26px;
+                white-space: normal;
+            }
+
+            .center {
+                padding: 40px 20px;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .logo {
+                width: 85px;
+                height: 85px;
+            }
+
+            .video-box {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 16px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .cta-bar .btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                display: none;
+                /* Hide floating cards on small mobile */
+            }
+
+            .headline {
+                font-size: 20px;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .center {
+                padding: 30px 16px;
+            }
+
+            .video-box {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 12px;
+            }
+
+            .cta-bar {
+                padding: 4px;
+                gap: 4px;
+                left: 12px;
+                right: 12px;
+                transform: none;
+            }
+
+            .cta-bar .btn {
+                padding: 8px 10px;
+                font-size: 11px;
+                flex: 1;
+            }
+
+            .cta-bar .btn svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- TOP EDGE -->
+        <div class="card main t1" data-rot="-8" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">File Shelf</div>
+                <div class="card-sub">Drop files to notch</div>
+            </div>
+        </div>
+        <div class="card t2" data-rot="5" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Drag-Out Files</div>
+                <div class="card-sub">From anywhere</div>
+            </div>
+        </div>
+        <div class="card main t3" data-rot="-4" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Floating Basket</div>
+                <div class="card-sub">Jiggle mouse</div>
+            </div>
+        </div>
+        <div class="card t4" data-rot="7" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Peek & Hide</div>
+                <div class="card-sub">Smooth animations</div>
+            </div>
+        </div>
+        <div class="card main t5" data-rot="-6" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Clipboard Manager</div>
+                <div class="card-sub">⌘⇧Space • History</div>
+            </div>
+        </div>
+        <div class="card t6" data-rot="4" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Instant Search</div>
+                <div class="card-sub">Find anything</div>
+            </div>
+        </div>
+        <div class="card t7" data-rot="-5" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Favorites</div>
+                <div class="card-sub">Pin important</div>
+            </div>
+        </div>
+        <div class="card t8" data-rot="9" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Flag Important</div>
+                <div class="card-sub">Mark priority</div>
+            </div>
+        </div>
+        <div class="card main t9" data-rot="-3" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Beautiful Media HUD</div>
+                <div class="card-sub">Album art</div>
+            </div>
+        </div>
+        <div class="card t10" data-rot="6" style="--op:0.65">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Bulk Copy</div>
+                <div class="card-sub">Multiple items</div>
+            </div>
+        </div>
+
+        <!-- LEFT EDGE -->
+        <div class="card main l1" data-rot="-8" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Volume HUD</div>
+                <div class="card-sub">Smooth animation</div>
+            </div>
+        </div>
+        <div class="card l2" data-rot="5" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Brightness HUD</div>
+                <div class="card-sub">Beautiful design</div>
+            </div>
+        </div>
+        <div class="card l3" data-rot="-4" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Battery HUD</div>
+                <div class="card-sub">% indicator</div>
+            </div>
+        </div>
+        <div class="card l4" data-rot="7" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Caps Lock HUD</div>
+                <div class="card-sub">Visual alert</div>
+            </div>
+        </div>
+        <div class="card l5" data-rot="-6" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Screen Unlock</div>
+                <div class="card-sub">Notification</div>
+            </div>
+        </div>
+        <div class="card l6" data-rot="4" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">AirPods HUD</div>
+                <div class="card-sub">Connection status</div>
+            </div>
+        </div>
+        <div class="card main l7" data-rot="-5" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Power Folders</div>
+                <div class="card-sub">Drop to organize</div>
+            </div>
+        </div>
+        <div class="card l8" data-rot="9" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Tracked Folders</div>
+                <div class="card-sub">Auto-watch</div>
+            </div>
+        </div>
+
+        <!-- RIGHT EDGE -->
+        <div class="card main r1" data-rot="9" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Audio Visualizer</div>
+                <div class="card-sub">Live beats</div>
+            </div>
+        </div>
+        <div class="card r2" data-rot="-5" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Tap-to-Seek</div>
+                <div class="card-sub">Precise control</div>
+            </div>
+        </div>
+        <div class="card r3" data-rot="4" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Shuffle & Repeat</div>
+                <div class="card-sub">Playback modes</div>
+            </div>
+        </div>
+        <div class="card r4" data-rot="-6" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Play/Pause/Skip</div>
+                <div class="card-sub">Media controls</div>
+            </div>
+        </div>
+        <div class="card main r5" data-rot="7" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Dynamic Island</div>
+                <div class="card-sub">Works on any Mac</div>
+            </div>
+        </div>
+        <div class="card r6" data-rot="-4" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Multi-Monitor</div>
+                <div class="card-sub">All displays</div>
+            </div>
+        </div>
+        <div class="card r7" data-rot="5" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Fullscreen Mode</div>
+                <div class="card-sub">Smart detection</div>
+            </div>
+        </div>
+        <div class="card r8" data-rot="-8" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Transparency</div>
+                <div class="card-sub">See-through notch</div>
+            </div>
+        </div>
+
+        <!-- BOTTOM EDGE -->
+        <div class="card b1" data-rot="6" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Smart Export</div>
+                <div class="card-sub">Auto-save output</div>
+            </div>
+        </div>
+        <div class="card main b2" data-rot="-3" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Spotify</div>
+                <div class="card-sub">Now Playing</div>
+            </div>
+        </div>
+        <div class="card b3" data-rot="9" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Apple Music</div>
+                <div class="card-sub">Full controls</div>
+            </div>
+        </div>
+        <div class="card b4" data-rot="-5" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">OCR Text</div>
+                <div class="card-sub">Extract from images</div>
+            </div>
+        </div>
+        <div class="card b5" data-rot="4" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Compress Files</div>
+                <div class="card-sub">ZIP/UNZIP</div>
+            </div>
+        </div>
+        <div class="card main b6" data-rot="-6" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Voice Transcribe</div>
+                <div class="card-sub">Whisper AI</div>
+            </div>
+        </div>
+        <div class="card b7" data-rot="7" style="--op:0.55">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">BG Removal</div>
+                <div class="card-sub">AI powered</div>
+            </div>
+        </div>
+        <div class="card b8" data-rot="-4" style="--op:0.65">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Video Compress</div>
+                <div class="card-sub">Discord ready</div>
+            </div>
+        </div>
+        <div class="card main b9" data-rot="5" style="--op:0.75">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Window Snap</div>
+                <div class="card-sub">Keyboard shortcuts</div>
+            </div>
+        </div>
+        <div class="card b10" data-rot="-8" style="--op:0.65">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Element Capture</div>
+                <div class="card-sub">Screenshot UI</div>
+            </div>
+        </div>
+
+        <!-- EXTRA scattered -->
+        <div class="card" style="top:15%;left:8%;--op:0.55" data-rot="-4">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Convert Images</div>
+                <div class="card-sub">PNG/JPG/HEIC</div>
+            </div>
+        </div>
+        <div class="card" style="top:88%;left:42%;--op:0.65" data-rot="5">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">AirDrop</div>
+                <div class="card-sub">Quick share</div>
+            </div>
+        </div>
+        <div class="card" style="top:88%;right:42%;--op:0.55" data-rot="-5">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Quick Actions</div>
+                <div class="card-sub">Right-click menu</div>
+            </div>
+        </div>
+        <div class="card" style="top:15%;right:8%;--op:0.65" data-rot="5">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Rename Entries</div>
+                <div class="card-sub">Clipboard items</div>
+            </div>
+        </div>
+        <div class="card" style="bottom:5%;left:5%;--op:0.55" data-rot="7">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Termi-Notch</div>
+                <div class="card-sub">Quick terminal</div>
+            </div>
+        </div>
+
+        <div class="card" style="top:92%;left:15%;--op:0.55" data-rot="9">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Alfred Workflow</div>
+                <div class="card-sub">Add from Alfred</div>
+            </div>
+        </div>
+        <div class="card" style="top:92%;right:15%;--op:0.65" data-rot="-8">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Finder Services</div>
+                <div class="card-sub">Right-click send</div>
+            </div>
+        </div>
+        <div class="card" style="top:5%;left:50%;--op:0.55" data-rot="-3">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Quickshare</div>
+                <div class="card-sub">Instant sharing</div>
+            </div>
+        </div>
+        <div class="card" style="bottom:12%;left:3%;--op:0.65" data-rot="5">
+            <div class="checkbox"></div>
+            <div class="card-body">
+                <div class="card-title">Lock Screen</div>
+                <div class="card-sub">Widgets</div>
+            </div>
+        </div>
+        <div class="card" style="bottom:12%;right:3%;--op:0.55" data-rot="-4">
+            <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 13l4 4 8-9" />
+                </svg></div>
+            <div class="card-body">
+                <div class="card-title">Notification HUD</div>
+                <div class="card-sub">System alerts</div>
+            </div>
+        </div>
+
+        <!-- Center -->
+        <div class="center">
+            <img src="assets/images/pepbox-icon-dark.png" alt="PepBox" class="logo">
+            <p class="headline"><span class="dim">The <span class="free">free</span> native productivity layer</span>
+                macOS is missing.</p>
+            <div class="video-box">
+                <video width="100%" autoplay loop muted playsinline controls>
+                    <source src="https://github.com/user-attachments/assets/813c3eea-6588-4f23-880f-135833d26a16"
+                        type="video/mp4">
+                </video>
+            </div>
+            <button class="credits-btn" id="credits-btn">Credits & Acknowledgements</button>
+        </div>
+    </div>
+
+    <!-- Credits Modal -->
+    <div class="credits-modal-overlay" id="credits-modal">
+        <div class="credits-modal">
+            <h2>Credits & Acknowledgements</h2>
+
+            <div class="credits-section">
+                <h3>🧑‍💻 Contributors</h3>
+                <p>PepBox has had contributions from developers who helped create code, improve features, and build
+                    community-driven extensions. Thank you to everyone who has contributed!</p>
+            </div>
+
+            <div class="credits-section">
+                <h3>✨ Alcove</h3>
+                <p>Alcove has been a great inspiration for creating a beautiful notch app with smooth animations. One of
+                    the founding fathers of good-looking notch apps on macOS. The developer has been supportive and is
+                    behind this project.</p>
+                <a href="https://tryalcove.com/" target="_blank">tryalcove.com →</a>
+            </div>
+
+            <div class="credits-section">
+                <h3>🎯 Boringnotch</h3>
+                <p>Thank you for pioneering notch creativity on macOS and laying the groundwork for the community.</p>
+                <a href="https://github.com/TheBoredTeam/boring.notch"
+                    target="_blank">github.com/TheBoredTeam/boring.notch →</a>
+            </div>
+        </div>
+    </div>
+    <!-- Donation Modal -->
+    <div class="donate-modal-overlay" id="donate-modal">
+        <div class="donate-modal">
+            <span class="donate-modal-icon">☕</span>
+            <h2>A Quick Note</h2>
+            <p>PepBox is <span class="highlight">completely free</span> and <span class="highlight">open source</span>,
+                built with love by a single developer.</p>
+            <p>If you can afford it, a small donation would mean the world. It helps keep this project alive and makes
+                future improvements possible.</p>
+            <p>PepBox costs money to develop and maintain — and right now, I'm covering those costs myself to bring you
+                great software for free.</p>
+            <div class="donate-modal-buttons">
+                <a href="https://github.com/KPScriptz/PepBox" class="donate-modal-btn primary" target="_blank">
+                    ☕ Donate a Cup of Coffee
+                </a>
+                <div class="donate-perks-list">
+                    <span class="donate-perk">🎖️ Discord Role</span>
+                    <span class="donate-perk">💬 Exclusive Channel</span>
+                    <span class="donate-perk">⭐ Website Credit</span>
+                </div>
+                <button class="donate-modal-btn secondary" id="free-download-btn">
+                    <span class="fill-bar"></span>
+                    <span>I understand, but I want it for free</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Bar -->
+    <div class="cta-bar">
+        <button id="download-btn" class="btn btn-main">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download PepBox
+        </button>
+        <a href="https://github.com/KPScriptz/PepBox" class="btn btn-donate" target="_blank">☕ Donate</a>
+        <a href="extensions.html" class="btn">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                    d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+            </svg>
+            Extensions
+        </a>
+    </div>
+
+    <script>
+        document.oncontextmenu = () => false;
+
+        // Smooth page transitions - fade out before navigation
+        document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
+            link.addEventListener('click', e => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript')) {
+                    e.preventDefault();
+                    document.querySelector('.page').classList.add('fade-out');
+                    document.querySelector('.cta-bar').classList.add('fade-out');
+                    setTimeout(() => window.location.href = href, 300);
+                }
+            });
+        });
+
+        // Smooth staggered fade-in
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, i) => {
+            const rot = card.dataset.rot || 0;
+            card.style.transform = `rotate(${rot}deg)`;
+            setTimeout(() => card.classList.add('visible'), 80 + Math.random() * 500);
+        });
+
+        // Optimized drag with momentum
+        let activeCard = null, x = 0, y = 0, vx = 0, vy = 0, lastX = 0, lastY = 0, rot = 0;
+        const friction = 0.9, minV = 0.3;
+
+        document.addEventListener('mousedown', e => {
+            const card = e.target.closest('.card');
+            if (!card) return;
+            activeCard = card;
+            rot = parseFloat(card.dataset.rot) || 0;
+            const style = getComputedStyle(card);
+            const matrix = new DOMMatrix(style.transform);
+            x = matrix.m41; y = matrix.m42;
+            lastX = e.clientX; lastY = e.clientY;
+            vx = 0; vy = 0;
+            card.classList.add('dragging');
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!activeCard) return;
+            const dx = e.clientX - lastX, dy = e.clientY - lastY;
+            x += dx; y += dy;
+            vx = dx * 0.5; vy = dy * 0.5;
+            lastX = e.clientX; lastY = e.clientY;
+            activeCard.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!activeCard) return;
+            activeCard.classList.remove('dragging');
+            const card = activeCard;
+            activeCard = null;
+
+            const animate = () => {
+                if (Math.abs(vx) < minV && Math.abs(vy) < minV) return;
+                x += vx; y += vy;
+                vx *= friction; vy *= friction;
+                card.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
+                requestAnimationFrame(animate);
+            };
+            if (Math.abs(vx) > minV || Math.abs(vy) > minV) requestAnimationFrame(animate);
+        });
+
+        // Touch support
+        document.addEventListener('touchstart', e => {
+            const card = e.target.closest('.card');
+            if (!card) return;
+            activeCard = card;
+            rot = parseFloat(card.dataset.rot) || 0;
+            const style = getComputedStyle(card);
+            const matrix = new DOMMatrix(style.transform);
+            x = matrix.m41; y = matrix.m42;
+            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+            vx = 0; vy = 0;
+            card.classList.add('dragging');
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!activeCard) return;
+            const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY;
+            x += dx; y += dy;
+            vx = dx * 0.5; vy = dy * 0.5;
+            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+            activeCard.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (!activeCard) return;
+            activeCard.classList.remove('dragging');
+            const card = activeCard;
+            activeCard = null;
+            const animate = () => {
+                if (Math.abs(vx) < minV && Math.abs(vy) < minV) return;
+                x += vx; y += vy;
+                vx *= friction; vy *= friction;
+                card.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
+                requestAnimationFrame(animate);
+            };
+            if (Math.abs(vx) > minV || Math.abs(vy) > minV) requestAnimationFrame(animate);
+        });
+
+        let downloadUrl = 'https://github.com/KPScriptz/PepBox/releases/latest';
+        fetch('https://api.github.com/repos/KPScriptz/PepBox/releases/latest').then(r => r.json()).then(rel => {
+            const dmg = rel.assets?.find(a => a.name.endsWith('.dmg'));
+            if (dmg) downloadUrl = dmg.browser_download_url;
+        }).catch(() => { });
+
+        // Credits modal logic
+        const creditsModal = document.getElementById('credits-modal');
+        const creditsBtn = document.getElementById('credits-btn');
+
+        creditsBtn.addEventListener('click', () => {
+            creditsModal.classList.add('active');
+        });
+
+        creditsModal.addEventListener('click', (e) => {
+            if (e.target === creditsModal) {
+                creditsModal.classList.remove('active');
+            }
+        });
+
+        // Donation modal logic
+        const donateModal = document.getElementById('donate-modal');
+        const downloadBtn = document.getElementById('download-btn');
+        const freeDownloadBtn = document.getElementById('free-download-btn');
+        let freeButtonReady = false;
+
+        downloadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            donateModal.classList.add('active');
+            freeButtonReady = false;
+            freeDownloadBtn.classList.remove('ready');
+
+            // Start fill animation after a brief delay
+            setTimeout(() => {
+                freeDownloadBtn.classList.add('filling');
+            }, 100);
+
+            // Enable button after 5 seconds
+            setTimeout(() => {
+                freeButtonReady = true;
+                freeDownloadBtn.classList.add('ready');
+            }, 5100);
+        });
+
+        freeDownloadBtn.addEventListener('click', () => {
+            if (!freeButtonReady) return;
+            donateModal.classList.remove('active');
+            window.location.href = downloadUrl;
+        });
+
+        donateModal.addEventListener('click', (e) => {
+            if (e.target === donateModal) {
+                donateModal.classList.remove('active');
+                freeDownloadBtn.classList.remove('filling');
+            }
+        });
+    </script>
+</body>
+
+</html>

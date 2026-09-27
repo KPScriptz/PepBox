@@ -22,11 +22,11 @@ struct CaffeineExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/high-alert-screenshot.gif")
+        URL(string: "pepbox-media://images/high-alert-screenshot.gif")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/high-alert.jpg")
+        URL(string: "pepbox-media://icons/high-alert.jpg")
     }
     
     static let iconPlaceholder = "eyes"

@@ -1,0 +1,81 @@
+// PepBox Version Config
+// Automatically fetches latest version from GitHub releases
+
+const PEPBOX_CONFIG = {
+    // Fallback values if GitHub API fails
+    version: '1.0.0',
+    dmgUrl: 'https://github.com/KPScriptz/PepBox/releases/latest/download/PepBox-1.0.0.dmg',
+    releasesUrl: 'https://github.com/KPScriptz/PepBox/releases/latest',
+
+    // GitHub API endpoint
+    apiUrl: 'https://api.github.com/repos/KPScriptz/PepBox/releases/latest'
+};
+
+// Cache key for localStorage
+const CACHE_KEY = 'pepbox_version_cache';
+const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
+
+// Get cached version or fetch from GitHub
+async function getLatestVersion() {
+    // Check cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            const { version, dmgUrl, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+                return { version, dmgUrl };
+            }
+        } catch (e) {
+            localStorage.removeItem(CACHE_KEY);
+        }
+    }
+
+    // Fetch from GitHub API
+    try {
+        const response = await fetch(PEPBOX_CONFIG.apiUrl);
+        if (!response.ok) throw new Error('API request failed');
+
+        const data = await response.json();
+        const version = data.tag_name.replace(/^v/, ''); // Remove 'v' prefix
+        const dmgAsset = data.assets.find(a => a.name.endsWith('.dmg'));
+        const dmgUrl = dmgAsset ? dmgAsset.browser_download_url : PEPBOX_CONFIG.dmgUrl;
+
+        // Cache the result
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+            version,
+            dmgUrl,
+            timestamp: Date.now()
+        }));
+
+        return { version, dmgUrl };
+    } catch (error) {
+        console.warn('Failed to fetch version from GitHub, using fallback:', error);
+        return {
+            version: PEPBOX_CONFIG.version,
+            dmgUrl: PEPBOX_CONFIG.dmgUrl
+        };
+    }
+}
+
+// Update all version elements on page load
+document.addEventListener('DOMContentLoaded', async function () {
+    const { version, dmgUrl } = await getLatestVersion();
+
+    // Update version text elements
+    document.querySelectorAll('.pepbox-version').forEach(el => {
+        el.textContent = 'v' + version;
+    });
+
+    // Update DMG download links
+    document.querySelectorAll('a[href*="PepBox"]').forEach(el => {
+        if (el.href.includes('.dmg') || el.href.includes('/download/')) {
+            el.href = dmgUrl;
+        }
+    });
+
+    // Update xattr command to use correct filename
+    const xattrCmd = document.getElementById('xattr-cmd');
+    if (xattrCmd) {
+        xattrCmd.textContent = `xattr -d com.apple.quarantine ~/Downloads/PepBox-${version}.dmg`;
+    }
+});

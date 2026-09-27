@@ -24,11 +24,11 @@ struct SpotifyExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/spotify-screenshot.jpg")
+        URL(string: "pepbox-media://images/spotify-screenshot.jpg")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/spotify.png")
+        URL(string: "pepbox-media://icons/spotify.png")
     }
     
     static let iconPlaceholder = "music.note.list"

@@ -25,11 +25,11 @@ struct WindowSnapExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/window-snap-screenshot.png")
+        URL(string: "pepbox-media://images/window-snap-screenshot.png")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/window-snap.jpg")
+        URL(string: "pepbox-media://icons/window-snap.jpg")
     }
     
     static let iconPlaceholder = "rectangle.split.2x2"

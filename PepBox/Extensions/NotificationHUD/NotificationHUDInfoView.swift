@@ -56,7 +56,7 @@ struct NotificationHUDInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/notification-hud.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/notification-hud.png")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "bell.badge.fill").font(.system(size: 32, weight: .medium)).foregroundStyle(.red)
@@ -144,7 +144,7 @@ struct NotificationHUDInfoView: View {
             featureRow(icon: "slider.horizontal.3", text: "Per-app notification filtering")
             featureRow(icon: "eye.slash", text: "Option to replace system notifications")
 
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/notification-hud-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/notification-hud-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

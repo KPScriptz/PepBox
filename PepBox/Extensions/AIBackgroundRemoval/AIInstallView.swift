@@ -151,7 +151,7 @@ struct AIInstallView: View {
                 }
                 
                 // Main icon - AI icon from remote URL (cached to prevent flashing)
-                CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/ai-bg.jpg")) { image in
+                CachedAsyncImage(url: URL(string: "pepbox-media://icons/ai-bg.jpg")) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Image(systemName: "brain.head.profile").font(.system(size: 32)).foregroundStyle(.blue)
@@ -270,7 +270,7 @@ struct AIInstallView: View {
             featureRow(icon: "arrow.down.circle", text: "One-time download (~400MB)")
             
             // Screenshot loaded from web (cached to prevent flashing)
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/ai-bg-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/ai-bg-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

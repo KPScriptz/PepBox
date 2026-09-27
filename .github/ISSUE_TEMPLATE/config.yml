@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation & Website
+    url: https://kpscriptz.github.io/PepBox/
+    about: Check the PepBox website for features, screenshots, and download

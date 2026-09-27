@@ -24,11 +24,11 @@ struct FinderServicesExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/finder-screenshot.png")
+        URL(string: "pepbox-media://images/finder-screenshot.png")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/finder.png")
+        URL(string: "pepbox-media://icons/finder.png")
     }
     
     static let iconPlaceholder = "folder"

@@ -45,7 +45,7 @@ struct FinderServicesSetupView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon - Finder icon from remote URL (cached to prevent flashing)
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/finder.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/finder.png")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "folder").font(.system(size: 32)).foregroundStyle(.blue)
@@ -168,7 +168,7 @@ struct FinderServicesSetupSheetView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon - Finder icon from remote URL (cached to prevent flashing)
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/finder.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/finder.png")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "folder").font(.system(size: 32)).foregroundStyle(.blue)

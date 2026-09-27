@@ -24,10 +24,10 @@ struct ToDoExtension: ExtensionDefinition {
         ("timer", "Priority levels and auto-cleanup")
     ]
     
-    static let screenshotURL: URL? = URL(string: "https://getdroppy.app/assets/images/reminders-screenshot.gif")
+    static let screenshotURL: URL? = URL(string: "pepbox-media://images/reminders-screenshot.gif")
     static let previewView: AnyView? = AnyView(ToDoPreviewView())
     
-    static let iconURL: URL? = URL(string: "https://getdroppy.app/assets/icons/reminders.png")
+    static let iconURL: URL? = URL(string: "pepbox-media://icons/reminders.png")
     static let iconPlaceholder: String = "checklist"
     static let iconPlaceholderColor: Color = .blue
     

@@ -68,7 +68,7 @@ struct CaffeineInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/high-alert.jpg")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/high-alert.jpg")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "eyes").font(.system(size: 32)).foregroundStyle(.orange)
@@ -156,7 +156,7 @@ struct CaffeineInfoView: View {
             featureRow(icon: "bolt.fill", text: "Low resource usage")
             
             // Screenshot (animated GIF)
-            AnimatedGIFView(url: "https://getdroppy.app/assets/images/high-alert-screenshot.gif")
+            AnimatedGIFView(url: "pepbox-media://images/high-alert-screenshot.gif")
                 .aspectRatio(contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
                 .overlay(

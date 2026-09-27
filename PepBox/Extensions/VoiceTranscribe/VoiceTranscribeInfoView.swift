@@ -71,7 +71,7 @@ struct VoiceTranscribeInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon (cached to prevent flashing)
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/voice-transcribe.jpg")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/voice-transcribe.jpg")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "waveform.and.mic").font(.system(size: 32)).foregroundStyle(.blue)
@@ -142,7 +142,7 @@ struct VoiceTranscribeInfoView: View {
             featureRow(icon: "lock.fill", text: "100% private, no data leaves your Mac")
             
             // Screenshot
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/voice-transcribe-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/voice-transcribe-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

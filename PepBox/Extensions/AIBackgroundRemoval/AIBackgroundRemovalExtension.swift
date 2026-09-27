@@ -24,11 +24,11 @@ struct AIBackgroundRemovalExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/ai-bg-screenshot.png")
+        URL(string: "pepbox-media://images/ai-bg-screenshot.png")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/ai-bg.jpg")
+        URL(string: "pepbox-media://icons/ai-bg.jpg")
     }
     
     static let iconPlaceholder = "brain.head.profile"

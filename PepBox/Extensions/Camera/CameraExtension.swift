@@ -25,7 +25,7 @@ struct CameraExtension: ExtensionDefinition {
     static let screenshotURL: URL? = nil
     static let previewView: AnyView? = nil
 
-    static let iconURL: URL? = URL(string: "https://getdroppy.app/assets/icons/snap-camera-v2.png")
+    static let iconURL: URL? = URL(string: "pepbox-media://icons/snap-camera-v2.png")
     static let iconPlaceholder: String = "camera.fill"
     static let iconPlaceholderColor: Color = .cyan
 

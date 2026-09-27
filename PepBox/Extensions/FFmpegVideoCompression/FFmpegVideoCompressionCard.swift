@@ -18,7 +18,7 @@ struct FFmpegVideoCompressionCard: View {
             // Header with icon, stats, and badge
             HStack(alignment: .top) {
                 // Extension icon from remote URL (cached)
-                CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/targeted-video-size.jpg")) { image in
+                CachedAsyncImage(url: URL(string: "pepbox-media://icons/targeted-video-size.jpg")) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)

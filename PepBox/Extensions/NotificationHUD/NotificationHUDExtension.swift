@@ -23,10 +23,10 @@ struct NotificationHUDExtension: ExtensionDefinition {
         ("slider.horizontal.3", "Per-app notification filtering")
     ]
     
-    static let screenshotURL: URL? = URL(string: "https://getdroppy.app/assets/images/notification-hud-screenshot.png")
+    static let screenshotURL: URL? = URL(string: "pepbox-media://images/notification-hud-screenshot.png")
     static let previewView: AnyView? = nil
     
-    static let iconURL: URL? = URL(string: "https://getdroppy.app/assets/icons/notification-hud.png")
+    static let iconURL: URL? = URL(string: "pepbox-media://icons/notification-hud.png")
     static let iconPlaceholder: String = "bell.badge.fill"
     static let iconPlaceholderColor: Color = .orange
     

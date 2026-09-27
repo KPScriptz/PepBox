@@ -333,7 +333,7 @@ struct QuickshareInfoView: View {
             }
             
             // Screenshot
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/quickshare-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/quickshare-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

@@ -24,11 +24,11 @@ struct MenuBarManagerExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/screenshots/menu-bar-manager.png")
+        nil  // no screenshot has been published for this extension
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/menubarmanager.png")
+        URL(string: "pepbox-media://icons/menubarmanager.png")
     }
     
     static let iconPlaceholder = "menubar.rectangle"

@@ -70,7 +70,7 @@ struct MenuBarManagerInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon from remote URL
-            CachedAsyncImage(url: URL(string: "https://iordv.github.io/Droppy/assets/icons/menubarmanager.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/menubarmanager.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)

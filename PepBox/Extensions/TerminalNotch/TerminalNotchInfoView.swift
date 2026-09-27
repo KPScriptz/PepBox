@@ -72,7 +72,7 @@ struct TerminalNotchInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/terminotch.jpg")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/terminotch.jpg")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "terminal").font(.system(size: 32, weight: .medium)).foregroundStyle(.green)
@@ -144,7 +144,7 @@ struct TerminalNotchInfoView: View {
             featureRow(icon: "arrow.up.forward.app", text: "Open in your terminal app anytime")
             
             // Screenshot
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/terminal-notch-screenshot.png")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/terminal-notch-screenshot.png")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

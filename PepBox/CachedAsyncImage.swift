@@ -58,7 +58,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         
         Task {
             do {
-                let (data, _) = try await URLSession.shared.data(from: url)
+                let (data, _) = try await URLSession.shared.data(from: ExtensionMedia.resolve(url))
                 if let nsImage = NSImage(data: data) {
                     ExtensionIconCache.shared.cache(nsImage, for: url)
                     await MainActor.run {

@@ -91,7 +91,7 @@ struct ElementCaptureInfoView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             // Icon from remote URL (cached to prevent flashing)
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/element-capture.jpg")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/element-capture.jpg")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -178,7 +178,7 @@ struct ElementCaptureInfoView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             // Screenshot
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/images/element-capture-screenshot.gif")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://images/element-capture-screenshot.gif")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)

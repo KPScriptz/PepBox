@@ -25,12 +25,12 @@ struct QuickshareExtension: ExtensionDefinition {
     
     // Screenshot from website
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/quickshare-screenshot.png")
+        URL(string: "pepbox-media://images/quickshare-screenshot.png")
     }
     
     // Icon from website
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/quickshare.jpg")
+        URL(string: "pepbox-media://icons/quickshare.jpg")
     }
     
     static let iconPlaceholder = "drop.fill"

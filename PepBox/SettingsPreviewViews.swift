@@ -156,7 +156,7 @@ struct FeaturePreviewImage: View {
         .task {
             guard let imageURL = URL(string: url) else { return }
             do {
-                let (data, _) = try await URLSession.shared.data(from: imageURL)
+                let (data, _) = try await URLSession.shared.data(from: ExtensionMedia.resolve(imageURL))
                 if let loadedImage = NSImage(data: data) {
                     await MainActor.run {
                         self.image = loadedImage
@@ -207,7 +207,7 @@ struct AnimatedGIFView: NSViewRepresentable {
         if let gifURL = URL(string: url) {
             Task {
                 do {
-                    let (data, _) = try await URLSession.shared.data(from: gifURL)
+                    let (data, _) = try await URLSession.shared.data(from: ExtensionMedia.resolve(gifURL))
                     if let image = NSImage(data: data) {
                         await MainActor.run {
                             context.coordinator.imageView?.image = image

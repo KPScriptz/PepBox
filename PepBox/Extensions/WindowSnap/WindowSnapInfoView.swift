@@ -160,7 +160,7 @@ struct WindowSnapInfoView: View {
 
     private var headerSection: some View {
         VStack(spacing: 12) {
-            CachedAsyncImage(url: URL(string: "https://getdroppy.app/assets/icons/window-snap.jpg")) { image in
+            CachedAsyncImage(url: URL(string: "pepbox-media://icons/window-snap.jpg")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)

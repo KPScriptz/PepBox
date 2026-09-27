@@ -24,11 +24,11 @@ struct TermiNotchExtension: ExtensionDefinition {
     ]
     
     static var screenshotURL: URL? {
-        URL(string: "https://getdroppy.app/assets/images/terminal-notch-screenshot.png")
+        URL(string: "pepbox-media://images/terminal-notch-screenshot.png")
     }
     
     static var iconURL: URL? {
-        URL(string: "https://getdroppy.app/assets/icons/terminotch.jpg")
+        URL(string: "pepbox-media://icons/terminotch.jpg")
     }
     
     static let iconPlaceholder = "terminal"
