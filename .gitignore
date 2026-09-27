@@ -1,0 +1,61 @@
+# Xcode
+.DS_Store
+*/build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+profile
+*.moved-aside
+DerivedData/
+.idea/
+*.hmap
+*.xccheckout
+*.xcscmblueprint
+
+# Build products
+build/
+Build/
+*.app
+dSYM/
+*.ipa
+*.dSYM.zip
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code Injection
+injected_code/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.tmp/
+
+# Large binary files (if any)
+*.dmg
+*.zip
+
+# Local configuration
+.env
+.env.local

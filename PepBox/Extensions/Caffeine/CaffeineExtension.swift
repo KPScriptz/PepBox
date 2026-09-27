@@ -1,0 +1,44 @@
+//
+//  CaffeineExtension.swift
+//  PepBox
+//
+
+import SwiftUI
+
+struct CaffeineExtension: ExtensionDefinition {
+    static let id = "caffeine"
+    static let title = "High Alert"
+    static let subtitle = "Keep your Mac awake"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .orange
+    
+    static let description = "Prevent your Mac from going to sleep. Choose indefinite mode or set a timer for hours or minutes. Perfect for downloads, presentations, or long-running tasks."
+    
+    static let features: [(icon: String, text: String)] = [
+        ("eyes", "Prevent display and system sleep"),
+        ("timer", "Timer presets: hours or minutes"),
+        ("infinity", "Indefinite mode until disabled"),
+        ("bolt.fill", "Lightweight, no battery drain")
+    ]
+    
+    static var screenshotURL: URL? {
+        URL(string: "https://getdroppy.app/assets/images/high-alert-screenshot.gif")
+    }
+    
+    static var iconURL: URL? {
+        URL(string: "https://getdroppy.app/assets/icons/high-alert.jpg")
+    }
+    
+    static let iconPlaceholder = "eyes"
+    static let iconPlaceholderColor: Color = .orange
+    
+    static func cleanup() {
+        CaffeineManager.shared.deactivate()
+    }
+    
+    // MARK: - Community Extension
+    
+    static let isCommunity = true
+    static let creatorName: String? = "Valetivivek"
+    static let creatorURL: URL? = URL(string: "https://github.com/valetivivek")
+}

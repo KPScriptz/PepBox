@@ -1,0 +1,324 @@
+import SwiftUI
+
+// MARK: - Onboarding Components
+// Extracted from OnboardingView.swift for faster incremental builds
+
+struct OnboardingToggle: View {
+    let icon: String
+    let title: String
+    let color: Color
+    @Binding var isOn: Bool
+    var secondaryColor: Color? = nil
+    
+    @State private var iconBounce = false
+    @State private var isHovering = false
+    
+    private var gradientSecondaryColor: Color {
+        secondaryColor ?? color.opacity(0.7)
+    }
+    
+    var body: some View {
+        Button {
+            // Trigger icon bounce
+            withAnimation(PepBoxAnimation.onboardingPop) {
+                iconBounce = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(PepBoxAnimation.stateEmphasis) {
+                    iconBounce = false
+                    isOn.toggle()
+                }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                // Premium gradient squircle icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: PepBoxRadius.ms, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [color, gradientSecondaryColor],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    // Inner highlight for 3D effect
+                    RoundedRectangle(cornerRadius: PepBoxRadius.ms, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [AdaptiveColors.overlayAuto(0.25), Color.clear],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .pepboxTextShadow()
+                        .scaleEffect(iconBounce ? 1.3 : 1.0)
+                        .rotationEffect(.degrees(iconBounce ? -8 : 0))
+                }
+                
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(isOn ? .primary : .secondary)
+                
+                Spacer()
+                
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(isOn ? .green : .secondary.opacity(0.5))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(AdaptiveColors.buttonBackgroundAuto)
+            .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous)
+                    .stroke(isOn ? color.opacity(0.3) : AdaptiveColors.overlayAuto(0.08), lineWidth: 1)
+            )
+            .scaleEffect(isHovering ? 1.02 : 1.0)
+        }
+        .buttonStyle(PepBoxSelectableButtonStyle(isSelected: isOn))
+        .onHover { hovering in
+            withAnimation(PepBoxAnimation.hover) {
+                isHovering = hovering
+            }
+        }
+    }
+}
+
+// MARK: - Onboarding View
+
+
+struct OnboardingConfettiView: View {
+    @State private var particles: [OnboardingParticle] = []
+    @State private var isVisible = true
+    
+    var body: some View {
+        GeometryReader { geo in
+            if isVisible {
+                Canvas { context, size in
+                    for particle in particles {
+                        let rect = CGRect(
+                            x: particle.currentX - particle.size / 2,
+                            y: particle.currentY - particle.size * 0.75,
+                            width: particle.size,
+                            height: particle.size * 1.5
+                        )
+                        context.fill(
+                            RoundedRectangle(cornerRadius: 1).path(in: rect),
+                            with: .color(particle.color.opacity(particle.opacity))
+                        )
+                    }
+                }
+                .onAppear {
+                    createParticles(in: geo.size)
+                    startAnimation()
+                }
+            }
+        }
+    }
+    
+    private func createParticles(in size: CGSize) {
+        let colors: [Color] = [.blue, .green, .yellow, .orange, .pink, .purple, .cyan]
+        
+        for i in 0..<24 {
+            var particle = OnboardingParticle(
+                id: i,
+                x: CGFloat.random(in: 40...(size.width - 40)),
+                startY: size.height + 10,
+                endY: CGFloat.random(in: -20...size.height * 0.3),
+                color: colors[i % colors.count],
+                size: CGFloat.random(in: 5...8),
+                delay: Double(i) * 0.015
+            )
+            particle.currentX = particle.x
+            particle.currentY = particle.startY
+            particles.append(particle)
+        }
+    }
+    
+    private func startAnimation() {
+        for i in 0..<particles.count {
+            let delay = particles[i].delay
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                guard i < particles.count else { return }
+                withAnimation(.easeOut(duration: 1.2)) {
+                    particles[i].currentY = particles[i].endY
+                    particles[i].currentX = particles[i].x + CGFloat.random(in: -30...30)
+                }
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.9) {
+                guard i < particles.count else { return }
+                withAnimation(.easeIn(duration: 0.3)) {
+                    particles[i].opacity = 0
+                }
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            isVisible = false
+        }
+    }
+}
+
+struct OnboardingParticle: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let startY: CGFloat
+    let endY: CGFloat
+    let color: Color
+    let size: CGFloat
+    let delay: Double
+    var currentX: CGFloat = 0
+    var currentY: CGFloat = 0
+    var opacity: Double = 1
+}
+
+// MARK: - Window Controller
+
+final class OnboardingWindowController: NSObject, NSWindowDelegate {
+    static let shared = OnboardingWindowController()
+    
+    private var window: NSWindow?
+    
+    private override init() {
+        super.init()
+    }
+    
+    func show() {
+        // If window exists and is visible, just bring to front
+        if let existingWindow = window {
+            if existingWindow.isVisible {
+                existingWindow.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+                return
+            } else {
+                // Window exists but not visible - clear it
+                window = nil
+            }
+        }
+        
+        let contentView = OnboardingView { [weak self] in
+            // Defer to next runloop to avoid releasing view while callback is in progress
+            DispatchQueue.main.async {
+                // Mark onboarding as complete first
+                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+                self?.close()
+            }
+        }
+
+        
+        let hostingView = NSHostingView(rootView: contentView)
+        
+        // Use NSPanel with borderless style to match extension windows (no traffic lights)
+        let newWindow = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 580),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        
+        newWindow.titlebarAppearsTransparent = true
+        newWindow.titleVisibility = .hidden
+        newWindow.backgroundColor = .clear  // Clear to allow SwiftUI transparency mode
+        newWindow.isOpaque = false
+        newWindow.hasShadow = true
+        newWindow.isMovableByWindowBackground = true
+        newWindow.isReleasedWhenClosed = false  // Prevent premature deallocation
+        newWindow.delegate = self  // Handle window close
+        newWindow.contentView = hostingView
+        
+        // Precisely center on the main screen (MacBook's built-in display)
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let windowFrame = newWindow.frame
+            let x = screenFrame.midX - windowFrame.width / 2
+            let y = screenFrame.midY - windowFrame.height / 2
+            newWindow.setFrameOrigin(NSPoint(x: x, y: y))
+        } else {
+            newWindow.center()
+        }
+        newWindow.level = .floating
+        
+        // Store reference AFTER setup
+        window = newWindow
+        
+        // PREMIUM: Start scaled down and invisible for spring animation
+        newWindow.alphaValue = 0
+        if let contentView = newWindow.contentView {
+            contentView.wantsLayer = true
+            contentView.layer?.transform = CATransform3DMakeScale(0.85, 0.85, 1.0)
+            contentView.layer?.opacity = 0
+        }
+        
+        // Show window - use deferred makeKey to avoid NotchWindow conflicts
+        newWindow.orderFront(nil)
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            newWindow.makeKeyAndOrderFront(nil)
+        }
+        
+        // PREMIUM: CASpringAnimation for bouncy appear
+        if let layer = newWindow.contentView?.layer {
+            // Fade in
+            let fadeAnim = CABasicAnimation(keyPath: "opacity")
+            fadeAnim.fromValue = 0
+            fadeAnim.toValue = 1
+            fadeAnim.duration = 0.25
+            fadeAnim.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            fadeAnim.fillMode = .forwards
+            fadeAnim.isRemovedOnCompletion = false
+            layer.add(fadeAnim, forKey: "fadeIn")
+            layer.opacity = 1
+            
+            // Scale with spring overshoot
+            let scaleAnim = CASpringAnimation(keyPath: "transform.scale")
+            scaleAnim.fromValue = 0.85
+            scaleAnim.toValue = 1.0
+            scaleAnim.mass = 1.0
+            scaleAnim.stiffness = 250  // Slightly softer for larger window
+            scaleAnim.damping = 22
+            scaleAnim.initialVelocity = 6
+            scaleAnim.duration = scaleAnim.settlingDuration
+            scaleAnim.fillMode = .forwards
+            scaleAnim.isRemovedOnCompletion = false
+            layer.add(scaleAnim, forKey: "scaleSpring")
+            layer.transform = CATransform3DIdentity
+        }
+        
+        // Fade window alpha
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.25
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            newWindow.animator().alphaValue = 1.0
+        })
+    }
+    
+    func close() {
+        guard let panel = window else { return }
+        
+        // Capture and nil reference AFTER animation to keep window alive
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            panel.animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            // Now safe to release - animation is done
+            self?.window = nil
+            panel.orderOut(nil)
+        })
+    }
+    
+    // MARK: - NSWindowDelegate
+    
+    func windowWillClose(_ notification: Notification) {
+        // Clear reference when window is closed via X button
+        window = nil
+    }
+}

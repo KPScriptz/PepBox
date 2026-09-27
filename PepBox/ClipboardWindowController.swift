@@ -1,0 +1,521 @@
+import Cocoa
+import SwiftUI
+
+class ClipboardWindowController: NSObject, NSWindowDelegate {
+    static let shared = ClipboardWindowController()
+    
+    var window: NSWindow!
+    private var globalEventMonitor: Any?
+    private var localEventMonitor: Any?
+    
+    // Copy+Favorite shortcut (Issue #43)
+    private var copyFavoriteHotKey: GlobalHotKey?
+    private var copyFavoriteLocalMonitor: Any?
+    
+    private override init() {
+        super.init()
+        // Lazy setup when needed or on init? Let's do on init to be ready.
+        setupWindow()
+    }
+    
+    func setupWindow() {
+        let clipboardView = ClipboardManagerView(
+            onPaste: { item in
+                self.paste(item)
+            },
+            onPasteItems: { items in
+                self.paste(items)
+            },
+            onClose: {
+                self.close()
+            },
+            onReset: {
+                self.resetWindowSize()
+            }
+        )
+
+        
+        // Use NSHostingView like SettingsWindowController for native sidebar appearance
+        let hostingView = NSHostingView(rootView: clipboardView)
+        
+        // Use ClipboardPanel (custom NSPanel subclass) for proper focus handling
+        // ClipboardPanel overrides canBecomeKey and canBecomeMain to allow interaction
+        // even after other windows (like media player) have taken focus
+        window = ClipboardPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 1040, height: 640),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        
+        window.center()
+        window.title = "Clipboard"
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .visible  // Same as Settings
+        
+        // Configure background and appearance - EXACTLY like Settings
+        // NOTE: Do NOT use isMovableByWindowBackground to avoid entries/buttons triggering window drag
+        window.isMovableByWindowBackground = false
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.hasShadow = true
+        window.isReleasedWhenClosed = false
+        
+        window.delegate = self
+        window.contentView = hostingView
+        
+        // Fix for Issue #33: Prevent snapping back to previous window/space
+        // Allow floating over full screen apps and on all desktops
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        
+        // Note: Removed level = .popUpMenu and custom collectionBehavior to match Settings
+        
+        // Allow clicking on it and becoming key
+        window.ignoresMouseEvents = false
+    }
+
+    func resetWindowSize() {
+        guard let window = window, let screen = NSScreen.main else { return }
+        let screenRect = screen.visibleFrame
+        let newRect = NSRect(
+            x: screenRect.midX - 520, 
+            y: screenRect.midY - 320, 
+            width: 1040, 
+            height: 640
+        )
+        DispatchQueue.main.async {
+            AppKitMotion.animateFrame(window, to: newRect, duration: 0.2)
+        }
+    }
+    
+    private var isAnimating = false
+    private var previousApp: NSRunningApplication?
+
+    func toggle() {
+        guard let window = window else {
+            setupWindow()
+            show()
+            return
+        }
+        if window.isVisible {
+            close()
+        } else {
+            show()
+        }
+    }
+    
+    private var clickMonitor: Any?
+    private var localClickMonitor: Any?
+
+
+
+    func show() {
+        guard !isAnimating, let window = window else { return }
+        
+        // Save previous app
+        if let frontmost = NSWorkspace.shared.frontmostApplication, 
+           frontmost.bundleIdentifier != Bundle.main.bundleIdentifier {
+            previousApp = frontmost
+        }
+        
+        // Center window
+        if let screen = NSScreen.main {
+            let screenRect = screen.visibleFrame
+            let windowRect = window.frame
+            let x = screenRect.midX - (windowRect.width / 2)
+            let y = screenRect.midY - (windowRect.height / 2)
+            window.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+        
+        isAnimating = true
+        AppKitMotion.prepareForPresent(window, initialScale: 0.9)
+        
+        // ✅ Restore Focus to allow Keyboard Navigation (Arrows + Enter)
+        // Use orderFront first, then async makeKey to ensure NotchWindow's canBecomeKey updates
+        window.orderFront(nil)
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            // Post notification for View to reset state (Search/Selection)
+            NotificationCenter.default.post(name: .clipboardWindowDidShow, object: nil)
+        }
+        
+        // Start monitoring for clicks outside to auto-close (since we are not Key)
+        startClickMonitoring()
+        
+        print("⌨️ PepBox: Showing Clipboard Window")
+        AppKitMotion.animateIn(window, initialScale: 0.9, duration: 0.24) { [weak self] in
+            self?.isAnimating = false
+        }
+        
+        // PREMIUM: Haptic confirms clipboard opened
+        HapticFeedback.expand()
+    }
+
+    func close() {
+        guard let window = window, window.isVisible, !isAnimating else { return }
+        
+        // Stop monitoring immediately
+        stopClickMonitoring()
+        
+        // Reset editing state to ensure shortcuts work correctly next time
+        ClipboardManager.shared.isEditingContent = false
+        
+        isAnimating = true
+        print("⌨️ PepBox: Fading Out Clipboard Window (Duration: 0.25s)...")
+
+        AppKitMotion.animateOut(window, targetScale: 0.96, duration: 0.16) { [weak self] in
+            self?.window?.orderOut(nil)
+            if let window = self?.window {
+                AppKitMotion.resetPresentationState(window)
+            }
+            self?.isAnimating = false
+        }
+    }
+    
+    // MARK: - Click Monitoring (Auto-Close)
+
+    
+    private func startClickMonitoring() {
+        stopClickMonitoring()
+        
+        print("🖱️ PepBox: Starting Click Monitoring")
+        
+        // 1. Global Monitor (Clicks sent to OTHER apps)
+        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, let window = self.window, window.isVisible else { return }
+            
+            // Check if click is outside our window frame
+            let mouseLoc = NSEvent.mouseLocation
+            let windowFrame = window.frame
+            
+            if !windowFrame.contains(mouseLoc) {
+                print("🖱️ PepBox: Global Click Outside (Loc: \(mouseLoc) | Frame: \(windowFrame)) -> Closing")
+                DispatchQueue.main.async {
+                    self.close()
+                }
+            }
+        }
+        
+        // 2. Local Monitor (Clicks sent to OUR app)
+        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, let window = self.window, window.isVisible else { return event }
+            
+            // Don't close if click is on the OCR window
+            if let ocrWindow = OCRWindowController.shared.window, event.window == ocrWindow {
+                return event
+            }
+            
+            // Don't close if click is on the Rename window
+            if let renameWindow = RenameWindowController.shared.window, event.window == renameWindow {
+                return event
+            }
+            
+            // Don't close if click is on a sheet or child window attached to our window
+            if let clickedWindow = event.window {
+                // Check if clicked window is our main window
+                if clickedWindow == window {
+                    return event
+                }
+                
+                // Check if clicked window is a sheet attached to our window
+                if clickedWindow.sheetParent == window {
+                    return event
+                }
+                
+                // Check if clicked window's parent is our window (child windows)
+                if clickedWindow.parent == window {
+                    return event
+                }
+                
+                // Check if the window is a sheet or presented from our app (generic check)
+                // This catches modal sheets that SwiftUI presents
+                if clickedWindow.level == .modalPanel || clickedWindow.isSheet {
+                    return event
+                }
+                
+                print("🖱️ PepBox: Local Click Outside (Window: \(String(describing: event.window))) -> Closing")
+                DispatchQueue.main.async {
+                    self.close()
+                }
+            }
+            return event
+        }
+    }
+    
+    private func stopClickMonitoring() {
+        if let monitor = clickMonitor {
+            NSEvent.removeMonitor(monitor)
+            clickMonitor = nil
+        }
+        if let monitor = localClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            localClickMonitor = nil
+        }
+    }
+    
+    func paste(_ item: ClipboardItem) {
+        guard let window = window else { return }
+        
+        // Dismiss clipboard immediately
+        isAnimating = true
+        // Stop monitoring to prevent double-closes
+        stopClickMonitoring()
+
+        AppKitMotion.animateOut(window, targetScale: 0.97, duration: 0.12) { [weak self] in
+            self?.window?.orderOut(nil)
+            if let window = self?.window {
+                AppKitMotion.resetPresentationState(window)
+            }
+            self?.isAnimating = false
+            
+            // The Mirror Method (V12): Refined Sequence
+            if let targetApp = self?.previousApp {
+                let pid = targetApp.processIdentifier
+                
+                // 1. Hide PepBox window (already ordered out), just ensure focus returns
+                // NSApp.hide(nil) - REMOVED: This was hiding the Notch window too!
+                // NSApp.deactivate() - REMOVED: Unnecessary if we activate target app
+                
+                // 2. Tiny wait to ensure PepBox is gone from focus
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    // 3. Activate target app with all windows
+                    targetApp.activate(options: .activateAllWindows)
+                    
+                    // 4. Wait for focus to settle (Matches ClipBook's 150ms)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        ClipboardManager.shared.paste(item: item, targetPID: pid)
+                    }
+                }
+            } else {
+                // No previous app, just hide window and paste (fallback)
+                // NSApp.hide(nil) - REMOVED
+                // NSApp.deactivate() - REMOVED
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    ClipboardManager.shared.paste(item: item)
+                }
+            }
+        }
+    }
+    
+    /// Batch paste multiple items (Issue #154)
+    /// Dismisses window once and pastes all items together
+    func paste(_ items: [ClipboardItem]) {
+        guard let window = window, !items.isEmpty else { return }
+        
+        // Single item: use regular paste
+        if items.count == 1, let item = items.first {
+            paste(item)
+            return
+        }
+        
+        // Dismiss clipboard immediately
+        isAnimating = true
+        stopClickMonitoring()
+
+        AppKitMotion.animateOut(window, targetScale: 0.97, duration: 0.12) { [weak self] in
+            self?.window?.orderOut(nil)
+            if let window = self?.window {
+                AppKitMotion.resetPresentationState(window)
+            }
+            self?.isAnimating = false
+            
+            // The Mirror Method (V12): Refined Sequence
+            if let targetApp = self?.previousApp {
+                let pid = targetApp.processIdentifier
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    targetApp.activate(options: .activateAllWindows)
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        ClipboardManager.shared.paste(items: items, targetPID: pid)
+                    }
+                }
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    ClipboardManager.shared.paste(items: items)
+                }
+            }
+        }
+    }
+
+    // Removed dead code: windowDidResignKey (Window is never Key now)
+
+    
+    // MARK: - Global Shortcut (Carbon)
+    private var globalHotKey: GlobalHotKey?
+    
+    func startMonitoringShortcut() {
+        stopMonitoringShortcut()
+        
+        // Load saved shortcut
+        var targetKeyCode = 49 // Space
+        var targetModifiers: UInt = NSEvent.ModifierFlags([.command, .shift]).rawValue
+        
+        if let data = UserDefaults.standard.data(forKey: "clipboardShortcut"),
+           let decoded = try? JSONDecoder().decode(SavedShortcut.self, from: data) {
+            targetKeyCode = decoded.keyCode
+            targetModifiers = decoded.modifiers
+        }
+        
+        // 1. Carbon HotKey (Works even with Secure Input / Password Fields)
+        globalHotKey = GlobalHotKey(keyCode: targetKeyCode, modifiers: targetModifiers) { [weak self] in
+            print("⌨️ PepBox: Global Shortcut Triggered (Carbon)")
+            self?.toggle()
+        }
+        
+        // 2. Only keep Local Monitor for swallowing the event when active
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            if flags.rawValue == targetModifiers && event.keyCode == targetKeyCode {
+                return nil
+            }
+            return event
+        }
+        
+    // 3. Permission Check & Prompt
+        // Wait 3.5 seconds to allow IOHIDManager retry logic (up to 3s) to complete first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in
+            self?.checkPermissionsDebounced()
+        }
+        
+        // 4. Start Copy+Favorite shortcut (Issue #43)
+        startCopyFavoriteShortcut()
+    }
+    
+    /// Tracks last permission check to prevent rapid re-checks
+    private var lastPermissionCheckTime: Date?
+    private let permissionCheckDebounceInterval: TimeInterval = 30 // Only check every 30 seconds max
+    
+    private func checkPermissionsDebounced() {
+        // Debounce: Skip if we checked recently to prevent TCC race conditions
+        if let lastCheck = lastPermissionCheckTime,
+           Date().timeIntervalSince(lastCheck) < permissionCheckDebounceInterval {
+            print("🔐 ClipboardWindowController: Skipping permission check (debounced)")
+            return
+        }
+        lastPermissionCheckTime = Date()
+        
+        checkPermissions()
+    }
+    
+    private func checkPermissions() {
+        // Use centralized PermissionManager with caching
+        let accessibilityOk = PermissionManager.shared.isAccessibilityGranted
+        
+        // Input Monitoring Check (uses runtime check + cache)
+        let isInputMonitoringActive = globalHotKey?.isInputMonitoringActive ?? false
+        let inputMonitoringOk = PermissionManager.shared.isInputMonitoringGranted(runtimeCheck: isInputMonitoringActive)
+        
+        // If all permissions are granted, return without prompting
+        if accessibilityOk && inputMonitoringOk {
+            return
+        }
+        
+        // Build message with missing permissions
+        var missingPermissions: [String] = []
+        if !accessibilityOk { missingPermissions.append("• Accessibility (for Paste)") }
+        if !inputMonitoringOk { missingPermissions.append("• Input Monitoring (for Global Hotkey)") }
+        
+        print("🔐 ClipboardWindowController: Missing permissions: \(missingPermissions.joined(separator: ", "))")
+        
+        // Use ONLY macOS native dialogs - no PepBox custom dialogs
+        if !accessibilityOk {
+            print("🔐 ClipboardWindowController: Requesting Accessibility via native dialog")
+            PermissionManager.shared.requestAccessibility()
+        }
+        if !inputMonitoringOk {
+            print("🔐 ClipboardWindowController: Opening Input Monitoring settings (no native dialog available)")
+            PermissionManager.shared.openInputMonitoringSettings()
+        }
+    }
+    
+    func stopMonitoringShortcut() {
+        // GlobalHotKey deinit handles unregistration
+        globalHotKey = nil
+        
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
+        }
+        
+        // Also stop Copy+Favorite shortcut
+        stopCopyFavoriteShortcut()
+    }
+    
+    // MARK: - Copy+Favorite Shortcut (Issue #43)
+    
+    func startCopyFavoriteShortcut() {
+        stopCopyFavoriteShortcut()
+        
+        // Check if enabled
+        guard UserDefaults.standard.bool(forKey: "clipboardCopyFavoriteEnabled") else { 
+            print("⌨️ PepBox: Copy+Favorite disabled")
+            return 
+        }
+        
+        // Load saved shortcut or use default (Cmd+Shift+C)
+        var targetKeyCode = 8 // C key
+        var targetModifiers: UInt = NSEvent.ModifierFlags([.command, .shift]).rawValue
+        
+        if let data = UserDefaults.standard.data(forKey: "clipboardCopyFavoriteShortcut"),
+           let decoded = try? JSONDecoder().decode(SavedShortcut.self, from: data) {
+            targetKeyCode = decoded.keyCode
+            targetModifiers = decoded.modifiers
+        }
+        
+        print("⌨️ PepBox: Registering Copy+Favorite shortcut - keyCode: \(targetKeyCode), modifiers: \(targetModifiers)")
+        
+        // Register Carbon HotKey for Copy+Favorite
+        copyFavoriteHotKey = GlobalHotKey(keyCode: targetKeyCode, modifiers: targetModifiers) {
+            print("⌨️ PepBox: Copy+Favorite Shortcut Triggered")
+            // Get the current clipboard content and favorite it
+            ClipboardManager.shared.copyAndFavoriteCurrentClipboard()
+        }
+        
+        // Local monitor to swallow the event
+        copyFavoriteLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            if flags.rawValue == targetModifiers && event.keyCode == targetKeyCode {
+                return nil
+            }
+            return event
+        }
+        
+        print("⌨️ PepBox: Copy+Favorite Shortcut Registered")
+    }
+    
+    func stopCopyFavoriteShortcut() {
+        copyFavoriteHotKey = nil
+        
+        if let monitor = copyFavoriteLocalMonitor {
+            NSEvent.removeMonitor(monitor)
+            copyFavoriteLocalMonitor = nil
+        }
+    }
+}
+
+// MARK: - Custom Panel Class
+class ClipboardPanel: NSPanel {
+    // ✅ FIX: Allow window to become key so it can receive Keyboard Events (Enter, Arrows)
+    override var canBecomeKey: Bool {
+        return true
+    }
+    
+    override var canBecomeMain: Bool {
+        return true
+    }
+    
+    // ✅ FIX v5.3: Configure panel for immediate click handling
+    override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask, backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
+        super.init(contentRect: contentRect, styleMask: style, backing: backingStoreType, defer: flag)
+        
+        // Panel should become key on any click, not just title bar
+        self.becomesKeyOnlyIfNeeded = false
+        
+        // Ensure the panel can accept mouse events immediately
+        self.isFloatingPanel = false
+        self.worksWhenModal = true
+    }
+}

@@ -1,0 +1,52 @@
+import AppKit
+
+/// Handles macOS Services for Finder integration
+/// Services appear in Finder's right-click menu automatically
+class ServiceProvider: NSObject {
+    
+    /// Called when user selects "Add to PepBox Shelf" from Finder context menu
+    @objc func addToShelf(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>) {
+        handleFiles(from: pboard, target: "shelf")
+    }
+    
+    /// Called when user selects "Add to PepBox Basket" from Finder context menu
+    @objc func addToBasket(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>) {
+        handleFiles(from: pboard, target: "basket")
+    }
+    
+    private func handleFiles(from pboard: NSPasteboard, target: String) {
+        let licenseManager = LicenseManager.shared
+        if licenseManager.requiresLicenseEnforcement && !licenseManager.isActivated {
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                LicenseWindowController.shared.show()
+            }
+            return
+        }
+
+        // Get file URLs from pasteboard
+        guard let urls = pboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL] else {
+            return
+        }
+        
+        // Filter to valid file URLs
+        let fileURLs = urls.filter { $0.isFileURL }
+        guard !fileURLs.isEmpty else { return }
+        
+        // Add files to PepBox
+        DispatchQueue.main.async {
+            let state = PepBoxState.shared
+            
+            if target == "shelf" {
+                state.addItems(from: fileURLs)
+                // Show the shelf on main display (Services are triggered externally, not from a specific notch)
+                NotchWindowController.shared.setupNotchWindow()
+                if let mainDisplayID = NSScreen.main?.displayID {
+                    state.expandShelf(for: mainDisplayID)
+                }
+            } else {
+                FloatingBasketWindowController.addItemsFromExternalSource(fileURLs)
+            }
+        }
+    }
+}

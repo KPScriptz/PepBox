@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.pivotxp.pepbox.url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pepbox</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Add to PepBox Shelf</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>addToShelf</string>
+			<key>NSPortName</key>
+			<string>PepBox</string>
+			<key>NSSendFileTypes</key>
+			<array>
+				<string>public.item</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Add to PepBox Basket</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>addToBasket</string>
+			<key>NSPortName</key>
+			<string>PepBox</string>
+			<key>NSSendFileTypes</key>
+			<array>
+				<string>public.item</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>PepBox needs to communicate with this app to export items when you drag them to the shelf or basket.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Voice Transcribe needs access to your microphone to record audio for transcription.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Notchface needs access to your camera to show your live notch preview.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>PepBox uses Bluetooth to detect AirPods connections and show battery status.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>PepBox needs Reminders access to sync reminder items into your Reminders tasks.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>PepBox needs full Reminders access to keep Reminders tasks synced with Apple Reminders changes.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>PepBox needs Calendar access to show upcoming events in your task overview.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>PepBox needs full Calendar access to keep upcoming events synced in your task overview.</string>
+</dict>
+</plist>

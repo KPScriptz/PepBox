@@ -1,0 +1,21 @@
+PepBox
+Copyright (c) 2026 PivotXP
+
+PepBox is a modified version of Droppy (https://github.com/iordv/Droppy),
+Copyright (c) 2026 Jordy Spruit, licensed under the GNU General Public
+License v3.0 with the Commons Clause License Condition v1.0 (see LICENSE).
+PepBox is distributed under the same terms.
+
+Modifications by PivotXP, starting 2026-09-27:
+- Renamed the app, bundle identifier (com.pivotxp.PepBox), URL scheme
+  (pepbox://), helper tools and all user-facing text from Droppy to PepBox,
+  per the Droppy trademark policy (see TRADEMARK).
+- Replaced the app icon, menu bar icon and Alfred workflow icon.
+- Removed the upstream analytics and extension-ratings service; PepBox sends
+  no usage data.
+- Pointed the update checker and crash-report links at KPScriptz/PepBox.
+- Removed the upstream website, marketing material, Homebrew cask and
+  release pipeline.
+
+"Droppy" and the Droppy logo are trademarks of Jordy Spruit. PepBox is not
+affiliated with or endorsed by the Droppy project.
