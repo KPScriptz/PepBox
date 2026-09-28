@@ -475,6 +475,13 @@ struct NotchItemView: View {
                 Label("Open", systemImage: "arrow.up.forward.square")
             }
             
+            Button {
+                let selected = state.items.filter { state.selectedItems.contains($0.id) }
+                DroppedItem.showInFinder(selected.contains(item) ? selected : [item])
+            } label: {
+                Label("Show in Finder", systemImage: "folder")
+            }
+            
             // Move To...
             Menu {
                 // Saved Destinations

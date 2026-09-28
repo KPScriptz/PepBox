@@ -379,4 +379,10 @@ extension DroppedItem {
         pasteboard.setString(items.map(\.url.path).joined(separator: "\n"), forType: .string)
         HapticFeedback.copy()
     }
+    
+    /// Opens Finder with the items selected ("Show in Finder").
+    static func showInFinder(_ items: [DroppedItem]) {
+        guard !items.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(items.map(\.url))
+    }
 }
