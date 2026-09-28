@@ -108,13 +108,17 @@ final class PermissionManager: ObservableObject {
             return true
         }
         
-        // After grace period, still trust cache but log normally
+        // After the grace period TCC is authoritative. A stale cache (permission revoked, or a
+        // rebuilt/re-signed app macOS treats as new) made paste fail silently and hid the
+        // Accessibility warning, so clear it and report the real state.
         if cacheValue {
-            print("🔐 PermissionManager: Accessibility - TCC=false but cache=true (trusting cache)")
+            print("🔐 PermissionManager: Accessibility - TCC=false after grace period, clearing stale cache")
+            UserDefaults.standard.set(false, forKey: accessibilityGrantedKey)
+            DispatchQueue.main.async { self.objectWillChange.send() }
         }
-        return cacheValue
+        return false
     }
-    
+
     /// Request accessibility permission and start polling
     func requestAccessibility() {
         // Prevent duplicate prompts in same session
@@ -144,6 +148,17 @@ final class PermissionManager: ObservableObject {
         startPollingForAccessibility()
     }
     
+    /// Ask for accessibility after the user tried an action that needs it (e.g. paste).
+    /// Skips the once-per-boot limit of requestAccessibility(): the prompt call also adds
+    /// PepBox to the Accessibility list, so opening Settings leaves only a toggle to flip.
+    func requestAccessibilityForUserAction() {
+        print("🔐 PermissionManager: Accessibility needed for a user action, prompting and opening Settings")
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
+        openAccessibilitySettings()
+        startPollingForAccessibility()
+    }
+
     /// Get the system boot time for boot-cycle tracking
     private func getSystemBootTime() -> Date? {
         var tv = timeval()
