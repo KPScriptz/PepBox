@@ -28,16 +28,21 @@ final class RingMenuController {
     func setEnabled(_ enabled: Bool) {
         if enabled {
             guard hotKey == nil else { return }
-            hotKey = GlobalHotKey(
-                keyCode: kVK_Space,
-                modifiers: NSEvent.ModifierFlags([.option, .shift]).rawValue
-            ) { [weak self] in
+            let shortcut = ExtensionShortcuts.load(ExtensionShortcuts.ringKey, default: ExtensionShortcuts.ringDefault)
+            hotKey = GlobalHotKey(keyCode: shortcut.keyCode, modifiers: shortcut.modifiers) { [weak self] in
                 DispatchQueue.main.async { self?.toggle() }
             }
         } else {
             hotKey = nil
             close()
         }
+    }
+
+    /// Re-registers the hotkey after the shortcut changed in the extension's options.
+    func reloadShortcut() {
+        guard hotKey != nil else { return }
+        hotKey = nil
+        setEnabled(true)
     }
 
     func toggle() {

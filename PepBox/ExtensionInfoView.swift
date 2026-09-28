@@ -43,6 +43,11 @@ struct ExtensionInfoView: View {
                     // Features section
                     featuresSection
                     
+                    // Options (shortcuts, volume) for installed extensions that have them
+                    if isInstalled && ExtensionOptionsView.hasOptions(extensionType) {
+                        ExtensionOptionsView(extensionType: extensionType)
+                    }
+                    
                     // Screenshot section
                     screenshotSection
                 }
