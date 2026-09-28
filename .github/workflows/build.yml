@@ -32,6 +32,7 @@ jobs:
             -skipPackagePluginValidation -skipMacroValidation \
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \
+            SWIFT_COMPILATION_MODE=singlefile \
             build 2>&1 | tee build.log | grep -E '(error|warning: unable|BUILD (SUCCEEDED|FAILED))' || true
           grep -q 'BUILD SUCCEEDED' build.log
 
@@ -40,6 +41,8 @@ jobs:
         run: |
           echo "=== errors ==="
           grep -E '(^|[^-W])error:' build.log | grep -v 'Werror' | cut -c1-600 | sort -u | head -100 || true
+          echo "=== compiler crash context ==="
+          grep -nE 'Stack dump|^[0-9]+\.\s|While (running|evaluating|emitting|silgen)|Running pass|error: compile command failed|Assertion' build.log | grep -v '^\S*:[0-9]* swift-frontend' | cut -c1-500 | head -60 || true
           echo "=== failed commands ==="
           sed -n '/The following build commands failed/,$p' build.log | cut -c1-400 | head -40 || true
           echo "=== last lines ==="
