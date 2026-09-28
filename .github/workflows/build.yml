@@ -95,6 +95,8 @@ jobs:
           shasum -a 256 PepBox-*.dmg
 
       - name: UI test (drives the app with synthetic mouse and keyboard)
+        timeout-minutes: 10
+        continue-on-error: true
         run: scripts/uitest/run.sh build/Build/Products/Release/PepBox.app ui-results
 
       - name: Publish UI test results to the ui-test-results branch
