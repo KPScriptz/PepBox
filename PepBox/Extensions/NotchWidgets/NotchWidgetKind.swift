@@ -15,6 +15,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case teleprompter
     case meetings
     case appVolume
+    case obsidian
 
     var id: String { rawValue }
 
@@ -30,6 +31,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .teleprompter: return .teleprompter
         case .meetings: return .meetings
         case .appVolume: return .appVolume
+        case .obsidian: return .obsidian
         }
     }
 
@@ -42,6 +44,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .teleprompter: return "text.alignleft"
         case .meetings: return "video.fill"
         case .appVolume: return "speaker.wave.2.fill"
+        case .obsidian: return "note.text"
         }
     }
 
@@ -52,6 +55,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .teleprompter: return .mint
         case .meetings: return .blue
         case .appVolume: return .green
+        case .obsidian: return .purple
         }
     }
 
@@ -79,7 +83,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .pomodoro: PomodoroManager.shared.reset()
         case .teleprompter: TeleprompterManager.shared.pause()
         case .appVolume: AppVolumeManager.shared.resetAll()
-        case .emojiPicker, .meetings: break
+        case .emojiPicker, .meetings, .obsidian: break
         }
     }
 }
@@ -103,6 +107,8 @@ struct NotchWidgetPanel: View {
                 MeetingsNotchView(manager: MeetingsManager.shared)
             case .appVolume:
                 AppVolumeNotchView(manager: AppVolumeManager.shared)
+            case .obsidian:
+                ObsidianNotchView(manager: ObsidianManager.shared)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

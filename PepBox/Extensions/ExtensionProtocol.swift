@@ -32,6 +32,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case teleprompter
     case meetings
     case appVolume
+    case obsidian
     case ring
     case keySounds
     case quickSearch
@@ -92,7 +93,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return MenuBarManager.shared.isEnabled
         case .todo:
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
-        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume:
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian:
             return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
         case .ring, .keySounds, .quickSearch, .textActions:
             return UtilityExtensionKind(extensionType: self)?.isInstalled ?? false

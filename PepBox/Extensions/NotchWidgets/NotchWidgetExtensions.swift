@@ -102,3 +102,21 @@ struct AppVolumeExtension: ExtensionDefinition {
     static let iconPlaceholderColor: Color = .green
     static func cleanup() { NotchWidgetKind.appVolume.cleanup() }
 }
+
+struct ObsidianExtension: ExtensionDefinition {
+    static let id = "obsidian"
+    static let title = "Obsidian"
+    static let subtitle = "Your vault on the shelf"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .purple
+    static let description = "Your most recently edited Obsidian notes one click away, with search, plus a capture field that appends a timestamped line to a \"PepBox Inbox\" note in your vault. The vault is found from Obsidian's settings, or pick it yourself."
+    static let features: [(icon: String, text: String)] = [
+        ("clock.arrow.circlepath", "Recent notes, newest first"),
+        ("magnifyingglass", "Find a note by title"),
+        ("square.and.pencil", "Quick capture into PepBox Inbox.md")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "note.text"
+    static let iconPlaceholderColor: Color = .purple
+}

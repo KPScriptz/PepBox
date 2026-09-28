@@ -140,6 +140,7 @@ final class ExtensionRegistry {
         register(TeleprompterExtension.self)
         register(MeetingsExtension.self)
         register(AppVolumeExtension.self)
+        register(ObsidianExtension.self)
         register(RingExtension.self)
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)

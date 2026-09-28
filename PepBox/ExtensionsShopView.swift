@@ -626,6 +626,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "obsidian",
+                iconPlaceholder: "note.text",
+                iconPlaceholderColor: .purple,
+                title: "Obsidian",
+                subtitle: "Your vault on the shelf",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.obsidian.isInstalled,
+                analyticsKey: "obsidian",
+                extensionType: .obsidian
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .obsidian,
+                    onAction: { NotchWidgetKind.obsidian.install() },
+                    installCount: extensionCounts["obsidian"],
+                    rating: extensionRatings["obsidian"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,
