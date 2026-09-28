@@ -135,6 +135,10 @@ final class ExtensionRegistry {
         register(CaffeineExtension.self)
         register(MenuBarManagerExtension.self)
         register(ToDoExtension.self)
+        register(PomodoroExtension.self)
+        register(EmojiPickerExtension.self)
+        register(TeleprompterExtension.self)
+        register(MeetingsExtension.self)
 
     }
     

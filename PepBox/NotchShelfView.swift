@@ -138,6 +138,8 @@ struct NotchShelfView: View {
     
     // Caffeine extension view state
     @State private var showCaffeineView: Bool = false
+    /// Notch widget panel (Pomodoro, Emoji, Teleprompter, Meetings) shown in the shelf.
+    @State private var activeNotchWidget: NotchWidgetKind?
     @State private var showCameraView: Bool = false
 
     // Todo extension state (for in-shelf input bar)
@@ -471,6 +473,34 @@ struct NotchShelfView: View {
         showCaffeineView && caffeineExtensionEnabled
     }
 
+    private var visibleNotchWidget: NotchWidgetKind? {
+        guard let activeNotchWidget, activeNotchWidget.isAvailable else { return nil }
+        return activeNotchWidget
+    }
+
+    private var isNotchWidgetVisible: Bool { visibleNotchWidget != nil }
+
+    /// Opens (or closes, if already open) a widget panel, closing the other extension views.
+    private func toggleNotchWidget(_ kind: NotchWidgetKind) {
+        HapticFeedback.tap()
+        withAnimation(displayNotchStateAnimation) {
+            if activeNotchWidget == kind {
+                activeNotchWidget = nil
+            } else {
+                activeNotchWidget = kind
+                showCaffeineView = false
+                showCameraView = false
+                terminalManager.hide()
+                isTodoListExpanded = false
+                todoManager.isShelfListExpanded = false
+            }
+        }
+        notchController.forceRecalculateAllWindowSizes()
+        DispatchQueue.main.async {
+            notchController.forceRecalculateAllWindowSizes()
+        }
+    }
+
     private var isMediaPlayerVisibleInShelf: Bool {
         let isForced = musicManager.isMediaHUDForced
         let autoOrSongDriven = (autoOpenMediaHUDOnShelfExpand && !musicManager.isMediaHUDHidden) ||
@@ -481,6 +511,7 @@ struct NotchShelfView: View {
 
         return showMediaPlayer &&
         !isCameraViewVisible &&
+        !isNotchWidgetVisible &&
         !state.isDropTargeted &&
         !dragMonitor.isDragging &&
         !musicManager.isPlayerIdle &&
@@ -517,7 +548,8 @@ struct NotchShelfView: View {
             isTodoExtensionActive &&
             state.shelfDisplaySlotCount == 0 &&
             !isTerminalViewVisible &&
-            !isCaffeineViewVisible
+            !isCaffeineViewVisible &&
+            !isNotchWidgetVisible
 
         let isActiveTodoListSession = todoCanOwnShelfOnThisScreen &&
             (isTodoListExpanded || todoManager.isEditingText || todoManager.isInteractingWithPopover)
@@ -538,6 +570,7 @@ struct NotchShelfView: View {
         !isTerminalViewVisible &&
         !isCaffeineViewVisible &&
         !isCameraViewVisible &&
+        !isNotchWidgetVisible &&
         !isMediaPlayerVisibleInShelf
     }
     
@@ -889,6 +922,18 @@ struct NotchShelfView: View {
             }
         }
 
+        // NOTCH WIDGETS: same height as the camera/terminal views (fits the SSOT window height)
+        if isNotchWidgetVisible {
+            let isExternalNotchStyle = isExternalDisplay && !externalDisplayUseDynamicIsland
+            if contentLayoutNotchHeight > 0 {
+                return contentLayoutNotchHeight + 160
+            } else if isExternalNotchStyle {
+                return 180
+            } else {
+                return 180
+            }
+        }
+
         if isCameraViewVisible {
             let isExternalNotchStyle = isExternalDisplay && !externalDisplayUseDynamicIsland
             if contentLayoutNotchHeight > 0 {
@@ -1087,11 +1132,16 @@ struct NotchShelfView: View {
                 .onChange(of: isExpandedOnThisScreen) { _, isExpanded in
                     // RESET RULE: When shelf collapses, reset extension views so next open shows default shelf
                     if !isExpanded {
+                        NotchWidgetKind.isHoldingShelfOpen = false
                         showCaffeineView = false
                         showCameraView = false
+                        activeNotchWidget = nil
                         isTodoListExpanded = false
                         todoManager.isShelfListExpanded = false
                     }
+                }
+                .onChange(of: visibleNotchWidget) { _, widget in
+                    NotchWidgetKind.isHoldingShelfOpen = widget == .teleprompter
                 }
                 .onChange(of: shouldAttachTodoShelfBar) { _, shouldAttach in
                     // Prevent stale ToDo expanded state from leaking height/layout into
@@ -1146,8 +1196,26 @@ struct NotchShelfView: View {
                     }
                     
                     // Regular floating buttons (caffeine/terminal/close) - appear when NOT dragging
-                    if !dragMonitor.isDragging && (caffeineShouldShow || terminalShouldShow || cameraShouldShow || !autoCollapseShelf) {
+                    if !dragMonitor.isDragging && (caffeineShouldShow || terminalShouldShow || cameraShouldShow || !NotchWidgetKind.available.isEmpty || !autoCollapseShelf) {
                         HStack(spacing: 12) {
+                            // Notch widget buttons (Pomodoro, Emoji, Teleprompter, Meetings)
+                            ForEach(NotchWidgetKind.available) { widget in
+                                let isHighlight = visibleNotchWidget == widget ||
+                                    (widget == .pomodoro && PomodoroManager.shared.isRunning)
+                                Button(action: { toggleNotchWidget(widget) }) {
+                                    Image(systemName: widget.icon)
+                                }
+                                .buttonStyle(PepBoxCircleButtonStyle(
+                                    size: 32,
+                                    useTransparent: shouldUseFloatingButtonTransparent,
+                                    solidFill: isHighlight ? widget.tint : (isDynamicIslandMode ? dynamicIslandGray : .black)
+                                ))
+                                .help(widget == .pomodoro && PomodoroManager.shared.isRunning
+                                      ? "Pomodoro: \(PomodoroManager.shared.formattedRemaining)"
+                                      : widget.title)
+                                .transition(displayElementTransition)
+                            }
+
                             // Caffeine button (if extension installed AND enabled)
                             if caffeineShouldShow {
                                 let isHighlight = showCaffeineView || CaffeineManager.shared.isActive
@@ -1158,6 +1226,7 @@ struct NotchShelfView: View {
                                         showCaffeineView.toggle()
                                         // If activating caffeine view, close terminal if open
                                         if showCaffeineView {
+                                            activeNotchWidget = nil
                                             terminalManager.hide()
                                             showCameraView = false
                                             isTodoListExpanded = false
@@ -1187,6 +1256,7 @@ struct NotchShelfView: View {
                                     withAnimation(displayNotchStateAnimation) {
                                         showCameraView.toggle()
                                         if showCameraView {
+                                            activeNotchWidget = nil
                                             showCaffeineView = false
                                             terminalManager.hide()
                                             isTodoListExpanded = false
@@ -1239,6 +1309,7 @@ struct NotchShelfView: View {
                                         let openingTerminal = !terminalManager.isVisible
                                         terminalManager.toggle()
                                         if openingTerminal {
+                                            activeNotchWidget = nil
                                             showCaffeineView = false
                                             showCameraView = false
                                             isTodoListExpanded = false
@@ -1664,6 +1735,8 @@ struct NotchShelfView: View {
             // Check BOTH SwiftUI hover state AND geometric fallback
             let isHoveringAnyMethod = isHoveringExpandedContent || isHoveringOnThisScreen || isMouseInExpandedZone
             let isTodoPopoverInteractionActive = ToDoManager.shared.isInteractingWithPopover
+            // The teleprompter has to stay on screen while you read, pointer or not.
+            guard !NotchWidgetKind.isHoldingShelfOpen else { return }
             guard isExpandedOnThisScreen && !isHoveringAnyMethod && !state.isDropTargeted && !isTodoPopoverInteractionActive else {
                 notchShelfDebugLog("⏳ AUTO-SHRINK SKIPPED: conditions not met (isHoveringAnyMethod=\(isHoveringAnyMethod))")
                 return
@@ -2395,6 +2468,7 @@ struct NotchShelfView: View {
         let caffeineShouldShow = UserDefaults.standard.preference(AppPreferenceKey.caffeineInstalled, default: PreferenceDefault.caffeineInstalled) && caffeineEnabled
         guard !(showCaffeineView && caffeineShouldShow) else { return false }
         guard !isCameraViewVisible else { return false }
+        guard !isNotchWidgetVisible else { return false }
         let dragMonitor = DragMonitor.shared
         let shouldBlockAutoSwitch = shouldLockMediaForTodo
         let forced = musicManager.isMediaHUDForced
@@ -2738,6 +2812,16 @@ struct NotchShelfView: View {
                 )
                     .frame(height: currentExpandedHeight, alignment: .top)
                     .id("camera-view")
+                    .transition(displayContentSwapTransition)
+            }
+            else if let widget = visibleNotchWidget {
+                NotchWidgetPanel(
+                    kind: widget,
+                    notchHeight: contentLayoutNotchHeight,
+                    isExternalWithNotchStyle: isExternalDisplay && !externalDisplayUseDynamicIsland
+                )
+                    .frame(height: currentExpandedHeight, alignment: .top)
+                    .id("notch-widget-\(widget.rawValue)")
                     .transition(displayContentSwapTransition)
             }
             // Show drop zone when dragging over (takes priority) - but NOT when Todo bar is visible

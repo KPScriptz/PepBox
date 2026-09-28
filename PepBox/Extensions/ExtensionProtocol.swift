@@ -27,6 +27,10 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case caffeine
     case menuBarManager
     case todo
+    case pomodoro
+    case emojiPicker
+    case teleprompter
+    case meetings
 
     /// URL-safe ID for deep links
     case finderServices  // Alias for finder
@@ -83,6 +87,8 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return MenuBarManager.shared.isEnabled
         case .todo:
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings:
+            return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
         }
     }
     

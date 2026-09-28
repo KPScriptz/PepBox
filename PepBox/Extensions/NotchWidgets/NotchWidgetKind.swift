@@ -1,0 +1,104 @@
+//
+//  NotchWidgetKind.swift
+//  PepBox
+//
+//  Small panels that open from a button under the expanded shelf.
+//  One slot in NotchShelfView hosts whichever widget is active, so each new
+//  widget only needs a case here, a view, and an extension definition.
+//
+
+import SwiftUI
+
+enum NotchWidgetKind: String, CaseIterable, Identifiable {
+    case pomodoro
+    case emojiPicker
+    case teleprompter
+    case meetings
+
+    var id: String { rawValue }
+
+    init?(extensionType: ExtensionType) {
+        guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
+        self = kind
+    }
+
+    var extensionType: ExtensionType {
+        switch self {
+        case .pomodoro: return .pomodoro
+        case .emojiPicker: return .emojiPicker
+        case .teleprompter: return .teleprompter
+        case .meetings: return .meetings
+        }
+    }
+
+    var title: String { extensionType.title }
+
+    var icon: String {
+        switch self {
+        case .pomodoro: return "timer"
+        case .emojiPicker: return "face.smiling"
+        case .teleprompter: return "text.alignleft"
+        case .meetings: return "video.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .pomodoro: return .red
+        case .emojiPicker: return .yellow
+        case .teleprompter: return .mint
+        case .meetings: return .blue
+        }
+    }
+
+    var installedKey: String { "notchWidget_\(rawValue)_installed" }
+
+    var isInstalled: Bool { UserDefaults.standard.bool(forKey: installedKey) }
+
+    /// Installed and not turned off in the Extension Store.
+    var isAvailable: Bool { isInstalled && !extensionType.isRemoved }
+
+    static var available: [NotchWidgetKind] { allCases.filter(\.isAvailable) }
+
+    /// True while a widget that must stay readable (the teleprompter) is open,
+    /// so auto-collapse and click-outside don't close the shelf under it.
+    static var isHoldingShelfOpen = false
+
+    func install() {
+        UserDefaults.standard.set(true, forKey: installedKey)
+        extensionType.setRemoved(false)
+        NotificationCenter.default.post(name: .extensionStateChanged, object: extensionType)
+    }
+
+    func cleanup() {
+        switch self {
+        case .pomodoro: PomodoroManager.shared.reset()
+        case .teleprompter: TeleprompterManager.shared.pause()
+        case .emojiPicker, .meetings: break
+        }
+    }
+}
+
+/// Hosts the active widget's panel inside the expanded shelf.
+struct NotchWidgetPanel: View {
+    let kind: NotchWidgetKind
+    var notchHeight: CGFloat = 0
+    var isExternalWithNotchStyle: Bool = false
+
+    var body: some View {
+        Group {
+            switch kind {
+            case .pomodoro:
+                PomodoroNotchView(manager: PomodoroManager.shared)
+            case .emojiPicker:
+                EmojiPickerNotchView()
+            case .teleprompter:
+                TeleprompterNotchView(manager: TeleprompterManager.shared)
+            case .meetings:
+                MeetingsNotchView(manager: MeetingsManager.shared)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(NotchLayoutConstants.contentEdgeInsets(notchHeight: notchHeight, isExternalWithNotchStyle: isExternalWithNotchStyle))
+    }
+}

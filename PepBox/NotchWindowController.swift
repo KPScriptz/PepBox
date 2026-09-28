@@ -720,6 +720,7 @@ final class NotchWindowController: NSObject, ObservableObject {
                 }
             } else if isExpandedOnTarget &&
                         !isInExpandedShelfZone &&
+                        !NotchWidgetKind.isHoldingShelfOpen &&
                         !self.hasActiveContextMenu() &&
                         !ToDoManager.shared.isInteractingWithPopover &&
                         !self.hasActivePopoverWindow() {

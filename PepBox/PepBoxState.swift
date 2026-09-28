@@ -412,7 +412,8 @@ final class PepBoxState {
         let cameraEnabled = UserDefaults.standard.preference(AppPreferenceKey.cameraEnabled, default: PreferenceDefault.cameraEnabled)
         let cameraButtonVisible = cameraInstalled && cameraEnabled && !ExtensionType.camera.isRemoved
         let isDragging = DragMonitor.shared.isDragging
-        let hasFloatingButtons = terminalButtonVisible || !autoCollapseEnabled || isDragging || caffeineButtonVisible || cameraButtonVisible
+        let hasFloatingButtons = terminalButtonVisible || !autoCollapseEnabled || isDragging || caffeineButtonVisible || cameraButtonVisible ||
+            !NotchWidgetKind.available.isEmpty
         
         if hasFloatingButtons {
             // Reserve space for offset + button/bar size + hover/animation headroom.

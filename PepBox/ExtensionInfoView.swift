@@ -249,6 +249,8 @@ struct ExtensionInfoView: View {
                 return "Set Up"
             case .finder, .finderServices, .windowSnap, .voiceTranscribe, .elementCapture, .terminalNotch, .camera, .notificationHUD, .caffeine, .menuBarManager, .todo:
                 return "Set Up"
+            case .pomodoro, .emojiPicker, .teleprompter, .meetings:
+                return "Install"
             case .quickshare:
                 return "Enable"
             case .aiBackgroundRemoval, .ffmpegVideoCompression, .alfred:
@@ -273,6 +275,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "Configure"
         case .menuBarManager: return "Configure"
         case .todo: return "Configure"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings: return "Installed"
         }
     }
 
@@ -294,6 +297,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "Configure"
         case .menuBarManager: return "Configure"
         case .todo: return "Configure"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings: return "Installed"
         }
     }
 
@@ -315,6 +319,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "cup.and.saucer.fill"
         case .menuBarManager: return "menubar.rectangle"
         case .todo: return "checklist"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings: return "plus.circle.fill"
         }
     }
 }

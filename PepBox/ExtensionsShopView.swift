@@ -536,6 +536,78 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "pomodoro",
+                iconPlaceholder: "timer",
+                iconPlaceholderColor: .red,
+                title: "Pomodoro",
+                subtitle: "Focus timer in your notch",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.pomodoro.isInstalled,
+                analyticsKey: "pomodoro",
+                extensionType: .pomodoro
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .pomodoro,
+                    onAction: { NotchWidgetKind.pomodoro.install() },
+                    installCount: extensionCounts["pomodoro"],
+                    rating: extensionRatings["pomodoro"]
+                ))
+            },
+            ExtensionListItem(
+                id: "emojiPicker",
+                iconPlaceholder: "face.smiling",
+                iconPlaceholderColor: .yellow,
+                title: "Emoji Picker",
+                subtitle: "Emoji one click away",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.emojiPicker.isInstalled,
+                analyticsKey: "emojiPicker",
+                extensionType: .emojiPicker
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .emojiPicker,
+                    onAction: { NotchWidgetKind.emojiPicker.install() },
+                    installCount: extensionCounts["emojiPicker"],
+                    rating: extensionRatings["emojiPicker"]
+                ))
+            },
+            ExtensionListItem(
+                id: "teleprompter",
+                iconPlaceholder: "text.alignleft",
+                iconPlaceholderColor: .mint,
+                title: "Teleprompter",
+                subtitle: "Your script under the camera",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.teleprompter.isInstalled,
+                analyticsKey: "teleprompter",
+                extensionType: .teleprompter
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .teleprompter,
+                    onAction: { NotchWidgetKind.teleprompter.install() },
+                    installCount: extensionCounts["teleprompter"],
+                    rating: extensionRatings["teleprompter"]
+                ))
+            },
+            ExtensionListItem(
+                id: "meetings",
+                iconPlaceholder: "video.fill",
+                iconPlaceholderColor: .blue,
+                title: "Meetings",
+                subtitle: "Zoom, Teams and Meet controls",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.meetings.isInstalled,
+                analyticsKey: "meetings",
+                extensionType: .meetings
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .meetings,
+                    onAction: { NotchWidgetKind.meetings.install() },
+                    installCount: extensionCounts["meetings"],
+                    rating: extensionRatings["meetings"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",
