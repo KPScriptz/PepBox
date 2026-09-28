@@ -680,6 +680,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "textActions",
+                iconPlaceholder: "text.cursor",
+                iconPlaceholderColor: .cyan,
+                title: "Text Actions",
+                subtitle: "Action bar for selected text",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.textActions.isInstalled,
+                analyticsKey: "textActions",
+                extensionType: .textActions
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .textActions,
+                    onAction: { UtilityExtensionKind.textActions.install() },
+                    installCount: extensionCounts["textActions"],
+                    rating: extensionRatings["textActions"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

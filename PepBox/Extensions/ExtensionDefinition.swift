@@ -143,6 +143,7 @@ final class ExtensionRegistry {
         register(RingExtension.self)
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)
+        register(TextActionsExtension.self)
 
     }
     

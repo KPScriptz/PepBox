@@ -12,6 +12,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case ring
     case keySounds
     case quickSearch
+    case textActions
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -23,6 +24,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .ring: return .ring
         case .keySounds: return .keySounds
         case .quickSearch: return .quickSearch
+        case .textActions: return .textActions
         }
     }
 
@@ -46,6 +48,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .ring: RingMenuController.shared.setEnabled(isAvailable)
         case .keySounds: KeySoundsManager.shared.setEnabled(isAvailable)
         case .quickSearch: QuickSearchController.shared.setEnabled(isAvailable)
+        case .textActions: TextActionsController.shared.setEnabled(isAvailable)
         }
     }
 
@@ -54,6 +57,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .ring: RingMenuController.shared.setEnabled(false)
         case .keySounds: KeySoundsManager.shared.setEnabled(false)
         case .quickSearch: QuickSearchController.shared.setEnabled(false)
+        case .textActions: TextActionsController.shared.setEnabled(false)
         }
     }
 
@@ -129,4 +133,24 @@ struct QuickSearchExtension: ExtensionDefinition {
     static let iconPlaceholder = "magnifyingglass"
     static let iconPlaceholderColor: Color = .teal
     static func cleanup() { UtilityExtensionKind.quickSearch.cleanup() }
+}
+
+struct TextActionsExtension: ExtensionDefinition {
+    static let id = "textActions"
+    static let title = "Text Actions"
+    static let subtitle = "Action bar for selected text"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .cyan
+    static let description = "Select text in any app and a small bar appears: copy, search the web, translate, look it up in Dictionary, read it aloud or drop it on the shelf as a text file. Needs Accessibility; your clipboard isn't touched and password fields are ignored."
+    static let features: [(icon: String, text: String)] = [
+        ("cursorarrow.and.square.on.square.dashed", "Appears after dragging or double-clicking text"),
+        ("magnifyingglass", "Search, translate, define, speak"),
+        ("tray.and.arrow.down", "Save the selection to the shelf"),
+        ("lock.shield", "Skips password fields")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "text.cursor"
+    static let iconPlaceholderColor: Color = .cyan
+    static func cleanup() { UtilityExtensionKind.textActions.cleanup() }
 }
