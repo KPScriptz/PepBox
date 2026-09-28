@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: macos-26
     timeout-minutes: 60
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -91,6 +93,21 @@ jobs:
           ln -s /Applications dmg_root/Applications
           hdiutil create -volname PepBox -srcfolder dmg_root -ov -format UDZO "PepBox-$VERSION.dmg"
           shasum -a 256 PepBox-*.dmg
+
+      - name: UI test (drives the app with synthetic mouse and keyboard)
+        run: scripts/uitest/run.sh build/Build/Products/Release/PepBox.app ui-results
+
+      - name: Publish UI test results to the ui-test-results branch
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          [ -d ui-results ] || exit 0
+          rm -f ui-results/driver
+          cd ui-results
+          git init -q -b ui-test-results
+          git add -A
+          git -c user.name="PepBox CI" -c user.email="ci@users.noreply.github.com" \
+            commit -qm "UI test results for ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ui-test-results
 
       - uses: actions/upload-artifact@v4
         with:
