@@ -304,6 +304,10 @@ struct NotchItemView: View {
             onRename: performRename,
             onUnzip: unzipFile
         )
+        // Create ZIP / Create Folder hand renaming to the NEW item's view, whose renamingText
+        // starts empty; fill in the current name like startRenaming() does.
+        .onAppear { prefillRenamingText(for: renamingItemId) }
+        .onChange(of: renamingItemId) { _, newId in prefillRenamingText(for: newId) }
         .offset(x: shakeOffset)
         .overlay(alignment: .center) {
             if isShakeAnimating {
@@ -895,8 +899,13 @@ struct NotchItemView: View {
                     // Keep isFileOperationInProgress = true since we auto-start renaming
                     // Update state immediately (animation deferred to poof effect)
                     state.replaceItems(itemsToZip, with: newItem)
-                    // Auto-start renaming the new zip file (flag stays true)
-                    renamingItemId = newItem.id
+                    // Auto-start renaming the new zip file (flag stays true) once its view
+                    // exists, as the basket does. Presenting the popover immediately left it
+                    // orphaned after the rename: it stayed on screen and Cancel did nothing.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        renamingItemId = newItem.id
+                        state.isRenaming = true
+                    }
                     // Trigger poof animation after view has appeared
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                         state.triggerPoof(for: newItem.id)
@@ -1285,6 +1294,11 @@ struct NotchItemView: View {
         state.isRenaming = true
         renamingText = item.url.deletingPathExtension().lastPathComponent
         renamingItemId = item.id
+    }
+
+    private func prefillRenamingText(for renamingId: UUID?) {
+        guard renamingId == item.id, renamingText.isEmpty else { return }
+        renamingText = item.url.deletingPathExtension().lastPathComponent
     }
     
     private func performRename() {

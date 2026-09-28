@@ -915,6 +915,16 @@ class ClipboardManager: ObservableObject {
     }
     
     private func simulatePasteCommand(targetPID: pid_t?) {
+        // Without Accessibility macOS drops the synthetic Cmd+V, so paste did nothing and
+        // nothing said why. The item is already on the pasteboard; ask for the permission.
+        guard PermissionManager.shared.isAccessibilityGranted else {
+            print("🔐 ClipboardManager: Accessibility not granted, can't simulate paste - requesting permission")
+            DispatchQueue.main.async {
+                PermissionManager.shared.requestAccessibilityForUserAction()
+            }
+            return
+        }
+
         // EXACT Mirror of ClipBook Method (V12):
         // Use discrete events for Cmd and V to correctly simulate physical input
         let source = CGEventSource(stateID: .hidSystemState)

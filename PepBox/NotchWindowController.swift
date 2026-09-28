@@ -1754,9 +1754,13 @@ final class NotchWindowController: NSObject, ObservableObject {
         
         cancelAutoExpandTimer() // Reset if already running
         
-        // Use configurable delay (0.5-2.0 seconds, default 1.0s)
-        let delay = UserDefaults.standard.double(forKey: "autoExpandDelay")
-        let actualDelay = delay > 0 ? delay : 1.0  // Fallback to 1.0s if not set
+        // Use configurable delay (0.1-2.0 seconds). Read through preference(_:default:) so an
+        // unset value uses the same 0.25s default the Settings slider shows, not 1.0s.
+        let delay = UserDefaults.standard.preference(
+            AppPreferenceKey.autoExpandDelay,
+            default: PreferenceDefault.autoExpandDelay
+        )
+        let actualDelay = delay > 0 ? delay : PreferenceDefault.autoExpandDelay
         notchDebugLog("🟢 AUTO-EXPAND TIMER STARTED with delay: \(actualDelay)s for displayID: \(displayID?.description ?? "nil")")
         autoExpandTimer = Timer.scheduledTimer(withTimeInterval: actualDelay, repeats: false) { [weak self] _ in
             guard self != nil else { return }

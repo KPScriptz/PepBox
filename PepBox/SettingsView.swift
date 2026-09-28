@@ -3164,13 +3164,7 @@ struct SettingsView: View {
     
     // Custom Persistence for struct
     private func loadShortcut() {
-        if let data = UserDefaults.standard.data(forKey: "clipboardShortcut"),
-           let decoded = try? JSONDecoder().decode(SavedShortcut.self, from: data) {
-            currentShortcut = decoded
-        } else {
-            // Default: Shift + Cmd + Space (49)
-            currentShortcut = SavedShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue)
-        }
+        currentShortcut = SavedShortcut.storedClipboardShortcut()
     }
     
     private func saveShortcut(_ shortcut: SavedShortcut?) {
@@ -3267,10 +3261,7 @@ struct SettingsView: View {
                     
                     if currentShortcut != nil {
                         Button {
-                            let defaultShortcut = SavedShortcut(
-                                keyCode: 49,
-                                modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue
-                            )
+                            let defaultShortcut = SavedShortcut.clipboardDefault
                             currentShortcut = defaultShortcut
                             saveShortcut(defaultShortcut)
                         } label: {
@@ -4780,7 +4771,7 @@ struct ClipboardShortcutInfoButton: View {
     
     /// Parse shortcut into display string
     private var shortcutString: String {
-        guard let s = shortcut else { return "⌘⇧Space" }
+        guard let s = shortcut else { return SavedShortcut.clipboardDefault.description }
         var parts: [String] = []
         let flags = NSEvent.ModifierFlags(rawValue: s.modifiers)
         if flags.contains(.command) { parts.append("⌘") }
