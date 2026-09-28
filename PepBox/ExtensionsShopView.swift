@@ -716,6 +716,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "smoothScroll",
+                iconPlaceholder: "computermouse",
+                iconPlaceholderColor: .indigo,
+                title: "Smooth Scroll",
+                subtitle: "Trackpad-smooth mouse wheels",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.smoothScroll.isInstalled,
+                analyticsKey: "smoothScroll",
+                extensionType: .smoothScroll
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .smoothScroll,
+                    onAction: { UtilityExtensionKind.smoothScroll.install() },
+                    installCount: extensionCounts["smoothScroll"],
+                    rating: extensionRatings["smoothScroll"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

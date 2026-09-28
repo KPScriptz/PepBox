@@ -13,6 +13,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case keySounds
     case quickSearch
     case textActions
+    case smoothScroll
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -25,6 +26,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .keySounds: return .keySounds
         case .quickSearch: return .quickSearch
         case .textActions: return .textActions
+        case .smoothScroll: return .smoothScroll
         }
     }
 
@@ -49,6 +51,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .keySounds: KeySoundsManager.shared.setEnabled(isAvailable)
         case .quickSearch: QuickSearchController.shared.setEnabled(isAvailable)
         case .textActions: TextActionsController.shared.setEnabled(isAvailable)
+        case .smoothScroll: SmoothScrollController.shared.setEnabled(isAvailable)
         }
     }
 
@@ -58,6 +61,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .keySounds: KeySoundsManager.shared.setEnabled(false)
         case .quickSearch: QuickSearchController.shared.setEnabled(false)
         case .textActions: TextActionsController.shared.setEnabled(false)
+        case .smoothScroll: SmoothScrollController.shared.setEnabled(false)
         }
     }
 
@@ -153,4 +157,23 @@ struct TextActionsExtension: ExtensionDefinition {
     static let iconPlaceholder = "text.cursor"
     static let iconPlaceholderColor: Color = .cyan
     static func cleanup() { UtilityExtensionKind.textActions.cleanup() }
+}
+
+struct SmoothScrollExtension: ExtensionDefinition {
+    static let id = "smoothScroll"
+    static let title = "Smooth Scroll"
+    static let subtitle = "Trackpad-smooth mouse wheels"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .indigo
+    static let description = "Turns a mouse wheel's jumpy line steps into short, eased glides, so scrolling feels like a trackpad. Trackpads and Magic Mouse are left untouched. Needs Accessibility."
+    static let features: [(icon: String, text: String)] = [
+        ("computermouse", "Smooth steps for regular mouse wheels"),
+        ("hand.draw", "Trackpad and Magic Mouse scrolling unchanged"),
+        ("arrow.up.arrow.down", "Changing direction stops the glide at once")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "computermouse"
+    static let iconPlaceholderColor: Color = .indigo
+    static func cleanup() { UtilityExtensionKind.smoothScroll.cleanup() }
 }

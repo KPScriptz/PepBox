@@ -145,6 +145,7 @@ final class ExtensionRegistry {
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)
         register(TextActionsExtension.self)
+        register(SmoothScrollExtension.self)
 
     }
     
