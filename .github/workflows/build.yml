@@ -1,0 +1,99 @@
+name: Build PepBox
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Build app
+        run: |
+          set -o pipefail
+          xcodebuild -project PepBox.xcodeproj -scheme PepBox \
+            -configuration Release \
+            -derivedDataPath build \
+            -destination 'generic/platform=macOS' \
+            -skipPackagePluginValidation -skipMacroValidation \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \
+            build 2>&1 | tee build.log | grep -E '(error|warning: unable|BUILD (SUCCEEDED|FAILED))' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+
+      - name: Show compiler errors
+        if: failure()
+        run: grep -E ' error: ' build.log | sort -u | head -100 || true
+
+      - name: Bundle updater helper
+        run: |
+          APP=build/Build/Products/Release/PepBox.app
+          for arch in arm64 x86_64; do
+            swiftc -o build/PepBoxUpdater-$arch PepBoxUpdater/main.swift \
+              -framework AppKit -framework SwiftUI -O -target $arch-apple-macos14.0
+          done
+          mkdir -p "$APP/Contents/Helpers"
+          lipo -create build/PepBoxUpdater-arm64 build/PepBoxUpdater-x86_64 \
+            -output "$APP/Contents/Helpers/PepBoxUpdater"
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict "$APP"
+
+      - name: Check bundle contents
+        run: |
+          APP=build/Build/Products/Release/PepBox.app
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist"
+          lipo -archs "$APP/Contents/MacOS/PepBox"
+          test -f "$APP/Contents/Resources/PepBox.alfredworkflow"
+          find "$APP/Contents/Resources" -name 'ai-bg.jpg' | grep -q . || { echo "ExtensionMedia not bundled"; exit 1; }
+
+      - name: Launch smoke test
+        run: |
+          APP=build/Build/Products/Release/PepBox.app
+          "$APP/Contents/MacOS/PepBox" > launch.log 2>&1 &
+          PID=$!
+          sleep 20
+          if kill -0 $PID 2>/dev/null; then
+            echo "PepBox is still running after 20s"
+            kill $PID
+          else
+            wait $PID; echo "PepBox exited early with status $?"; cat launch.log; exit 1
+          fi
+          tail -40 launch.log
+
+      - name: Package DMG
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/Build/Products/Release/PepBox.app/Contents/Info.plist)
+          mkdir -p dmg_root
+          cp -R build/Build/Products/Release/PepBox.app dmg_root/
+          ln -s /Applications dmg_root/Applications
+          hdiutil create -volname PepBox -srcfolder dmg_root -ov -format UDZO "PepBox-$VERSION.dmg"
+          shasum -a 256 PepBox-*.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PepBox-dmg
+          path: PepBox-*.dmg
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: |
+            build.log
+            launch.log
+          if-no-files-found: ignore
