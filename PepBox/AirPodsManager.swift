@@ -60,17 +60,29 @@ final class AirPodsManager {
         guard !isMonitoring else { return }
         
         print("[AirPods] Starting connection monitoring")
-        
-        // Register for Bluetooth device connections
-        connectionNotification = IOBluetoothDevice.register(
-            forConnectNotifications: self,
-            selector: #selector(handleDeviceConnection(_:device:))
-        )
-        
+
         isMonitoring = true
-        
-        // Check for already-connected AirPods
-        checkExistingConnections()
+
+        // IOBluetooth's first call sets up a CoreBluetooth coordinator that blocks until
+        // macOS has decided Bluetooth access. On the main thread that froze the whole app
+        // (no notch, no drops, no URL scheme) while the permission prompt was pending, which
+        // happens after every ad-hoc signed build. Warm it up off the main thread first.
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            _ = IOBluetoothDevice.pairedDevices()
+            DispatchQueue.main.async {
+                guard let self, self.isMonitoring, self.connectionNotification == nil else { return }
+
+                // Register for Bluetooth device connections
+                self.connectionNotification = IOBluetoothDevice.register(
+                    forConnectNotifications: self,
+                    selector: #selector(self.handleDeviceConnection(_:device:))
+                )
+
+                // Check for already-connected AirPods
+                self.checkExistingConnections()
+                print("[AirPods] Connection monitoring active")
+            }
+        }
     }
     
     /// Stop monitoring for AirPods connections
