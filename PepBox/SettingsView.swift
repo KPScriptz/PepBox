@@ -1076,6 +1076,14 @@ struct SettingsView: View {
                 } header: {
                     Text("Behavior")
                 }
+                
+                Section {
+                    NotchWidgetOrderView()
+                } header: {
+                    Text("Widget Buttons")
+                } footer: {
+                    Text("Drag to change the order of widget buttons under the expanded shelf.")
+                }
             }
         }
     }

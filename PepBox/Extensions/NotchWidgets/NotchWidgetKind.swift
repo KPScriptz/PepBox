@@ -66,7 +66,22 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     /// Installed and not turned off in the Extension Store.
     var isAvailable: Bool { isInstalled && !extensionType.isRemoved }
 
-    static var available: [NotchWidgetKind] { allCases.filter(\.isAvailable) }
+    /// Available widgets in the user's chosen order (Settings → Shelf → Widget Buttons).
+    static var available: [NotchWidgetKind] { ordered.filter(\.isAvailable) }
+
+    private static let orderKey = "notchWidgetOrder"
+
+    /// All widgets in the saved order; ones added later go at the end.
+    static var ordered: [NotchWidgetKind] {
+        let saved = (UserDefaults.standard.stringArray(forKey: orderKey) ?? []).compactMap(NotchWidgetKind.init(rawValue:))
+        return saved + allCases.filter { !saved.contains($0) }
+    }
+
+    static func saveOrder(_ kinds: [NotchWidgetKind]) {
+        // Keep widgets that aren't in the list (not installed) in their old relative place at the end.
+        let rest = ordered.filter { !kinds.contains($0) }
+        UserDefaults.standard.set((kinds + rest).map(\.rawValue), forKey: orderKey)
+    }
 
     /// True while a widget that must stay readable (the teleprompter) is open,
     /// so auto-collapse and click-outside don't close the shelf under it.
