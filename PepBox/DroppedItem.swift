@@ -370,3 +370,13 @@ struct DroppedItem: Identifiable, Hashable, Transferable {
     }
 }
 
+extension DroppedItem {
+    /// Copies the items' file paths as plain text, one per line ("Copy Path").
+    static func copyPaths(of items: [DroppedItem]) {
+        guard !items.isEmpty else { return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(items.map(\.url.path).joined(separator: "\n"), forType: .string)
+        HapticFeedback.copy()
+    }
+}

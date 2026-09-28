@@ -764,6 +764,13 @@ struct BasketItemView: View {
         }
         
         Button {
+            let selected = state.basketItems.filter { state.selectedBasketItems.contains($0.id) }
+            DroppedItem.copyPaths(of: selected.contains(item) ? selected : [item])
+        } label: {
+            Label("Copy Path", systemImage: "link")
+        }
+        
+        Button {
             item.openFile()
         } label: {
             Label("Open", systemImage: "arrow.up.forward.square")
