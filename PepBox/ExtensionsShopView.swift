@@ -644,6 +644,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "quickSearch",
+                iconPlaceholder: "magnifyingglass",
+                iconPlaceholderColor: .teal,
+                title: "Quick Search",
+                subtitle: "Search bar for apps, files and math",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.quickSearch.isInstalled,
+                analyticsKey: "quickSearch",
+                extensionType: .quickSearch
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .quickSearch,
+                    onAction: { UtilityExtensionKind.quickSearch.install() },
+                    installCount: extensionCounts["quickSearch"],
+                    rating: extensionRatings["quickSearch"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

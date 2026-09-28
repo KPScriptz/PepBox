@@ -121,6 +121,8 @@ struct DisableExtensionButton: View {
             return "This will turn off the ⌥⇧Space ring. You can enable it again later."
         case .keySounds:
             return "This will stop the typing sounds. You can enable it again later."
+        case .quickSearch:
+            return "This will turn off the ⌃⌥Space search bar. You can enable it again later."
         }
     }
     

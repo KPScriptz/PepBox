@@ -11,6 +11,7 @@ import SwiftUI
 enum UtilityExtensionKind: String, CaseIterable {
     case ring
     case keySounds
+    case quickSearch
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -21,6 +22,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         switch self {
         case .ring: return .ring
         case .keySounds: return .keySounds
+        case .quickSearch: return .quickSearch
         }
     }
 
@@ -43,6 +45,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         switch self {
         case .ring: RingMenuController.shared.setEnabled(isAvailable)
         case .keySounds: KeySoundsManager.shared.setEnabled(isAvailable)
+        case .quickSearch: QuickSearchController.shared.setEnabled(isAvailable)
         }
     }
 
@@ -50,6 +53,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         switch self {
         case .ring: RingMenuController.shared.setEnabled(false)
         case .keySounds: KeySoundsManager.shared.setEnabled(false)
+        case .quickSearch: QuickSearchController.shared.setEnabled(false)
         }
     }
 
@@ -105,4 +109,24 @@ struct KeySoundsExtension: ExtensionDefinition {
     static let iconPlaceholder = "keyboard"
     static let iconPlaceholderColor: Color = .brown
     static func cleanup() { UtilityExtensionKind.keySounds.cleanup() }
+}
+
+struct QuickSearchExtension: ExtensionDefinition {
+    static let id = "quickSearch"
+    static let title = "Quick Search"
+    static let subtitle = "Search bar for apps, files and math"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .teal
+    static let description = "Press ⌃⌥Space for a search bar: launch apps, open files from your home folder, do math (12*4, (3+2)^2) and convert units (5 km to mi, 70 f to c, 2 gb in mb). Enter opens or copies; ⌘Enter shows a file in Finder."
+    static let features: [(icon: String, text: String)] = [
+        ("app.badge", "Launch apps"),
+        ("doc.text.magnifyingglass", "Find files by name"),
+        ("plus.forwardslash.minus", "Math and unit conversion, Enter copies"),
+        ("keyboard", "Arrow keys to pick, Esc to close")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "magnifyingglass"
+    static let iconPlaceholderColor: Color = .teal
+    static func cleanup() { UtilityExtensionKind.quickSearch.cleanup() }
 }
