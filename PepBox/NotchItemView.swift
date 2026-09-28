@@ -304,6 +304,10 @@ struct NotchItemView: View {
             onRename: performRename,
             onUnzip: unzipFile
         )
+        // Create ZIP / Create Folder hand renaming to the NEW item's view, whose renamingText
+        // starts empty; fill in the current name like startRenaming() does.
+        .onAppear { prefillRenamingText(for: renamingItemId) }
+        .onChange(of: renamingItemId) { _, newId in prefillRenamingText(for: newId) }
         .offset(x: shakeOffset)
         .overlay(alignment: .center) {
             if isShakeAnimating {
@@ -1285,6 +1289,11 @@ struct NotchItemView: View {
         state.isRenaming = true
         renamingText = item.url.deletingPathExtension().lastPathComponent
         renamingItemId = item.id
+    }
+
+    private func prefillRenamingText(for renamingId: UUID?) {
+        guard renamingId == item.id, renamingText.isEmpty else { return }
+        renamingText = item.url.deletingPathExtension().lastPathComponent
     }
     
     private func performRename() {

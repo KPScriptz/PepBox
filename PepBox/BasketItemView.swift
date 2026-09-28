@@ -125,6 +125,10 @@ struct BasketItemView: View {
                 value: [item.id: geo.frame(in: .named("basketContainer"))]
             )
         })
+        // Create ZIP / Create Folder hand renaming to the NEW item's view, whose renamingText
+        // starts empty; fill in the current name like startRenaming() does.
+        .onAppear { prefillRenamingText(for: renamingItemId) }
+        .onChange(of: renamingItemId) { _, newId in prefillRenamingText(for: newId) }
         .popover(isPresented: renamePopoverPresented, arrowEdge: .top) {
             RenameTooltipPopover(
                 text: $renamingText,
@@ -1698,6 +1702,11 @@ struct BasketItemView: View {
         DispatchQueue.main.async {
             renamingItemId = item.id
         }
+    }
+
+    private func prefillRenamingText(for renamingId: UUID?) {
+        guard renamingId == item.id, renamingText.isEmpty else { return }
+        renamingText = item.url.deletingPathExtension().lastPathComponent
     }
     
     private func performRename() {
