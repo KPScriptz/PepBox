@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage(AppPreferenceKey.enableFloatingBasket) private var enableFloatingBasket = PreferenceDefault.enableFloatingBasket
     @AppStorage(AppPreferenceKey.enableBasketAutoHide) private var enableBasketAutoHide = PreferenceDefault.enableBasketAutoHide
     @AppStorage(AppPreferenceKey.enableAutoClean) private var enableAutoClean = PreferenceDefault.enableAutoClean
+    @AppStorage(AppPreferenceKey.autoAddScreenshots) private var autoAddScreenshots = PreferenceDefault.autoAddScreenshots
+    @AppStorage(AppPreferenceKey.rememberShelfItems) private var rememberShelfItems = PreferenceDefault.rememberShelfItems
     @AppStorage(AppPreferenceKey.alwaysCopyOnDrag) private var alwaysCopyOnDrag = PreferenceDefault.alwaysCopyOnDrag
     @AppStorage(AppPreferenceKey.enablePowerFolders) private var enablePowerFolders = PreferenceDefault.enablePowerFolders
     @AppStorage(AppPreferenceKey.enableQuickActions) private var enableQuickActions = PreferenceDefault.enableQuickActions
@@ -1046,6 +1048,30 @@ struct SettingsView: View {
                             Slider(value: $autoExpandDelay, in: 0.1...2.0, step: 0.05)
                                 .sliderHaptics(value: autoExpandDelay, range: 0.1...2.0)
                         }
+                    }
+
+                    Toggle(isOn: $autoAddScreenshots) {
+                        VStack(alignment: .leading) {
+                            Text("Add New Screenshots")
+                            Text("Screenshots and screen recordings land on the shelf as you take them")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: autoAddScreenshots) { _, _ in
+                        ScreenshotWatcher.shared.updateFromPreferences()
+                    }
+
+                    Toggle(isOn: $rememberShelfItems) {
+                        VStack(alignment: .leading) {
+                            Text("Remember Items")
+                            Text("Keep shelf items after PepBox restarts")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: rememberShelfItems) { _, _ in
+                        PepBoxState.shared.saveShelfItemsIfRemembering()
                     }
                 } header: {
                     Text("Behavior")

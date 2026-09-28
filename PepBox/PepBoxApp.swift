@@ -337,6 +337,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Touch singletons on main thread to ensure proper @AppStorage / UI initialization
         _ = PepBoxState.shared
+        PepBoxState.shared.restoreShelfItems()  // Restore shelf items if "Remember Items" is on (before pinned folders touch the shelf)
         PepBoxState.shared.restorePinnedFolders()  // Restore pinned folders from previous session
         _ = DragMonitor.shared
         _ = NotchWindowController.shared
@@ -415,6 +416,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             // Initialize Menu Bar Manager (restores status items if it was enabled)
             _ = MenuBarManager.shared
+
+            // Add new screenshots to the shelf (if enabled)
+            ScreenshotWatcher.shared.updateFromPreferences()
         }
 
         // Start monitoring for drag events (polling-based, safe)

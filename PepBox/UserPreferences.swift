@@ -87,6 +87,8 @@ enum AppPreferenceKey {
     static let basketJiggleSensitivity = "basketJiggleSensitivity"  // 1...5 (higher = easier shake trigger)
     static let basketDragRevealShortcut = "basketDragRevealShortcut"  // JSON-encoded SavedShortcut data
     static let enableAutoClean = "enableAutoClean"
+    static let autoAddScreenshots = "autoAddScreenshots"
+    static let rememberShelfItems = "rememberShelfItems"
     static let alwaysCopyOnDrag = "alwaysCopyOnDrag"
     static let enablePowerFolders = "enablePowerFolders"
     static let enableQuickActions = "enableQuickActions"
@@ -262,6 +264,8 @@ enum PreferenceDefault {
     static let instantBasketDelay: Double = 0.15  // Seconds, minimum 0.15 to let drag settle
     static let basketJiggleSensitivity: Double = 3.0
     static let enableAutoClean = false
+    static let autoAddScreenshots = false  // New screenshots appear on the shelf by themselves
+    static let rememberShelfItems = false  // Shelf items survive restarts (pinned folders always do)
     static let alwaysCopyOnDrag = false  // Off by default (standard macOS behavior), advanced users enable for protection
     static let enablePowerFolders = true
     static let enableQuickActions = false  // Advanced feature, opt-in

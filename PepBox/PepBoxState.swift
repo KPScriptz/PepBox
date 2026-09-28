@@ -61,7 +61,9 @@ final class PepBoxState {
     // MARK: - Simple Item Arrays (post-v9.3.0 - stacks removed)
     
     /// Items currently on the shelf (regular files)
-    var shelfItems: [DroppedItem] = []
+    var shelfItems: [DroppedItem] = [] {
+        didSet { saveShelfItemsIfRemembering() }
+    }
     
     /// Power Folders on shelf (pinned directories)
     var shelfPowerFolders: [DroppedItem] = []
@@ -632,6 +634,37 @@ final class PepBoxState {
         }
     }
     
+    // MARK: - Remember Shelf Items
+
+    private static let rememberedShelfItemsKey = "rememberedShelfItemPaths"
+
+    private var isRememberingShelfItems: Bool {
+        UserDefaults.standard.preference(
+            AppPreferenceKey.rememberShelfItems,
+            default: PreferenceDefault.rememberShelfItems
+        )
+    }
+
+    /// Saves shelf item paths when "Remember Items" is on, and clears them when it's off.
+    /// (Pinned folders are persisted separately by savePinnedFolders.)
+    func saveShelfItemsIfRemembering() {
+        if isRememberingShelfItems {
+            UserDefaults.standard.set(shelfItems.map(\.url.path), forKey: Self.rememberedShelfItemsKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.rememberedShelfItemsKey)
+        }
+    }
+
+    /// Puts back the shelf items from the previous session, skipping files that are gone.
+    func restoreShelfItems() {
+        guard isRememberingShelfItems,
+              let paths = UserDefaults.standard.stringArray(forKey: Self.rememberedShelfItemsKey) else { return }
+        let urls = paths
+            .map { URL(fileURLWithPath: $0) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        addItems(from: urls)
+    }
+
     /// Validates that all items still exist on disk and removes ghost items
     /// Call this when shelf becomes visible or after drag operations
     func validateItems() {
