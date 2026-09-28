@@ -139,7 +139,7 @@ class ClipboardWindowController: NSObject, NSWindowDelegate {
             // Post notification for View to reset state (Search/Selection)
             NotificationCenter.default.post(name: .clipboardWindowDidShow, object: nil)
         }
-        
+
         // Start monitoring for clicks outside to auto-close (since we are not Key)
         startClickMonitoring()
         
@@ -350,14 +350,9 @@ class ClipboardWindowController: NSObject, NSWindowDelegate {
         stopMonitoringShortcut()
         
         // Load saved shortcut
-        var targetKeyCode = 49 // Space
-        var targetModifiers: UInt = NSEvent.ModifierFlags([.command, .shift]).rawValue
-        
-        if let data = UserDefaults.standard.data(forKey: "clipboardShortcut"),
-           let decoded = try? JSONDecoder().decode(SavedShortcut.self, from: data) {
-            targetKeyCode = decoded.keyCode
-            targetModifiers = decoded.modifiers
-        }
+        let shortcut = SavedShortcut.storedClipboardShortcut()
+        let targetKeyCode = shortcut.keyCode
+        let targetModifiers = shortcut.modifiers
         
         // 1. Carbon HotKey (Works even with Secure Input / Password Fields)
         globalHotKey = GlobalHotKey(keyCode: targetKeyCode, modifiers: targetModifiers) { [weak self] in

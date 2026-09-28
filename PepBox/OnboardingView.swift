@@ -1086,7 +1086,7 @@ private struct ReadyContent: View {
                         .offset(x: showRows[1] ? 0 : -20)
                         .animation(PepBoxAnimation.notchState.delay(0.5), value: showRows[1])
                     
-                    GuideRow(icon: "command", color: .cyan, action: "Press ⌘⇧Space", result: "Opens clipboard")
+                    GuideRow(icon: "command", color: .cyan, action: "Press ⌥Space", result: "Opens clipboard")
                         .opacity(showRows[2] ? 1 : 0)
                         .offset(x: showRows[2] ? 0 : -20)
                         .animation(PepBoxAnimation.notchState.delay(0.6), value: showRows[2])

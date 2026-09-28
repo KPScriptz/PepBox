@@ -4,7 +4,29 @@ import Carbon
 struct SavedShortcut: Codable, Equatable {
     var keyCode: Int
     var modifiers: UInt
-    
+
+    /// Default clipboard shortcut: ⌥Space. macOS 27 opens its own on-screen Siri / Image Search
+    /// overlay on ⌘⇧Space, which took keyboard focus away from the clipboard panel.
+    static let clipboardDefault = SavedShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags.option.rawValue)
+    private static let legacyClipboardDefault = SavedShortcut(
+        keyCode: 49,
+        modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue
+    )
+
+    /// The saved clipboard shortcut, or the default. A saved ⌘⇧Space (the old default) is
+    /// cleared so those users move to the new default.
+    static func storedClipboardShortcut() -> SavedShortcut {
+        guard let data = UserDefaults.standard.data(forKey: "clipboardShortcut"),
+              let decoded = try? JSONDecoder().decode(SavedShortcut.self, from: data) else {
+            return clipboardDefault
+        }
+        if decoded == legacyClipboardDefault {
+            UserDefaults.standard.removeObject(forKey: "clipboardShortcut")
+            return clipboardDefault
+        }
+        return decoded
+    }
+
     var description: String {
         var str = ""
         let flags = NSEvent.ModifierFlags(rawValue: modifiers)
