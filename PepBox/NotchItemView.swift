@@ -899,8 +899,13 @@ struct NotchItemView: View {
                     // Keep isFileOperationInProgress = true since we auto-start renaming
                     // Update state immediately (animation deferred to poof effect)
                     state.replaceItems(itemsToZip, with: newItem)
-                    // Auto-start renaming the new zip file (flag stays true)
-                    renamingItemId = newItem.id
+                    // Auto-start renaming the new zip file (flag stays true) once its view
+                    // exists, as the basket does. Presenting the popover immediately left it
+                    // orphaned after the rename: it stayed on screen and Cancel did nothing.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        renamingItemId = newItem.id
+                        state.isRenaming = true
+                    }
                     // Trigger poof animation after view has appeared
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                         state.triggerPoof(for: newItem.id)
