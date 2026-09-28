@@ -14,14 +14,16 @@ import CoreAudio
 import AudioToolbox
 import Combine
 
+/// One app as shown in the panel: its own audio process plus any helpers
+/// (e.g. browser renderers) that play sound on its behalf.
 struct AudioApp: Identifiable, Hashable {
-    let pid: pid_t
-    let objectID: AudioObjectID
+    /// Parent app bundle ID, or "pid:<n>" for apps without one.
+    let id: String
     let name: String
-    let bundleID: String?
-    var id: pid_t { pid }
+    let iconPID: pid_t
+    let objectIDs: [AudioObjectID]
 
-    var icon: NSImage? { NSRunningApplication(processIdentifier: pid)?.icon }
+    var icon: NSImage? { NSRunningApplication(processIdentifier: iconPID)?.icon }
 }
 
 @Observable
@@ -30,63 +32,82 @@ final class AppVolumeManager {
 
     /// Apps currently playing sound, plus any app whose level was changed.
     private(set) var apps: [AudioApp] = []
-    /// 0...1.5 per PID; missing = 100%.
-    private(set) var levels: [pid_t: Float] = [:]
+    /// 0...1.5 per app; missing = 100%.
+    private(set) var levels: [String: Float] = [:]
     private(set) var errorMessage: String?
 
-    private var taps: [pid_t: Any] = [:]  // AppAudioTap, stored as Any to avoid availability on the property
+    private var taps: [String: Any] = [:]  // AppAudioTap, stored as Any to avoid availability on the property
+    /// Process set each tap was built for, to rebuild it when an app starts a new helper.
+    private var tappedObjects: [String: Set<AudioObjectID>] = [:]
 
     var isSupported: Bool {
         if #available(macOS 14.2, *) { return true }
         return false
     }
 
-    func level(for app: AudioApp) -> Float { levels[app.pid] ?? 1 }
+    func level(for app: AudioApp) -> Float { levels[app.id] ?? 1 }
 
     func refresh() {
-        let active = Self.audioProcesses().filter { $0.isRunningOutput || levels[$0.app.pid] != nil }
-        apps = active.map(\.app).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        // Forget apps that quit.
-        let alive = Set(apps.map(\.pid))
-        for pid in levels.keys where !alive.contains(pid) {
-            setLevel(1, forPID: pid)
+        let groups = Self.audioApps()
+        apps = groups.filter { $0.isPlaying || levels[$0.app.id] != nil }
+            .map(\.app)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+        let byID = Dictionary(uniqueKeysWithValues: apps.map { ($0.id, $0) })
+        for (id, level) in levels {
+            guard let app = byID[id] else {
+                setLevel(1, for: id, objectIDs: [])  // app quit
+                continue
+            }
+            // A new helper started playing: rebuild the tap so it's included.
+            if tappedObjects[id] != Set(app.objectIDs) {
+                removeTap(id)
+                setLevel(level, for: id, objectIDs: app.objectIDs)
+            }
         }
     }
 
     func setLevel(_ level: Float, for app: AudioApp) {
-        setLevel(level, forPID: app.pid, objectID: app.objectID)
+        setLevel(level, for: app.id, objectIDs: app.objectIDs)
     }
 
     /// Puts every app back to its normal audio path.
     func resetAll() {
-        for pid in Array(levels.keys) { setLevel(1, forPID: pid) }
+        for id in Array(levels.keys) { setLevel(1, for: id, objectIDs: []) }
     }
 
-    private func setLevel(_ level: Float, forPID pid: pid_t, objectID: AudioObjectID? = nil) {
+    private func removeTap(_ id: String) {
+        guard #available(macOS 14.2, *) else { return }
+        (taps[id] as? AppAudioTap)?.stop()
+        taps[id] = nil
+        tappedObjects[id] = nil
+    }
+
+    private func setLevel(_ level: Float, for id: String, objectIDs: [AudioObjectID]) {
         guard #available(macOS 14.2, *) else { return }
         let clamped = min(1.5, max(0, level))
         errorMessage = nil
 
         if abs(clamped - 1) < 0.01 {
             // Back to normal: remove the tap entirely.
-            (taps[pid] as? AppAudioTap)?.stop()
-            taps[pid] = nil
-            levels[pid] = nil
+            removeTap(id)
+            levels[id] = nil
             return
         }
 
-        levels[pid] = clamped
-        if let tap = taps[pid] as? AppAudioTap {
+        levels[id] = clamped
+        if let tap = taps[id] as? AppAudioTap {
             tap.gain = clamped
             return
         }
-        guard let objectID else { return }
+        guard !objectIDs.isEmpty else { return }
         do {
-            let tap = try AppAudioTap(processObjectID: objectID, name: "PepBox App Volume \(pid)")
+            let tap = try AppAudioTap(processObjectIDs: objectIDs, name: "PepBox App Volume \(id)")
             tap.gain = clamped
-            taps[pid] = tap
+            taps[id] = tap
+            tappedObjects[id] = Set(objectIDs)
         } catch {
-            levels[pid] = nil
+            levels[id] = nil
             errorMessage = "Couldn't change this app's volume. Allow PepBox under Privacy & Security → Screen & System Audio Recording."
             print("🔊 AppVolume: \(error)")
         }
@@ -94,25 +115,52 @@ final class AppVolumeManager {
 
     // MARK: - Core Audio process list
 
-    private struct ProcessInfo {
-        let app: AudioApp
-        let isRunningOutput: Bool
+    private struct Group {
+        var app: AudioApp
+        var isPlaying: Bool
     }
 
-    private static func audioProcesses() -> [ProcessInfo] {
+    /// Audio processes grouped under the app they belong to.
+    private static func audioApps() -> [Group] {
         let ids: [AudioObjectID] = getArray(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyProcessObjectList)
         let ownPID = Foundation.ProcessInfo.processInfo.processIdentifier
-        return ids.compactMap { id in
-            guard let pid: pid_t = getValue(id, kAudioProcessPropertyPID), pid != ownPID,
-                  let running = NSRunningApplication(processIdentifier: pid) else { return nil }
-            // Helper processes (e.g. browser renderers) report the parent app's name when possible.
-            let name = running.localizedName ?? running.bundleIdentifier ?? "PID \(pid)"
-            let isRunningOutput: UInt32 = getValue(id, kAudioProcessPropertyIsRunningOutput) ?? 0
-            return ProcessInfo(
-                app: AudioApp(pid: pid, objectID: id, name: name, bundleID: running.bundleIdentifier),
-                isRunningOutput: isRunningOutput != 0
-            )
+        let regularApps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
+
+        var groups: [String: Group] = [:]
+        var order: [String] = []
+        for objectID in ids {
+            guard let pid: pid_t = getValue(objectID, kAudioProcessPropertyPID), pid != ownPID else { continue }
+            let bundleID = stringValue(objectID, kAudioProcessPropertyBundleID)
+                ?? NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
+            // Helpers carry the parent's bundle ID as a prefix (com.google.Chrome.helper.Renderer).
+            let parent = bundleID.flatMap { id in
+                regularApps
+                    .filter { app in app.bundleIdentifier.map { id == $0 || id.hasPrefix($0 + ".") } ?? false }
+                    .max { ($0.bundleIdentifier?.count ?? 0) < ($1.bundleIdentifier?.count ?? 0) }
+            }
+            let owner = parent ?? NSRunningApplication(processIdentifier: pid)
+            guard let owner else { continue }
+            let key = owner.bundleIdentifier ?? "pid:\(owner.processIdentifier)"
+            let playing: UInt32 = getValue(objectID, kAudioProcessPropertyIsRunningOutput) ?? 0
+
+            if var group = groups[key] {
+                group.app = AudioApp(id: key, name: group.app.name, iconPID: group.app.iconPID,
+                                     objectIDs: group.app.objectIDs + [objectID])
+                group.isPlaying = group.isPlaying || playing != 0
+                groups[key] = group
+            } else {
+                order.append(key)
+                // Safari and other WebKit views play through a shared WebKit process.
+                let name = key.hasPrefix("com.apple.WebKit")
+                    ? "Safari & Web Views"
+                    : owner.localizedName ?? owner.bundleIdentifier ?? "PID \(owner.processIdentifier)"
+                groups[key] = Group(
+                    app: AudioApp(id: key, name: name, iconPID: owner.processIdentifier, objectIDs: [objectID]),
+                    isPlaying: playing != 0
+                )
+            }
         }
+        return order.compactMap { groups[$0] }
     }
 }
 
@@ -143,6 +191,15 @@ private func getArray<T>(_ object: AudioObjectID, _ selector: AudioObjectPropert
     }
 }
 
+private func stringValue(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) -> String? {
+    var addr = address(selector)
+    var value: Unmanaged<CFString>?
+    var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+    guard AudioObjectGetPropertyData(object, &addr, 0, nil, &size, &value) == noErr else { return nil }
+    let string = value?.takeRetainedValue() as String?
+    return string?.isEmpty == false ? string : nil
+}
+
 private func deviceUID(_ device: AudioObjectID) -> String? {
     var addr = address(kAudioDevicePropertyDeviceUID)
     var uid: Unmanaged<CFString>?
@@ -170,11 +227,11 @@ final class AppAudioTap {
     private var procID: AudioDeviceIOProcID?
     private let queue = DispatchQueue(label: "com.pepbox.appvolume", qos: .userInteractive)
 
-    init(processObjectID: AudioObjectID, name: String) throws {
+    init(processObjectIDs: [AudioObjectID], name: String) throws {
         guard let outputDevice: AudioObjectID = getValue(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultSystemOutputDevice),
               let outputUID = deviceUID(outputDevice) else { throw AppAudioTapError.noOutputDevice }
 
-        let description = CATapDescription(stereoMixdownOfProcesses: [processObjectID])
+        let description = CATapDescription(stereoMixdownOfProcesses: processObjectIDs)
         description.uuid = UUID()
         description.muteBehavior = .mutedWhenTapped
         description.isPrivate = true
