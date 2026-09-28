@@ -57,6 +57,15 @@ struct ClipboardTag: Identifiable, Codable, Hashable {
     }
 }
 
+extension ClipboardItem {
+    /// A copy with rich text formatting removed, for "Paste as Plain Text" (⌥Return).
+    var withoutFormatting: ClipboardItem {
+        var copy = self
+        copy.rtfData = nil
+        return copy
+    }
+}
+
 struct ClipboardItem: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var type: ClipboardType

@@ -256,6 +256,14 @@ struct ClipboardManagerView: View {
             .keyboardShortcut(.return, modifiers: []) // 1. Return -> Paste
             .keyboardShortcut(.return, modifiers: .command) // 2. Cmd+Return -> Paste (Bonus)
             .opacity(0)
+            .background(
+                // 3. Option+Return -> Paste as plain text (formatting stripped)
+                Button("") {
+                    onPasteItems(selectedItemsArray.map(\.withoutFormatting))
+                }
+                .keyboardShortcut(.return, modifiers: .option)
+                .opacity(0)
+            )
     }
     
     @ViewBuilder
@@ -735,6 +743,11 @@ struct ClipboardManagerView: View {
                                         // Single item context menu
                                         Button { onPaste(item) } label: {
                                             Label("Paste", systemImage: "doc.on.clipboard")
+                                        }
+                                        if item.type == .text {
+                                            Button { onPaste(item.withoutFormatting) } label: {
+                                                Label("Paste as Plain Text", systemImage: "textformat")
+                                            }
                                         }
                                         Button {
                                             let willBeFavorite = !item.isFavorite
