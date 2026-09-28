@@ -37,10 +37,13 @@ TEST="$HOME/Desktop/pepbox-ui-test"
 DROP="$HOME/Desktop/pepbox-drop-target"
 rm -rf "$TEST" "$DROP"; mkdir -p "$TEST" "$DROP"
 echo "hello from the PepBox UI test" > "$TEST/note.txt"
-cp "$APP/Contents/Resources/"*alfred*.png "$TEST/picture.png" 2>/dev/null || sips -s format png "$APP/Contents/Resources/"*.jpg --out "$TEST/picture.png" >/dev/null 2>&1
+cp "$(find "$APP/Contents/Resources" -name '*.png' | head -1)" "$TEST/picture.png"
+ls -la "$TEST" >> "$REPORT"
 
 # Launch, capturing stdout/stderr (the app logs with print)
 pkill -x PepBox 2>/dev/null; sleep 1
+# Skip the welcome window so it doesn't cover the Finder windows the test drags from
+defaults write com.pivotxp.PepBox hasCompletedOnboarding -bool true
 "$APP/Contents/MacOS/PepBox" > "$OUT/app-stdout.log" 2>&1 &
 APP_PID=$!
 sleep 12
@@ -81,7 +84,7 @@ NOTE_X=$((80 + 100)); NOTE_Y=$((200 + 70 + 100))
 say "drag note.txt from Finder onto the notch"
 t 20 "$D" drag $NOTE_X $NOTE_Y $CX 6 &
 sleep 1.4; shot mid-drag-to-notch
-wait
+wait $!
 sleep 1.5
 shot after-drop-on-notch
 "$D" move $CX 3; sleep 0.3; "$D" move $((CX + 4)) 5; sleep 1.5
@@ -105,7 +108,7 @@ if [ -n "$SW" ]; then
     say "drag shelf item at $ITEM_X,$ITEM_Y out to the drop-target window"
     t 20 "$D" drag $ITEM_X $ITEM_Y 1010 420 &
     sleep 1.4; shot mid-drag-out
-    wait; sleep 2
+    wait $!; sleep 2
     shot after-drag-out
 fi
 say "drop-target folder now contains: $(ls "$DROP" | tr '\n' ' ')"
