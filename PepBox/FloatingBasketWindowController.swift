@@ -462,11 +462,28 @@ final class FloatingBasketWindowController: NSObject {
     }
     
     /// Called by DragMonitor when drag ends
-    func onDragEnded() {
-        guard basketWindow != nil, !isShowingOrHiding else { return }
-        
-        // Auto-hide disabled = NO baskets ever auto-hide
-        guard isAutoHideEnabled else { return }
+    func onDragEnded(isRetry: Bool = false) {
+        guard basketWindow?.isVisible == true else { return }
+
+        // Instant mode pops a basket up on every drag; one nothing was dropped into is
+        // just clutter once the drag ends, even with Auto-Hide off.
+        let instantMode = UserDefaults.standard.preference(
+            AppPreferenceKey.instantBasketOnDrag,
+            default: PreferenceDefault.instantBasketOnDrag
+        )
+
+        // Auto-hide disabled = NO baskets ever auto-hide (except empty instant baskets)
+        guard isAutoHideEnabled || instantMode else { return }
+
+        // A quick drag can end while the basket is still animating in; check once it settles.
+        if isShowingOrHiding {
+            if !isRetry {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                    self?.onDragEnded(isRetry: true)
+                }
+            }
+            return
+        }
         
         // Don't hide during file operations or sharing
         guard !PepBoxState.shared.isFileOperationInProgress, !PepBoxState.shared.isSharingInProgress else { return }
@@ -482,8 +499,9 @@ final class FloatingBasketWindowController: NSObject {
             guard !PepBoxState.shared.isFileOperationInProgress, !PepBoxState.shared.isSharingInProgress else { return }
             guard !BasketSwitcherWindowController.shared.isVisible else { return }
             
-            // Auto-hide enabled = ALL empty baskets hide (consistent behavior)
-            if self.basketState.items.isEmpty {
+            // Auto-hide enabled = ALL empty baskets hide (consistent behavior).
+            // Skip if a new drag already started: the basket is its drop target again.
+            if self.basketState.items.isEmpty && !DragMonitor.shared.isDragging {
                 self.hideBasket()
             }
         }
