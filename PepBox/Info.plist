@@ -46,6 +46,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>PepBox routes an app's sound through itself so App Volume can make it louder or quieter.</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>PepBox needs to communicate with this app to export items when you drag them to the shelf or basket, and to find your Google Meet tab for Meeting controls.</string>
 	<key>NSMicrophoneUsageDescription</key>

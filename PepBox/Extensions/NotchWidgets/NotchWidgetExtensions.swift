@@ -83,3 +83,22 @@ struct MeetingsExtension: ExtensionDefinition {
     static let iconPlaceholderColor: Color = .blue
     static func cleanup() {}
 }
+
+struct AppVolumeExtension: ExtensionDefinition {
+    static let id = "appVolume"
+    static let title = "App Volume"
+    static let subtitle = "Volume slider for each app"
+    static let category: ExtensionGroup = .media
+    static let categoryColor: Color = .green
+    static let description = "Turn one app down (or up to 150%) without touching the others. Apps playing sound appear in the panel; click the percentage to reset. Needs macOS 14.2 and Screen & System Audio Recording permission."
+    static let features: [(icon: String, text: String)] = [
+        ("speaker.wave.2.fill", "A slider for every app playing sound"),
+        ("speaker.plus.fill", "Boost quiet apps up to 150%"),
+        ("arrow.uturn.backward", "At 100% the app's audio is left untouched")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "speaker.wave.2.fill"
+    static let iconPlaceholderColor: Color = .green
+    static func cleanup() { NotchWidgetKind.appVolume.cleanup() }
+}

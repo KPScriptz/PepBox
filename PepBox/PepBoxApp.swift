@@ -588,6 +588,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Mark clean exit (no crash prompt on next launch)
         CrashReporter.shared.markCleanExit()
         
+        // Give every app its normal audio path back (App Volume taps)
+        AppVolumeManager.shared.resetAll()
+        
         // Stop drag monitoring
         DragMonitor.shared.stopMonitoring()
         

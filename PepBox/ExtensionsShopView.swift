@@ -608,6 +608,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "appVolume",
+                iconPlaceholder: "speaker.wave.2.fill",
+                iconPlaceholderColor: .green,
+                title: "App Volume",
+                subtitle: "Volume slider for each app",
+                category: .media,
+                isInstalled: NotchWidgetKind.appVolume.isInstalled,
+                analyticsKey: "appVolume",
+                extensionType: .appVolume
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .appVolume,
+                    onAction: { NotchWidgetKind.appVolume.install() },
+                    installCount: extensionCounts["appVolume"],
+                    rating: extensionRatings["appVolume"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

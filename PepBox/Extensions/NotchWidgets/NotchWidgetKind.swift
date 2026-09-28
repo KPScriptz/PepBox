@@ -14,6 +14,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case emojiPicker
     case teleprompter
     case meetings
+    case appVolume
 
     var id: String { rawValue }
 
@@ -28,6 +29,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .emojiPicker: return .emojiPicker
         case .teleprompter: return .teleprompter
         case .meetings: return .meetings
+        case .appVolume: return .appVolume
         }
     }
 
@@ -39,6 +41,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .emojiPicker: return "face.smiling"
         case .teleprompter: return "text.alignleft"
         case .meetings: return "video.fill"
+        case .appVolume: return "speaker.wave.2.fill"
         }
     }
 
@@ -48,6 +51,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .emojiPicker: return .yellow
         case .teleprompter: return .mint
         case .meetings: return .blue
+        case .appVolume: return .green
         }
     }
 
@@ -74,6 +78,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         switch self {
         case .pomodoro: PomodoroManager.shared.reset()
         case .teleprompter: TeleprompterManager.shared.pause()
+        case .appVolume: AppVolumeManager.shared.resetAll()
         case .emojiPicker, .meetings: break
         }
     }
@@ -96,6 +101,8 @@ struct NotchWidgetPanel: View {
                 TeleprompterNotchView(manager: TeleprompterManager.shared)
             case .meetings:
                 MeetingsNotchView(manager: MeetingsManager.shared)
+            case .appVolume:
+                AppVolumeNotchView(manager: AppVolumeManager.shared)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

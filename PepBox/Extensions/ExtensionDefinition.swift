@@ -139,6 +139,7 @@ final class ExtensionRegistry {
         register(EmojiPickerExtension.self)
         register(TeleprompterExtension.self)
         register(MeetingsExtension.self)
+        register(AppVolumeExtension.self)
         register(RingExtension.self)
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)
