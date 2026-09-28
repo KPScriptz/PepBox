@@ -57,6 +57,12 @@ class DragContainerView<Content: View>: NSView, NSDraggingSource {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    /// Swift 6.3 (Xcode 26.6) crashes in the EarlyPerfInliner pass while optimizing the
+    /// implicit deinit of this generic NSView subclass in Release builds. An explicit
+    /// deinit that the optimizer skips avoids the crash; it has nothing to clean up itself.
+    @_optimize(none)
+    deinit {}
     
     func update(rootView: Content, items: @escaping () -> [NSItemProvider], onDragComplete: (() -> Void)?) {
         self.hostingView.rootView = rootView

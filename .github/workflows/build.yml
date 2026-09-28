@@ -32,7 +32,6 @@ jobs:
             -skipPackagePluginValidation -skipMacroValidation \
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \
-            SWIFT_COMPILATION_MODE=singlefile \
             build 2>&1 | tee build.log | grep -E '(error|warning: unable|BUILD (SUCCEEDED|FAILED))' || true
           grep -q 'BUILD SUCCEEDED' build.log
 

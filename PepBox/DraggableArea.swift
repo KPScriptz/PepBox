@@ -126,6 +126,12 @@ class DraggableAreaView<Content: View>: NSView, NSDraggingSource {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    /// Swift 6.3 (Xcode 26.6) crashes in the EarlyPerfInliner pass while optimizing the
+    /// implicit deinit of this generic NSView subclass in Release builds. An explicit
+    /// deinit that the optimizer skips avoids the crash; it has nothing to clean up itself.
+    @_optimize(none)
+    deinit {}
     
     /// CRITICAL: Report the hosting view's intrinsic size to SwiftUI
     /// Without this, the NSView may size incorrectly in LazyVGrid
