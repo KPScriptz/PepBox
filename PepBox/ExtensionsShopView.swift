@@ -608,6 +608,42 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "ring",
+                iconPlaceholder: "circle.dashed",
+                iconPlaceholderColor: .purple,
+                title: "Ring",
+                subtitle: "Actions in a circle at your cursor",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.ring.isInstalled,
+                analyticsKey: "ring",
+                extensionType: .ring
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .ring,
+                    onAction: { UtilityExtensionKind.ring.install() },
+                    installCount: extensionCounts["ring"],
+                    rating: extensionRatings["ring"]
+                ))
+            },
+            ExtensionListItem(
+                id: "keySounds",
+                iconPlaceholder: "keyboard",
+                iconPlaceholderColor: .brown,
+                title: "Key Sounds",
+                subtitle: "Mechanical keyboard sounds",
+                category: .media,
+                isInstalled: UtilityExtensionKind.keySounds.isInstalled,
+                analyticsKey: "keySounds",
+                extensionType: .keySounds
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .keySounds,
+                    onAction: { UtilityExtensionKind.keySounds.install() },
+                    installCount: extensionCounts["keySounds"],
+                    rating: extensionRatings["keySounds"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

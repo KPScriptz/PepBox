@@ -2690,6 +2690,8 @@ struct SettingsView: View {
                             break // No action needed - these have their own configuration UI
                         case .pomodoro, .emojiPicker, .teleprompter, .meetings:
                             NotchWidgetKind(extensionType: extensionType)?.install()
+                        case .ring, .keySounds:
+                            UtilityExtensionKind(extensionType: extensionType)?.install()
                         }
                     }
                 }

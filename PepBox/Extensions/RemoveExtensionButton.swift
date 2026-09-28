@@ -117,6 +117,10 @@ struct DisableExtensionButton: View {
             return "This will disable the Todo extension. Your tasks will be preserved and you can enable it again later."
         case .pomodoro, .emojiPicker, .teleprompter, .meetings:
             return "This will remove its button from the shelf. You can enable it again later."
+        case .ring:
+            return "This will turn off the ⌥⇧Space ring. You can enable it again later."
+        case .keySounds:
+            return "This will stop the typing sounds. You can enable it again later."
         }
     }
     

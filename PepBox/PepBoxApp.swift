@@ -419,6 +419,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             // Add new screenshots to the shelf (if enabled)
             ScreenshotWatcher.shared.updateFromPreferences()
+            
+            // Ring and Key Sounds (if installed)
+            UtilityExtensionKind.startAll()
         }
 
         // Start monitoring for drag events (polling-based, safe)

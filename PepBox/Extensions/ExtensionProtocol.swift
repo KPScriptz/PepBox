@@ -31,6 +31,8 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case emojiPicker
     case teleprompter
     case meetings
+    case ring
+    case keySounds
 
     /// URL-safe ID for deep links
     case finderServices  // Alias for finder
@@ -89,6 +91,8 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
         case .pomodoro, .emojiPicker, .teleprompter, .meetings:
             return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
+        case .ring, .keySounds:
+            return UtilityExtensionKind(extensionType: self)?.isInstalled ?? false
         }
     }
     
