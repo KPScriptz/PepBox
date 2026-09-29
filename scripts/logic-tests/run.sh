@@ -7,5 +7,7 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/Extensions/Utilities/QuickSearchMath.swift" \
     "$ROOT/PepBox/Extensions/Utilities/ScrollEasing.swift" \
     "$ROOT/PepBox/Extensions/NotchWidgets/AudioSampleCopier.swift" \
+    "$ROOT/PepBox/Extensions/NotchWidgets/Pomodoro.swift" \
+    "$ROOT/PepBox/SavedShortcut.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

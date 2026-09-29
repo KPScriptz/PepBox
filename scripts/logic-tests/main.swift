@@ -2,6 +2,7 @@
 
 import Foundation
 import CoreAudio
+import AppKit
 
 var failures = 0
 var checks = 0
@@ -83,6 +84,57 @@ expect(copyCase([(1, [0.2, 0.4]), (1, [0.6, 0.8])], [(2, [9, 9, 9, 9])], gain: 0
 expect(copyCase([(1, [0.9, -0.9])], [(1, [9, 9]), (1, [9, 9])], gain: 1.5), [[1, -1], [1, -1]], "copy mono -> two channels, clipped")
 expect(copyCase([(2, [0.5, 0.5])], [(2, [9, 9, 9, 9])], gain: 1), [[0.5, 0.5, 0, 0]], "copy pads missing frames with silence")
 expect(copyCase([(2, [])], [(2, [9, 9])], gain: 1), [[0, 0]], "copy with an empty input buffer writes silence")
+
+// MARK: - Clipboard shortcut default and migration (SavedShortcut)
+
+let defaults = UserDefaults.standard
+defaults.removeObject(forKey: "clipboardShortcut")
+expect(SavedShortcut.storedClipboardShortcut(), SavedShortcut.clipboardDefault, "no saved shortcut -> Option+Space")
+expect(SavedShortcut.clipboardDefault.description, "⌥Space", "default shortcut description")
+
+let legacy = SavedShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue)
+defaults.set(try! JSONEncoder().encode(legacy), forKey: "clipboardShortcut")
+expect(SavedShortcut.storedClipboardShortcut(), SavedShortcut.clipboardDefault, "saved Cmd+Shift+Space migrates to Option+Space")
+expect(defaults.data(forKey: "clipboardShortcut") == nil, true, "migration clears the saved legacy shortcut")
+
+let custom = SavedShortcut(keyCode: 9, modifiers: NSEvent.ModifierFlags([.control, .command]).rawValue)
+defaults.set(try! JSONEncoder().encode(custom), forKey: "clipboardShortcut")
+expect(SavedShortcut.storedClipboardShortcut(), custom, "a custom shortcut is kept")
+defaults.removeObject(forKey: "clipboardShortcut")
+
+// MARK: - Pomodoro cycle
+
+for key in ["pomodoro_focusMinutes", "pomodoro_shortBreakMinutes", "pomodoro_longBreakMinutes"] {
+    defaults.removeObject(forKey: key)
+}
+let pomodoro = PomodoroManager.shared
+pomodoro.reset()
+expect(pomodoro.phase, .focus, "starts in focus")
+expect(pomodoro.formattedRemaining, "25:00", "default focus is 25 minutes")
+var phases: [PomodoroManager.Phase] = []
+for _ in 0..<8 {
+    pomodoro.skip()
+    phases.append(pomodoro.phase)
+}
+expect(phases, [.shortBreak, .focus, .shortBreak, .focus, .shortBreak, .focus, .longBreak, .focus],
+       "long break after every 4th focus session")
+expect(pomodoro.isRunning, false, "skipping leaves the timer paused")
+
+pomodoro.select(.shortBreak)
+expect(pomodoro.formattedRemaining, "05:00", "default break is 5 minutes")
+pomodoro.shortBreakMinutes = 7
+expect(pomodoro.formattedRemaining, "07:00", "changing the current phase's length applies at once")
+expect(defaults.integer(forKey: "pomodoro_shortBreakMinutes"), 7, "durations are saved")
+pomodoro.start()
+expect(pomodoro.isRunning, true, "start runs the timer")
+pomodoro.pause()
+expect(pomodoro.isRunning, false, "pause stops it")
+pomodoro.reset()
+expect(pomodoro.phase, .focus, "reset returns to focus")
+expect(pomodoro.completedFocusSessions, 0, "reset clears finished sessions")
+for key in ["pomodoro_focusMinutes", "pomodoro_shortBreakMinutes", "pomodoro_longBreakMinutes"] {
+    defaults.removeObject(forKey: key)
+}
 
 print(failures == 0 ? "OK \(checks) checks passed" : "\(failures) of \(checks) checks failed")
 exit(failures == 0 ? 0 : 1)
