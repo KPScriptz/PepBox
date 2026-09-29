@@ -39,6 +39,20 @@ for (input, expected) in units {
     expect(QuickUnitConverter.convert(input), expected, "units \(input)")
 }
 
+// MARK: - Currency conversion
+
+let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]
+let currency: [(String, String?)] = [
+    ("100 usd to eur", "50.00 EUR"), ("$20 in gbp", "5.00 GBP"), ("50€ to $", "100.00 USD"),
+    ("1,000 jpy to usd", "6.67 USD"), ("10 cad to eur", "4.00 EUR"), ("5 euros to yen", "1,500.00 JPY"),
+    ("$5 usd to eur", nil),  // two source currencies
+    ("100 xyz to eur", nil), ("100 usd to usd", nil), ("5 km to mi", nil)
+]
+for (input, expected) in currency {
+    expect(QuickCurrencyConverter.convert(input, rates: rates), expected, "currency \(input)")
+}
+expect(QuickCurrencyConverter.convert("100 usd to eur", rates: [:]), nil, "currency without rates")
+
 // MARK: - Smooth Scroll easing: every glide ends and delivers its full distance
 
 for lines in [1, 3, -2, 10, -25] {

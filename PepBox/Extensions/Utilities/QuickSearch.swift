@@ -55,6 +55,7 @@ final class QuickSearchModel {
         query = ""
         selection = 0
         apps = Self.installedApps()
+        QuickCurrencyRates.refreshIfStale()
     }
 
     private func search() {
@@ -73,6 +74,8 @@ final class QuickSearchModel {
         }
         if let converted = QuickUnitConverter.convert(text) {
             list.append(QuickSearchResult(id: "unit", title: converted, subtitle: "\(text) · Enter to copy", kind: .answer(converted)))
+        } else if let converted = QuickCurrencyConverter.convert(text, rates: QuickCurrencyRates.cached) {
+            list.append(QuickSearchResult(id: "currency", title: converted, subtitle: "\(text) · daily rates · Enter to copy", kind: .answer(converted)))
         }
 
         let lower = text.lowercased()

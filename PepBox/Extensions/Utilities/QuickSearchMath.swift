@@ -146,3 +146,65 @@ enum QuickUnitConverter {
         return "\(QuickCalculator.format((converted.value * 10_000).rounded() / 10_000)) \(lower[toRange])"
     }
 }
+
+// MARK: - Currency conversion ("100 usd to eur", "$20 in gbp", "50€ to $")
+
+enum QuickCurrencyConverter {
+    private static let symbols: [String: String] = [
+        "$": "USD", "€": "EUR", "£": "GBP", "¥": "JPY", "₹": "INR", "₩": "KRW", "₽": "RUB", "₺": "TRY", "₪": "ILS", "฿": "THB",
+        "dollar": "USD", "dollars": "USD", "euro": "EUR", "euros": "EUR", "pound": "GBP", "pounds": "GBP", "yen": "JPY"
+    ]
+
+    /// Rates are units per 1 USD, as published by open.er-api.com.
+    static func convert(_ input: String, rates: [String: Double]) -> String? {
+        let pattern = #"^\s*([$€£¥₹₩₽₺₪฿]?)\s*([\d.,]+)\s*([a-z$€£¥₹₩₽₺₪฿]*)\s+(?:to|in|as)\s+([a-z$€£¥₹₩₽₺₪฿]+)\s*$"#
+        guard !rates.isEmpty, let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
+        let text = input.lowercased()
+        guard let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+        func group(_ i: Int) -> String { Range(match.range(at: i), in: text).map { String(text[$0]) } ?? "" }
+
+        let prefix = group(1), amountText = group(2), suffix = group(3), target = group(4)
+        guard prefix.isEmpty != suffix.isEmpty,  // exactly one source currency
+              let amount = Double(amountText.replacingOccurrences(of: ",", with: "")),
+              let from = code(prefix.isEmpty ? suffix : prefix, rates: rates),
+              let to = code(target, rates: rates), from != to,
+              let fromRate = rates[from], let toRate = rates[to], fromRate > 0 else { return nil }
+        let value = amount / fromRate * toRate
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        formatter.locale = Locale(identifier: "en_US")
+        return "\(formatter.string(from: NSNumber(value: value)) ?? String(value)) \(to)"
+    }
+
+    private static func code(_ token: String, rates: [String: Double]) -> String? {
+        if let mapped = symbols[token] { return mapped }
+        let upper = token.uppercased()
+        return upper.count == 3 && rates[upper] != nil ? upper : nil
+    }
+}
+
+/// Exchange rates from open.er-api.com (free, no key), refreshed at most every 12 hours.
+enum QuickCurrencyRates {
+    private static let ratesKey = "quickSearch_currencyRates"
+    private static let fetchedKey = "quickSearch_currencyRatesFetched"
+
+    static var cached: [String: Double] {
+        UserDefaults.standard.dictionary(forKey: ratesKey) as? [String: Double] ?? [:]
+    }
+
+    static func refreshIfStale() {
+        let fetched = UserDefaults.standard.double(forKey: fetchedKey)
+        guard Date().timeIntervalSince1970 - fetched > 12 * 3600,
+              let url = URL(string: "https://open.er-api.com/v6/latest/USD") else { return }
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  json["result"] as? String == "success",
+                  let rates = json["rates"] as? [String: NSNumber] else { return }
+            UserDefaults.standard.set(rates.mapValues(\.doubleValue), forKey: ratesKey)
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: fetchedKey)
+        }.resume()
+    }
+}
