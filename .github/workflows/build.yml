@@ -24,6 +24,9 @@ jobs:
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
+      - name: Logic tests
+        run: scripts/logic-tests/run.sh
+
       - name: Build app
         run: |
           set -o pipefail

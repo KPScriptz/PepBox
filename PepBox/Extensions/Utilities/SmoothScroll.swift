@@ -15,7 +15,7 @@ final class SmoothScrollController {
 
     /// Marks events we post so the tap lets them through.
     private static let syntheticMarker: Int64 = 0x5045_5042  // "PEPB"
-    private static let pixelsPerLine: Double = 42
+    private static let pixelsPerLine: Double = ScrollEasing.pixelsPerLine
     /// Fraction of the remaining distance scrolled per frame (higher = snappier).
     private static let easing: Double = 0.2
 
@@ -105,12 +105,6 @@ final class SmoothScrollController {
         return nil  // swallow the line step; the timer delivers it as pixels
     }
 
-    private static func step(_ delta: Double, remaining: Double) -> Int32 {
-        let rounded = Int32(delta.rounded())
-        if rounded == 0 && abs(remaining) >= 0.5 { return remaining > 0 ? 1 : -1 }
-        return rounded
-    }
-
     private func startTimerIfNeeded() {
         guard timer == nil else { return }
         let timer = DispatchSource.makeTimerSource(queue: .main)
@@ -122,11 +116,8 @@ final class SmoothScrollController {
 
     private func step() {
         let (y, x): (Int32, Int32) = lock.withLock {
-            // Ease toward the target; finish the last pixel instead of crawling toward zero.
-            let dy = abs(pendingY) < 1 ? pendingY : pendingY * Self.easing
-            let dx = abs(pendingX) < 1 ? pendingX : pendingX * Self.easing
-            // Always move at least a pixel while distance remains, or the glide never ends.
-            let y = Self.step(dy, remaining: pendingY), x = Self.step(dx, remaining: pendingX)
+            let y = ScrollEasing.nextStep(remaining: pendingY, easing: Self.easing)
+            let x = ScrollEasing.nextStep(remaining: pendingX, easing: Self.easing)
             // Subtract exactly what's posted so the total distance is preserved.
             pendingY -= Double(y)
             pendingX -= Double(x)
