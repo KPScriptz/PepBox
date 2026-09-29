@@ -210,7 +210,7 @@ struct ScreenshotEditorView: View {
         }
         .frame(minWidth: 600, idealWidth: 800, maxWidth: .infinity)
         .frame(minHeight: 400, idealHeight: 600, maxHeight: .infinity)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .sheet(isPresented: $showingTextInput) {
             textInputSheet

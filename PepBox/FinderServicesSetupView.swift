@@ -35,7 +35,7 @@ struct FinderServicesSetupView: View {
         }
         .frame(width: 340)  // Same width as AIInstallView
         .fixedSize(horizontal: false, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
         .pepboxFloatingShadow()
     }
@@ -159,7 +159,7 @@ struct FinderServicesSetupSheetView: View {
         }
         .frame(width: 340)  // Same width as AIInstallView
         .fixedSize(horizontal: false, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipped()  // Same as AIInstallView
     }
     

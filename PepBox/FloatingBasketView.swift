@@ -461,7 +461,7 @@ struct FloatingBasketView: View {
     @ViewBuilder
     private var basketBackground: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+            .pepboxSurfaceFill(transparent: useTransparentBackground)
             .frame(width: currentWidth, height: currentHeight)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

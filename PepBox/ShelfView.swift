@@ -33,7 +33,7 @@ struct ShelfView: View {
             state.deselectAll()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .dropDestination(for: URL.self) { urls, _ in
             withAnimation(PepBoxAnimation.transition) {
                 state.addItems(from: urls)

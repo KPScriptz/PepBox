@@ -242,7 +242,7 @@ struct ClipboardManagerView: View {
                     }
             }
         }
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .frame(minWidth: 1040, maxWidth: .infinity, minHeight: 640, maxHeight: .infinity)
         .background(pasteShortcutButton)
         .background(navigationShortcutButtons)
@@ -370,7 +370,7 @@ struct ClipboardManagerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+            .pepboxSurface(transparent: useTransparentBackground)
             .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous)

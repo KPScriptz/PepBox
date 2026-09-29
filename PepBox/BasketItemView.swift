@@ -415,7 +415,7 @@ struct BasketItemView: View {
                         if isShakeAnimating {
                             ZStack {
                                 RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous)
-                                    .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                                    .pepboxSurfaceFill(transparent: useTransparentBackground)
                                     .frame(width: 44, height: 44)
                                     .shadow(radius: 4)
                                 Image(systemName: "checkmark.shield.fill")
@@ -740,7 +740,7 @@ struct BasketItemView: View {
                 if isShakeAnimating {
                     ZStack {
                         RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous)
-                            .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                            .pepboxSurfaceFill(transparent: useTransparentBackground)
                             .frame(width: 44, height: 44)
                             .shadow(radius: 4)
                         Image(systemName: "checkmark.shield.fill")

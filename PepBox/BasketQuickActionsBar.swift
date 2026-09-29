@@ -86,7 +86,7 @@ struct BasketQuickActionsBar: View {
                 
                 // Collapsed: Zap button
                 Circle()
-                    .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                    .pepboxSurfaceFill(transparent: useTransparentBackground)
                     .frame(width: buttonSize, height: buttonSize)
                     .overlay(
                         Circle()
