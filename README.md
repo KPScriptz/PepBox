@@ -89,6 +89,17 @@ Modular extensions add even more power. **Install only what you need.**
 | <img src="docs/assets/icons/menubarmanager.png" width="24"> | [**Menu Bar Manager**](docs/extensions.html) | Hide & organize menu bar icons with hover reveal |
 | <img src="docs/assets/icons/reminders.png" width="24"> | [**Reminders**](docs/extensions.html) | Capture tasks in natural language & sync with Apple Reminders |
 | <img src="docs/assets/icons/snap-camera-v2.png" width="24"> | [**Notchface**](docs/extensions.html) | Floating camera button with full live preview in your notch |
+| ⏱️ | **Pomodoro** | Focus / break timer right in the shelf |
+| 😀 | **Emoji Picker** | Search every emoji by name and type it into the app you're in |
+| 📜 | **Teleprompter** | Your script scrolls under the camera; the shelf stays open while you read |
+| 🎥 | **Meetings** | Mute, camera and leave for Zoom, Teams and Google Meet |
+| 🔊 | **App Volume** | A 0–150% volume slider for each app playing sound (macOS 14.2+) |
+| 📝 | **Obsidian** | Recent vault notes and quick capture into an inbox note |
+| ⭕️ | **Ring** | ⌥⇧Space: eight actions in a circle at the pointer |
+| ⌨️ | **Key Sounds** | Mechanical keyboard clicks, synthesized on your Mac |
+| 🔎 | **Quick Search** | ⌃⌥Space: apps, files, math and unit conversion |
+| ✂️ | **Text Actions** | Pill beside selected text: copy, search, AI rewrite, custom actions, per-app rules (DropClip) |
+| 🖱️ | **Smooth Scroll** | Trackpad-smooth scrolling for mouse wheels |
 
 ## FAQ
 
@@ -148,6 +159,13 @@ off until `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set in `docs/extensions.htm
 ## Changelog
 
 <!-- CHANGELOG_START -->
+## Unreleased
+
+- 11 new extensions: Pomodoro, Emoji Picker, Teleprompter, Meetings, App Volume, Obsidian, Ring, Key Sounds, Quick Search, Text Actions (DropClip) and Smooth Scroll
+- Shelf: add new screenshots automatically, remember items across restarts, Copy Path and Show in Finder, reorder widget buttons
+- Clipboard: ⌥Space to open (macOS 27 takes ⌘⇧Space), ⌥Return pastes as plain text
+- Fixes: launch freeze on Bluetooth permission, 1 s hover delay, rename popover after Create ZIP, silent paste without Accessibility, empty instant basket left on screen
+
 ## What's New in PepBox 1.0.0
 
 - First release of PepBox, based on Droppy 11.0.0
@@ -172,6 +190,8 @@ not affiliated with the Droppy project.
 <br>
 <b>Droppy</b> by Jordy Spruit, the project PepBox is built on (<a href="https://github.com/iordv/Droppy">github</a>)<br>
 <b>Alcove</b>, inspiration for the notch design (<a href="https://tryalcove.com/">tryalcove.com</a>)<br>
-<b>Boringnotch</b>, pioneered notch creativity on macOS (<a href="https://github.com/TheBoredTeam/boring.notch">github</a>)
+<b>Boringnotch</b>, pioneered notch creativity on macOS (<a href="https://github.com/TheBoredTeam/boring.notch">github</a>)<br>
+<b>DropClip</b> (MIT), which Text Actions is, based on <b>OpenClip</b> by Ganesh M (<a href="https://gitlab.com/droppyformac1/droplets/-/tree/main/droplets/dropclip">source</a>)<br>
+<b>OpenSelection</b> by Ganesh M (Apache-2.0) and <b>KeyboardShortcuts</b> by Sindre Sorhus (MIT), used by Text Actions. Licences: <code>Packages/TextActionsKit/Legal</code>
 </sub>
 </details>

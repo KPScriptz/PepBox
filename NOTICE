@@ -22,5 +22,14 @@ Modifications by PivotXP, starting 2026-09-27:
 - Kept Droppy's original README, release notes and launch post, unmodified,
   in upstream/.
 
+Third-party code added in PepBox:
+- Text Actions (Packages/TextActionsKit) is DropClip, MIT License, Copyright (c)
+  2026 Ganesh M and OpenClip Contributors and Copyright (c) 2026 Jordy Spruit,
+  based on OpenClip by Ganesh M; with OpenSelection, Apache License 2.0,
+  Copyright 2026 Ganesh M (unmodified); and part of KeyboardShortcuts, MIT
+  License, Copyright (c) Sindre Sorhus. Licence texts and notices are in
+  Packages/TextActionsKit/Legal and ship inside the app; PepBox's changes to
+  DropClip are listed in Packages/TextActionsKit/PEPBOX_CHANGES.md.
+
 "Droppy" and the Droppy logo are trademarks of Jordy Spruit. PepBox is not
 affiliated with or endorsed by the Droppy project.
