@@ -23,6 +23,9 @@ final class KeySoundsManager {
     private var isEngineSetUp = false
 
     private var globalMonitor: Any?
+    /// Stops the engine after a pause in typing so the audio device (and Bluetooth
+    /// headphones) can go idle instead of staying active the whole time.
+    private var idleStop: DispatchWorkItem?
     private var localMonitor: Any?
 
     var volume: Float {
@@ -40,7 +43,6 @@ final class KeySoundsManager {
         if enabled {
             guard globalMonitor == nil else { return }
             setUpEngineIfNeeded()
-            try? engine.start()
             // Global monitor = typing in other apps (needs Accessibility / Input Monitoring);
             // local monitor = typing in PepBox itself.
             globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -55,6 +57,8 @@ final class KeySoundsManager {
             if let localMonitor { NSEvent.removeMonitor(localMonitor) }
             globalMonitor = nil
             localMonitor = nil
+            idleStop?.cancel()
+            idleStop = nil
             if isEngineSetUp { engine.stop() }
         }
     }
@@ -68,6 +72,15 @@ final class KeySoundsManager {
         nextPlayer = (nextPlayer + 1) % players.count
         player.scheduleBuffer(buffer, at: nil, options: .interrupts)
         if !player.isPlaying { player.play() }
+
+        idleStop?.cancel()
+        let stop = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.players.forEach { $0.stop() }
+            self.engine.pause()
+        }
+        idleStop = stop
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: stop)
     }
 
     private func setUpEngineIfNeeded() {

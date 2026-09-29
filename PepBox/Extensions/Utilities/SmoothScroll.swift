@@ -30,8 +30,18 @@ final class SmoothScrollController {
         enabled ? start() : stop()
     }
 
+    private var wantsEnabled = false
+
     private func start() {
-        guard tap == nil, AXIsProcessTrusted() else { return }
+        wantsEnabled = true
+        guard tap == nil else { return }
+        guard AXIsProcessTrusted() else {
+            // The event tap needs Accessibility; start as soon as it's granted.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                if self?.wantsEnabled == true { self?.start() }
+            }
+            return
+        }
         let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue)
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -56,6 +66,7 @@ final class SmoothScrollController {
     }
 
     private func stop() {
+        wantsEnabled = false
         if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
         if let runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
         tap = nil
