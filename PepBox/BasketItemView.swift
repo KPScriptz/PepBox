@@ -910,6 +910,16 @@ struct BasketItemView: View {
             }
         }
         
+        // Remove Location & Metadata - single image
+        if state.selectedBasketItems.count <= 1 && item.isImage {
+            Button {
+                stripMetadata()
+            } label: {
+                Label("Remove Location & Metadata", systemImage: "location.slash")
+            }
+            .disabled(isConverting)
+        }
+        
         // Remove Background - show when single image OR all selected are images
         if (state.selectedBasketItems.count <= 1 && item.isImage) || (state.selectedBasketItems.count > 1 && allSelectedAreImages && state.selectedBasketItems.contains(item.id)) {
             if AIInstallManager.shared.isInstalled {
@@ -1259,6 +1269,33 @@ struct BasketItemView: View {
                 await PepBoxAlertController.shared.showError(
                     title: "Conversion Failed",
                     message: "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                )
+            }
+        }
+    }
+    
+    /// Replaces the item with a copy that has no GPS, camera or date metadata.
+    private func stripMetadata() {
+        guard !isConverting else { return }
+        isConverting = true
+        state.beginFileOperation()
+        let source = item.url
+        Task.detached {
+            let cleaned = ImageMetadataStripper.strip(source)
+            await MainActor.run {
+                isConverting = false
+                state.endFileOperation()
+                if let cleaned {
+                    pendingConvertedItem = DroppedItem(url: cleaned, isTemporary: true)
+                    withAnimation(PepBoxAnimation.state) {
+                        isPoofing = true
+                    }
+                }
+            }
+            if cleaned == nil {
+                await PepBoxAlertController.shared.showError(
+                    title: "Couldn't Remove Metadata",
+                    message: "\(source.lastPathComponent) couldn't be read as an image."
                 )
             }
         }

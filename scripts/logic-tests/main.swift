@@ -3,6 +3,8 @@
 import Foundation
 import CoreAudio
 import AppKit
+import ImageIO
+import UniformTypeIdentifiers
 
 var failures = 0
 var checks = 0
@@ -37,6 +39,45 @@ let units: [(String, String?)] = [
 ]
 for (input, expected) in units {
     expect(QuickUnitConverter.convert(input), expected, "units \(input)")
+}
+
+// MARK: - Image metadata stripping
+
+do {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pepbox-strip-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let context = CGContext(data: nil, width: 40, height: 20, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    let image = context.makeImage()!
+    for type in [UTType.jpeg, .heic, .png] {
+        let input = dir.appendingPathComponent("photo").appendingPathExtension(type.preferredFilenameExtension!)
+        let destination = CGImageDestinationCreateWithURL(input as CFURL, type.identifier as CFString, 1, nil)!
+        let tagged: [CFString: Any] = [
+            kCGImagePropertyGPSDictionary: [kCGImagePropertyGPSLatitude: 32.78, kCGImagePropertyGPSLatitudeRef: "N"],
+            kCGImagePropertyExifDictionary: [kCGImagePropertyExifDateTimeOriginal: "2026:09:29 10:00:00", kCGImagePropertyExifLensModel: "Lens"],
+            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFModel: "Camera"],
+            kCGImagePropertyOrientation: 6
+        ]
+        CGImageDestinationAddImage(destination, image, tagged as CFDictionary)
+        CGImageDestinationFinalize(destination)
+
+        let name = type.preferredFilenameExtension!
+        guard let output = ImageMetadataStripper.strip(input, into: dir),
+              let source = CGImageSourceCreateWithURL(output as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else {
+            expect(false, true, "strip \(name) produced an image")
+            continue
+        }
+        let exif = properties[kCGImagePropertyExifDictionary] as? [CFString: Any] ?? [:]
+        let tiff = properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any] ?? [:]
+        expect(properties[kCGImagePropertyGPSDictionary] == nil, true, "strip \(name) GPS")
+        expect(exif[kCGImagePropertyExifDateTimeOriginal] == nil && exif[kCGImagePropertyExifLensModel] == nil, true, "strip \(name) EXIF")
+        expect(tiff[kCGImagePropertyTIFFModel] == nil, true, "strip \(name) camera model")
+        expect((properties[kCGImagePropertyOrientation] as? NSNumber)?.intValue, 6, "strip \(name) keeps orientation")
+        expect(output != input, true, "strip \(name) leaves the original")
+    }
+    expect(ImageMetadataStripper.strip(dir.appendingPathComponent("missing.jpg")) == nil, true, "strip missing file")
 }
 
 // MARK: - Currency conversion

@@ -12,5 +12,6 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/Extensions/NotchWidgets/EmojiPicker.swift" \
     "$ROOT/PepBox/Extensions/NotchWidgets/Obsidian.swift" \
     "$ROOT/PepBox/Lyrics/LyricsParser.swift" \
+    "$ROOT/PepBox/ImageMetadataStripper.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"
