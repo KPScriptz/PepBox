@@ -108,7 +108,8 @@ struct EmojiPickerNotchView: View {
         return EmojiCatalog.all.filter { $0.name.contains(trimmed) }
     }
 
-    private let columns = Array(repeating: GridItem(.fixed(30), spacing: 4), count: 14)
+    // Adaptive, so the grid fits the shelf's content width (~390 pt) instead of overflowing it.
+    private let columns = [GridItem(.adaptive(minimum: 30, maximum: 34), spacing: 4)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

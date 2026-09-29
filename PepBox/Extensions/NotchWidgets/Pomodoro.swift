@@ -222,10 +222,11 @@ struct PomodoroNotchView: View {
                     .help("Reset")
                 }
 
-                HStack(spacing: 6) {
-                    minuteStepper("Focus", value: $manager.focusMinutes)
-                    minuteStepper("Break", value: $manager.shortBreakMinutes)
-                    minuteStepper("Long", value: $manager.longBreakMinutes)
+                // Compact so ring + controls fit the shelf's ~390 pt content width.
+                HStack(spacing: 4) {
+                    minuteStepper(icon: "brain.head.profile", help: "Focus minutes", value: $manager.focusMinutes)
+                    minuteStepper(icon: "cup.and.saucer", help: "Break minutes", value: $manager.shortBreakMinutes)
+                    minuteStepper(icon: "bed.double", help: "Long break minutes", value: $manager.longBreakMinutes)
                 }
 
                 HStack(spacing: 4) {
@@ -243,18 +244,22 @@ struct PomodoroNotchView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func minuteStepper(_ label: String, value: Binding<Int>) -> some View {
+    private func minuteStepper(icon: String, help: String, value: Binding<Int>) -> some View {
         HStack(spacing: 2) {
-            Text("\(label) \(value.wrappedValue)m")
+            Image(systemName: icon)
+                .font(.system(size: 9))
+                .foregroundStyle(.white.opacity(0.55))
+            Text("\(value.wrappedValue)m")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.white.opacity(0.75))
                 .monospacedDigit()
             Stepper("", value: value, in: 1...120)
                 .labelsHidden()
                 .controlSize(.mini)
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 5)
         .padding(.vertical, 3)
         .background(Capsule().fill(.white.opacity(0.08)))
+        .help(help)
     }
 }
