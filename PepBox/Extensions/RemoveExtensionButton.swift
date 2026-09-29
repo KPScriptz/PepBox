@@ -129,6 +129,8 @@ struct DisableExtensionButton: View {
             return "This will return mouse wheels to normal line-by-line scrolling. You can enable it again later."
         case .eyeBreaks:
             return "This will stop the 20-20-20 break reminders. You can enable it again later."
+        case .downloadsActivity:
+            return "This will stop showing downloads beside the notch. You can enable it again later."
         }
     }
     

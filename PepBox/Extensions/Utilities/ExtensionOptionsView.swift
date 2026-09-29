@@ -35,7 +35,7 @@ struct ExtensionOptionsView: View {
     let extensionType: ExtensionType
 
     static func hasOptions(_ type: ExtensionType) -> Bool {
-        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks].contains(type)
+        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks, .downloadsActivity].contains(type)
     }
 
     var body: some View {
@@ -68,6 +68,8 @@ struct ExtensionOptionsView: View {
                     .foregroundStyle(.secondary)
             case .eyeBreaks:
                 EyeBreakOptions()
+            case .downloadsActivity:
+                DownloadsOptions()
             default:
                 EmptyView()
             }
@@ -130,5 +132,13 @@ private struct EyeBreakOptions: View {
     var body: some View {
         Stepper("Break every \(minutes) minutes", value: $minutes, in: 5...90, step: 5)
         Toggle("Play a sound at start and end", isOn: $sound)
+    }
+}
+
+private struct DownloadsOptions: View {
+    @AppStorage(DownloadsWatcher.addToShelfKey) private var addToShelf = true
+
+    var body: some View {
+        Toggle("Put finished downloads on the shelf", isOn: $addToShelf)
     }
 }

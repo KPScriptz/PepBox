@@ -806,6 +806,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "downloadsActivity",
+                iconPlaceholder: "arrow.down.circle",
+                iconPlaceholderColor: .blue,
+                title: "Download Progress",
+                subtitle: "Browser downloads beside the notch",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.downloadsActivity.isInstalled,
+                analyticsKey: "downloadsActivity",
+                extensionType: .downloadsActivity
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .downloadsActivity,
+                    onAction: { UtilityExtensionKind.downloadsActivity.install() },
+                    installCount: extensionCounts["downloadsActivity"],
+                    rating: extensionRatings["downloadsActivity"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

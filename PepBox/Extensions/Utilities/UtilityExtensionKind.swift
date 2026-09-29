@@ -16,6 +16,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case textActions
     case smoothScroll
     case eyeBreaks
+    case downloadsActivity
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -30,6 +31,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .textActions: return .textActions
         case .smoothScroll: return .smoothScroll
         case .eyeBreaks: return .eyeBreaks
+        case .downloadsActivity: return .downloadsActivity
         }
     }
 
@@ -56,6 +58,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .textActions: isAvailable ? TextActions.start() : TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(isAvailable)
         case .eyeBreaks: EyeBreakManager.shared.setEnabled(isAvailable)
+        case .downloadsActivity: DownloadsWatcher.shared.setEnabled(isAvailable)
         }
     }
 
@@ -67,6 +70,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .textActions: TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(false)
         case .eyeBreaks: EyeBreakManager.shared.setEnabled(false)
+        case .downloadsActivity: DownloadsWatcher.shared.setEnabled(false)
         }
     }
 

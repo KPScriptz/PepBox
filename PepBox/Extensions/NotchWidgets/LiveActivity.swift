@@ -32,6 +32,17 @@ struct LiveActivity: Equatable {
             )
         }
 
+        let downloads = DownloadsWatcher.shared
+        if UtilityExtensionKind.downloadsActivity.isAvailable, let active = downloads.active, let text = downloads.activityText {
+            return LiveActivity(
+                id: "download-\(active.name)",
+                icon: "arrow.down",
+                tint: .blue,
+                text: text,
+                progress: active.progress
+            )
+        }
+
         let pomodoro = PomodoroManager.shared
         if NotchWidgetKind.pomodoro.isAvailable, pomodoro.isRunning {
             return LiveActivity(
