@@ -18,6 +18,7 @@ struct QuickSearchResult: Identifiable {
         case answer(String)  // math or conversion; Enter copies it
         case startTimer(QuickTimerParser.Request)
         case cancelTimer(UUID)
+        case command(QuickCommand)
     }
 
     let id: String
@@ -29,6 +30,7 @@ struct QuickSearchResult: Identifiable {
         switch kind {
         case .startTimer: return "timer"
         case .cancelTimer: return "xmark.circle.fill"
+        case .command(let command): return command.symbol
         default: return "equal.circle.fill"
         }
     }
@@ -37,7 +39,7 @@ struct QuickSearchResult: Identifiable {
         switch kind {
         case .app(let url), .file(let url):
             return NSWorkspace.shared.icon(forFile: url.path)
-        case .answer, .startTimer, .cancelTimer:
+        case .answer, .startTimer, .cancelTimer, .command:
             return nil
         }
     }
@@ -115,6 +117,18 @@ final class QuickSearchModel {
             QuickSearchResult(id: url.path, title: name, subtitle: "Application", kind: .app(url))
         }
 
+        // Commands come after apps, so "sl" + Enter opens Slack rather than sleeping the Mac.
+        let running = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+            .compactMap { app in app.localizedName.map { ($0, app.processIdentifier) } }
+        list += QuickCommand.matches(text, runningApps: running).map {
+            QuickSearchResult(id: "command-\($0.title)", title: $0.title, subtitle: $0.subtitle, kind: .command($0))
+        }
+
+        // Web search is the fallback, so it stays last (after files arrive too).
+        let web = QuickCommand.webSearch(text)
+        list.append(QuickSearchResult(id: "web", title: web.title, subtitle: web.subtitle, kind: .command(web)))
+
         results = list
         startFileQuery(for: text)
     }
@@ -145,8 +159,11 @@ final class QuickSearchModel {
             let folder = (url.deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath
             return QuickSearchResult(id: path, title: url.lastPathComponent, subtitle: folder, kind: .file(url))
         }
-        let nonFiles = results.filter { if case .file = $0.kind { return false } else { return true } }
-        results = nonFiles + files
+        let nonFiles = results.filter { result in
+            if case .file = result.kind { return false }
+            return result.id != "web"
+        }
+        results = nonFiles + files + results.filter { $0.id == "web" }
         stopFileQuery()
     }
 
@@ -184,6 +201,8 @@ final class QuickSearchModel {
             QuickTimerManager.shared.start(request)
         case .cancelTimer(let id):
             QuickTimerManager.shared.cancel(id)
+        case .command(let command):
+            command.run()
         }
         return true
     }

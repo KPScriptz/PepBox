@@ -14,5 +14,6 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/Lyrics/LyricsParser.swift" \
     "$ROOT/PepBox/ImageMetadataStripper.swift" \
     "$ROOT/PepBox/QRCodePanel.swift" \
+    "$ROOT/PepBox/Extensions/Utilities/QuickCommands.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

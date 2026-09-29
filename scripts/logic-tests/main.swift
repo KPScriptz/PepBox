@@ -114,6 +114,24 @@ for text in ["https://pivotxp.com/booth?id=42", "Hello from PepBox ✨"] {
 expect(QRCodeGenerator.image(for: "") == nil, true, "QR empty text")
 expect(QRCodeGenerator.image(for: String(repeating: "x", count: 5000)) == nil, true, "QR too long")
 
+// MARK: - Quick Search commands
+
+let apps: [(String, pid_t)] = [("Safari", 10), ("Slack", 11), ("Spotify", 12), ("Finder", 13)]
+func titles(_ query: String) -> [String] { QuickCommand.matches(query, runningApps: apps).map(\.title) }
+expect(titles("lock"), ["Lock Screen"], "command lock")
+expect(titles("slee"), ["Sleep"], "command sleep prefix")
+expect(titles("restart"), ["Restart…"], "command restart")
+expect(titles("shut"), ["Shut Down…"], "command shut down")
+expect(titles("eject"), ["Eject All Disks"], "command eject")
+expect(titles("quit s"), ["Quit Safari", "Quit Slack", "Quit Spotify"], "command quit prefix")
+expect(titles("quit spo"), ["Quit Spotify"], "command quit narrow")
+expect(titles("quit "), [], "command quit without name")
+expect(titles("wi-fi"), ["Wi-Fi Settings"], "settings wifi")
+expect(titles("bluetooth settings"), ["Bluetooth Settings"], "settings suffix")
+expect(titles("security"), ["Privacy & Security Settings"], "settings second word")
+expect(titles("x"), [], "command too short")
+expect(titles("zzzz"), [], "command no match")
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]
