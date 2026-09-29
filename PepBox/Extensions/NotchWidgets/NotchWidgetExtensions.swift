@@ -158,3 +158,21 @@ struct UpNextExtension: ExtensionDefinition {
     static let iconPlaceholder = "calendar.badge.clock"
     static let iconPlaceholderColor: Color = .orange
 }
+
+struct ShortcutsWidgetExtension: ExtensionDefinition {
+    static let id = "shortcuts"
+    static let title = "Shortcuts"
+    static let subtitle = "Run Apple Shortcuts from the shelf"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .indigo
+    static let description = "Your favorite Apple Shortcuts one click from the shelf. Pin the ones you use, or drop files on a shortcut to run it with them as input: resize images, convert files, upload, whatever your shortcut does."
+    static let features: [(icon: String, text: String)] = [
+        ("play.fill", "Run any shortcut with one click"),
+        ("pin", "Pin the ones you use most"),
+        ("tray.and.arrow.down", "Drop files on a shortcut as its input")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "square.2.layers.3d.fill"
+    static let iconPlaceholderColor: Color = .indigo
+}

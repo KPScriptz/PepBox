@@ -680,6 +680,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "shortcuts",
+                iconPlaceholder: "square.2.layers.3d.fill",
+                iconPlaceholderColor: .indigo,
+                title: "Shortcuts",
+                subtitle: "Run Apple Shortcuts from the shelf",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.shortcuts.isInstalled,
+                analyticsKey: "shortcuts",
+                extensionType: .shortcuts
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .shortcuts,
+                    onAction: { NotchWidgetKind.shortcuts.install() },
+                    installCount: extensionCounts["shortcuts"],
+                    rating: extensionRatings["shortcuts"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

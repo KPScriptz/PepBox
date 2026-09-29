@@ -143,6 +143,7 @@ final class ExtensionRegistry {
         register(ObsidianExtension.self)
         register(SystemStatsExtension.self)
         register(UpNextExtension.self)
+        register(ShortcutsWidgetExtension.self)
         register(RingExtension.self)
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)
