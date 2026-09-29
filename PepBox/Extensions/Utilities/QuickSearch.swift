@@ -16,6 +16,8 @@ struct QuickSearchResult: Identifiable {
         case app(URL)
         case file(URL)
         case answer(String)  // math or conversion; Enter copies it
+        case startTimer(QuickTimerParser.Request)
+        case cancelTimer(UUID)
     }
 
     let id: String
@@ -23,11 +25,19 @@ struct QuickSearchResult: Identifiable {
     let subtitle: String
     let kind: Kind
 
+    var symbol: String {
+        switch kind {
+        case .startTimer: return "timer"
+        case .cancelTimer: return "xmark.circle.fill"
+        default: return "equal.circle.fill"
+        }
+    }
+
     var icon: NSImage? {
         switch kind {
         case .app(let url), .file(let url):
             return NSWorkspace.shared.icon(forFile: url.path)
-        case .answer:
+        case .answer, .startTimer, .cancelTimer:
             return nil
         }
     }
@@ -76,6 +86,19 @@ final class QuickSearchModel {
             list.append(QuickSearchResult(id: "unit", title: converted, subtitle: "\(text) · Enter to copy", kind: .answer(converted)))
         } else if let converted = QuickCurrencyConverter.convert(text, rates: QuickCurrencyRates.cached) {
             list.append(QuickSearchResult(id: "currency", title: converted, subtitle: "\(text) · daily rates · Enter to copy", kind: .answer(converted)))
+        }
+
+        if let request = QuickTimerParser.parse(text) {
+            let name = request.label.map { " for \($0)" } ?? ""
+            list.append(QuickSearchResult(id: "timer", title: "Start \(QuickTimerParser.format(request.seconds)) timer\(name)",
+                                          subtitle: "Counts down beside the notch · Enter to start", kind: .startTimer(request)))
+        }
+        if ["timer", "timers"].contains(text.lowercased()) {
+            let manager = QuickTimerManager.shared
+            list += manager.timers.map { timer in
+                QuickSearchResult(id: "cancel-\(timer.id)", title: "\(timer.title) · \(QuickTimerParser.format(manager.remaining(timer))) left",
+                                  subtitle: "Enter to cancel", kind: .cancelTimer(timer.id))
+            }
         }
 
         let lower = text.lowercased()
@@ -157,6 +180,10 @@ final class QuickSearchModel {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
             HapticFeedback.copy()
+        case .startTimer(let request):
+            QuickTimerManager.shared.start(request)
+        case .cancelTimer(let id):
+            QuickTimerManager.shared.cancel(id)
         }
         return true
     }
@@ -310,7 +337,7 @@ struct QuickSearchView: View {
                 if let icon = result.icon {
                     Image(nsImage: icon).resizable()
                 } else {
-                    Image(systemName: "equal.circle.fill").resizable().foregroundStyle(.orange)
+                    Image(systemName: result.symbol).resizable().foregroundStyle(.orange)
                 }
             }
             .frame(width: 28, height: 28)

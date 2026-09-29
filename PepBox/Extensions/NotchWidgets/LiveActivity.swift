@@ -32,6 +32,10 @@ struct LiveActivity: Equatable {
             )
         }
 
+        if UtilityExtensionKind.quickSearch.isAvailable, let timer = QuickTimerManager.shared.liveActivity {
+            return timer
+        }
+
         let downloads = DownloadsWatcher.shared
         if UtilityExtensionKind.downloadsActivity.isAvailable, let active = downloads.active, let text = downloads.activityText {
             return LiveActivity(

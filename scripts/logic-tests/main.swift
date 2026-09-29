@@ -80,6 +80,26 @@ do {
     expect(ImageMetadataStripper.strip(dir.appendingPathComponent("missing.jpg")) == nil, true, "strip missing file")
 }
 
+// MARK: - Quick timers
+
+let timers: [(String, QuickTimerParser.Request?)] = [
+    ("timer 5m", .init(seconds: 300, label: nil)),
+    ("timer 5", .init(seconds: 300, label: nil)),
+    ("timer 1h30m", .init(seconds: 5400, label: nil)),
+    ("timer 1h 30m tea", .init(seconds: 5400, label: "tea")),
+    ("timer 90 sec", .init(seconds: 90, label: nil)),
+    ("timer 4 min pasta water", .init(seconds: 240, label: "pasta water")),
+    ("25 min timer", .init(seconds: 1500, label: nil)),
+    ("Timer 2.5m", .init(seconds: 150, label: nil)),
+    ("timer", nil), ("timer pizza", nil), ("timer 0", nil), ("timer 48h", nil), ("5 km to mi", nil), ("time 5m", nil)
+]
+for (input, expected) in timers {
+    expect(QuickTimerParser.parse(input), expected, "timer \(input)")
+}
+expect(QuickTimerParser.format(65), "1:05", "timer format m:ss")
+expect(QuickTimerParser.format(3725), "1:02:05", "timer format h:mm:ss")
+expect(QuickTimerParser.format(0.4), "0:01", "timer format rounds up")
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

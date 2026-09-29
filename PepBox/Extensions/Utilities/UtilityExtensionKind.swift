@@ -134,11 +134,12 @@ struct QuickSearchExtension: ExtensionDefinition {
     static let subtitle = "Search bar for apps, files and math"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .teal
-    static let description = "Press ⌃⌥Space for a search bar: launch apps, open files from your home folder, do math (12*4, (3+2)^2), convert units (5 km to mi, 70 f to c, 2 gb in mb) and currencies ($20 to eur, 100 gbp in jpy, daily rates). Enter opens or copies; ⌘Enter shows a file in Finder."
+    static let description = "Press ⌃⌥Space for a search bar: launch apps, open files from your home folder, do math (12*4, (3+2)^2), convert units (5 km to mi, 70 f to c, 2 gb in mb) and currencies ($20 to eur, 100 gbp in jpy, daily rates), and start timers (timer 5m tea) that count down beside the notch. Enter opens or copies; ⌘Enter shows a file in Finder."
     static let features: [(icon: String, text: String)] = [
         ("app.badge", "Launch apps"),
         ("doc.text.magnifyingglass", "Find files by name"),
         ("plus.forwardslash.minus", "Math, units and currency, Enter copies"),
+        ("timer", "Timers beside the notch: \"timer 10m pizza\""),
         ("keyboard", "Arrow keys to pick, Esc to close")
     ]
     static var screenshotURL: URL? { nil }

@@ -208,3 +208,89 @@ enum QuickCurrencyRates {
         }.resume()
     }
 }
+
+// MARK: - Timers ("timer 5m", "timer 1h30m tea", "25 min timer")
+
+enum QuickTimerParser {
+    struct Request: Equatable {
+        let seconds: TimeInterval
+        let label: String?
+    }
+
+    /// Accepts "timer <duration> [label]" or "<duration> timer". A bare number means minutes.
+    static func parse(_ input: String) -> Request? {
+        let words = input.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
+        guard words.count >= 2 else { return nil }
+        var rest: [String]
+        if words.first == "timer" {
+            rest = Array(words.dropFirst())
+        } else if words.last == "timer" {
+            rest = Array(words.dropLast())
+        } else {
+            return nil
+        }
+
+        // Consume duration tokens from the front ("1h", "30m", "1", "h", "90 sec"); the rest is a label.
+        var seconds: TimeInterval = 0
+        var consumed = 0
+        var pendingNumber: Double?
+        let unitPattern = try! NSRegularExpression(pattern: #"^(\d+(?:\.\d+)?)?([a-z]*)$"#)
+        tokens: for token in rest {
+            for part in splitNumberRuns(token) {
+                let range = NSRange(part.startIndex..., in: part)
+                guard let match = unitPattern.firstMatch(in: part, range: range) else { break tokens }
+                let number = Range(match.range(at: 1), in: part).flatMap { Double(part[$0]) }
+                let unit = Range(match.range(at: 2), in: part).map { String(part[$0]) } ?? ""
+                if let number, unit.isEmpty {
+                    if let pending = pendingNumber { seconds += pending * 60 }
+                    pendingNumber = number
+                } else if let multiplier = multiplier(for: unit) {
+                    guard let value = number ?? pendingNumber else { break tokens }
+                    seconds += value * multiplier
+                    pendingNumber = nil
+                } else {
+                    break tokens
+                }
+            }
+            consumed += 1
+        }
+        if let pending = pendingNumber { seconds += pending * 60 }
+        guard seconds >= 1, seconds <= 24 * 3600 else { return nil }
+        let label = rest.dropFirst(consumed).joined(separator: " ")
+        return Request(seconds: seconds.rounded(), label: label.isEmpty ? nil : label)
+    }
+
+    /// "1h30m" → ["1h", "30m"].
+    private static func splitNumberRuns(_ token: String) -> [String] {
+        var parts: [String] = []
+        var current = ""
+        var inUnit = false
+        for character in token {
+            let isDigit = character.isNumber || character == "."
+            if isDigit && inUnit {
+                parts.append(current)
+                current = ""
+                inUnit = false
+            }
+            if !isDigit { inUnit = true }
+            current.append(character)
+        }
+        if !current.isEmpty { parts.append(current) }
+        return parts
+    }
+
+    private static func multiplier(for unit: String) -> TimeInterval? {
+        switch unit {
+        case "h", "hr", "hrs", "hour", "hours": return 3600
+        case "m", "min", "mins", "minute", "minutes": return 60
+        case "s", "sec", "secs", "second", "seconds": return 1
+        default: return nil
+        }
+    }
+
+    static func format(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded(.up))
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+    }
+}
