@@ -31,5 +31,16 @@ Third-party code added in PepBox:
   Packages/TextActionsKit/Legal and ship inside the app; PepBox's changes to
   DropClip are listed in Packages/TextActionsKit/PEPBOX_CHANGES.md.
 
+Code derived from Atoll:
+- Parallax3DModifier.swift, LockScreenManager.swift,
+  TemporaryFileStorageService.swift, BrightnessManager.swift,
+  VolumeManager.swift and MediaKeyInterceptor.swift contain code derived
+  from Atoll (DynamicIsland), https://github.com/Ebullioscopic/Atoll,
+  Copyright (C) 2024-2026 Atoll Contributors, licensed under the GNU General
+  Public License v3 (some of it originally from boring.notch). Each file
+  carries Atoll's copyright notice and the GPL v3 header, as requested in
+  the DMCA notice github/dmca 2026-02-10-atoll.md that removed the upstream
+  Droppy repository.
+
 "Droppy" and the Droppy logo are trademarks of Jordy Spruit. PepBox is not
 affiliated with or endorsed by the Droppy project.
