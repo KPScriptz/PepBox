@@ -132,6 +132,43 @@ expect(titles("security"), ["Privacy & Security Settings"], "settings second wor
 expect(titles("x"), [], "command too short")
 expect(titles("zzzz"), [], "command no match")
 
+// MARK: - Agents log parsing
+
+do {
+    func json(_ object: Any) -> String { String(decoding: try! JSONSerialization.data(withJSONObject: object), as: UTF8.self) }
+    let prompt = json(["type": "user", "cwd": "/Users/me/PepBox", "timestamp": "2026-09-29T10:00:00.000Z", "message": ["role": "user", "content": "fix the bug"]])
+    let edit = json(["type": "assistant", "cwd": "/Users/me/PepBox", "message": ["role": "assistant", "stop_reason": "tool_use",
+        "content": [["type": "tool_use", "name": "Edit", "input": ["file_path": "/Users/me/PepBox/App.swift"]]]]])
+    let result = json(["type": "user", "message": ["role": "user", "content": [["type": "tool_result", "content": "ok"]]]])
+    let bash = json(["type": "assistant", "message": ["role": "assistant", "content": [["type": "tool_use", "name": "Bash", "input": ["command": "xcodebuild -scheme X", "description": "Build the app"]]]]])
+    let sidechain = json(["type": "assistant", "isSidechain": true, "message": ["role": "assistant", "content": [["type": "tool_use", "name": "Read", "input": ["file_path": "/x/Secret.swift"]]]]])
+    let done = json(["type": "assistant", "message": ["role": "assistant", "stop_reason": "end_turn", "content": [["type": "text", "text": "All fixed."]]]])
+
+    let running = AgentTranscriptParser.parseClaude([prompt, edit, result, bash, sidechain])
+    expect(running?.project, "PepBox", "agents project from cwd")
+    expect(running?.state, .tool("Build the app"), "agents current tool uses Bash description")
+    expect(running?.tools, ["Edit App.swift", "Build the app"], "agents tool list, sidechain skipped")
+    expect(running?.toolCount, 2, "agents tool count")
+    expect(running?.editCount, 1, "agents edit count")
+    expect(running?.promptStart != nil, true, "agents prompt time")
+    expect(AgentTranscriptParser.parseClaude([prompt, edit, result, done])?.state, .done, "agents end_turn is done")
+    expect(AgentTranscriptParser.parseClaude([prompt, edit, result, done, prompt])?.toolCount, 0, "agents new prompt resets")
+    expect(AgentTranscriptParser.parseClaude(["not json", ""]) == nil, true, "agents garbage")
+    expect(AgentTranscriptParser.toolLabel(name: "mcp__github__create_issue", input: [:]), "create issue", "agents MCP label")
+
+    let codex = [
+        json(["type": "session_meta", "payload": ["cwd": "/Users/me/site"]]),
+        json(["type": "event_msg", "timestamp": "2026-09-29T10:00:00.000Z", "payload": ["type": "user_message", "message": "go"]]),
+        json(["type": "response_item", "payload": ["type": "function_call", "name": "exec_command", "arguments": "{\"cmd\":\"npm test\"}"]]),
+        json(["type": "response_item", "payload": ["type": "custom_tool_call", "name": "apply_patch", "input": "*** Begin Patch\n*** Update File: /Users/me/site/index.html\n"]])
+    ]
+    let codexSnapshot = AgentTranscriptParser.parseCodex(codex)
+    expect(codexSnapshot?.project, "site", "codex project from session_meta")
+    expect(codexSnapshot?.tools, ["Run npm", "Edit index.html"], "codex tool labels")
+    expect(codexSnapshot?.editCount, 1, "codex edits")
+    expect(AgentTranscriptParser.parseCodex(codex + [json(["type": "event_msg", "payload": ["type": "task_complete"]])])?.state, .done, "codex done")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

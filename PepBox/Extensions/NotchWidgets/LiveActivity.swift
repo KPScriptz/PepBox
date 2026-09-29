@@ -36,6 +36,10 @@ struct LiveActivity: Equatable {
             return timer
         }
 
+        if NotchWidgetKind.agents.isAvailable, let agent = AgentsMonitor.shared.liveActivity {
+            return agent
+        }
+
         let downloads = DownloadsWatcher.shared
         if UtilityExtensionKind.downloadsActivity.isAvailable, let active = downloads.active, let text = downloads.activityText {
             return LiveActivity(

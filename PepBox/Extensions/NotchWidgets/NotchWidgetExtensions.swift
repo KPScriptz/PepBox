@@ -176,3 +176,22 @@ struct ShortcutsWidgetExtension: ExtensionDefinition {
     static let iconPlaceholder = "square.2.layers.3d.fill"
     static let iconPlaceholderColor: Color = .indigo
 }
+
+struct AgentsExtension: ExtensionDefinition {
+    static let id = "agents"
+    static let title = "Agents"
+    static let subtitle = "Claude Code and Codex progress in the notch"
+    static let category: ExtensionGroup = .ai
+    static let categoryColor: Color = .orange
+    static let description = "See what your coding agent is doing without switching windows: the current tool call beside the notch (\"Edit Agents.swift\", \"Run xcodebuild\"), a yellow \"Needs you\" when it's waiting for approval, and \"Done\" when the turn ends. The shelf panel adds tool-call and edit counts and the time this turn has taken. Reads the agents' session logs on this Mac only; nothing leaves your computer."
+    static let features: [(icon: String, text: String)] = [
+        ("sparkle", "Claude Code and Codex, detected automatically"),
+        ("hand.raised.fill", "\"Needs you\" when a tool call waits for approval"),
+        ("list.bullet", "Recent tool calls, edits and turn time"),
+        ("lock.shield", "Local logs only, no network")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "sparkle"
+    static let iconPlaceholderColor: Color = .orange
+}

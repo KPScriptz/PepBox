@@ -79,12 +79,16 @@ enum UtilityExtensionKind: String, CaseIterable {
     /// Called at launch: start what's installed and follow later Turn On / Turn Off changes.
     static func startAll() {
         allCases.forEach { $0.applyState() }
+        AgentsMonitor.shared.sync()
         guard stateObserver == nil else { return }
         stateObserver = NotificationCenter.default.addObserver(
             forName: .extensionStateChanged, object: nil, queue: .main
         ) { _ in
             // Let the Store finish updating the removed flag first.
-            DispatchQueue.main.async { allCases.forEach { $0.applyState() } }
+            DispatchQueue.main.async {
+                allCases.forEach { $0.applyState() }
+                AgentsMonitor.shared.sync()
+            }
         }
     }
 }

@@ -698,6 +698,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "agents",
+                iconPlaceholder: "sparkle",
+                iconPlaceholderColor: .orange,
+                title: "Agents",
+                subtitle: "Claude Code and Codex progress in the notch",
+                category: .ai,
+                isInstalled: NotchWidgetKind.agents.isInstalled,
+                analyticsKey: "agents",
+                extensionType: .agents
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .agents,
+                    onAction: { NotchWidgetKind.agents.install() },
+                    installCount: extensionCounts["agents"],
+                    rating: extensionRatings["agents"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

@@ -19,6 +19,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case systemStats
     case upNext
     case shortcuts
+    case agents
 
     var id: String { rawValue }
 
@@ -38,6 +39,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .systemStats: return .systemStats
         case .upNext: return .upNext
         case .shortcuts: return .shortcuts
+        case .agents: return .agents
         }
     }
 
@@ -54,6 +56,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .systemStats: return "gauge.with.dots.needle.67percent"
         case .upNext: return "calendar.badge.clock"
         case .shortcuts: return "square.2.layers.3d.fill"
+        case .agents: return "sparkle"
         }
     }
 
@@ -68,6 +71,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .systemStats: return .teal
         case .upNext: return .orange
         case .shortcuts: return .indigo
+        case .agents: return .orange
         }
     }
 
@@ -103,6 +107,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         UserDefaults.standard.set(true, forKey: installedKey)
         extensionType.setRemoved(false)
         NotificationCenter.default.post(name: .extensionStateChanged, object: extensionType)
+        AgentsMonitor.shared.sync()
     }
 
     func cleanup() {
@@ -110,6 +115,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .pomodoro: PomodoroManager.shared.reset()
         case .teleprompter: TeleprompterManager.shared.pause()
         case .appVolume: AppVolumeManager.shared.resetAll()
+        case .agents: AgentsMonitor.shared.setEnabled(false)
         case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext, .shortcuts: break
         }
     }
@@ -142,6 +148,8 @@ struct NotchWidgetPanel: View {
                 UpNextNotchView(calendar: UpNextCalendar.shared, weather: UpNextWeather.shared)
             case .shortcuts:
                 ShortcutsNotchView(manager: ShortcutsWidgetManager.shared)
+            case .agents:
+                AgentsNotchView(monitor: AgentsMonitor.shared)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
