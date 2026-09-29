@@ -99,10 +99,11 @@ struct RingExtension: ExtensionDefinition {
     static let subtitle = "Actions in a circle at your cursor"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .purple
-    static let description = "Press ⌥⇧Space to open a ring of quick actions right where your pointer is: clipboard, shelf, basket, screenshot to shelf, color picker, Pomodoro, keep awake and settings."
+    static let description = "Press ⌥⇧Space to open a ring of quick actions right where your pointer is: clipboard, shelf, basket, screenshot to shelf, grab text from the screen, color picker, Pomodoro, keep awake and settings."
     static let features: [(icon: String, text: String)] = [
         ("circle.dashed", "Opens at the pointer with ⌥⇧Space"),
         ("camera.viewfinder", "Screenshot straight onto the shelf"),
+        ("text.viewfinder", "Grab Text: select an area, its text is copied"),
         ("eyedropper", "Pick any color on screen, copied as hex"),
         ("escape", "Esc or click away to close")
     ]

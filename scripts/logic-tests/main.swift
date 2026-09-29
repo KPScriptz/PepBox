@@ -129,6 +129,8 @@ expect(titles("quit "), [], "command quit without name")
 expect(titles("wi-fi"), ["Wi-Fi Settings"], "settings wifi")
 expect(titles("bluetooth settings"), ["Bluetooth Settings"], "settings suffix")
 expect(titles("security"), ["Privacy & Security Settings"], "settings second word")
+expect(titles("ocr"), ["Copy Text from Screen"], "command ocr")
+expect(titles("grab"), ["Copy Text from Screen"], "command grab text")
 expect(titles("x"), [], "command too short")
 expect(titles("zzzz"), [], "command no match")
 

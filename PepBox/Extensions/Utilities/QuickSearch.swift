@@ -201,6 +201,9 @@ final class QuickSearchModel {
             QuickTimerManager.shared.start(request)
         case .cancelTimer(let id):
             QuickTimerManager.shared.cancel(id)
+        case .command(.grabText):
+            // Let the search panel close before the capture crosshair appears.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { ScreenTextGrabber.start() }
         case .command(let command):
             command.run()
         }

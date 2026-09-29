@@ -111,6 +111,9 @@ final class RingMenuController {
             RingAction(id: "screenshot", title: "Screenshot", icon: "camera.viewfinder", tint: .teal) {
                 RingMenuController.screenshotToShelf()
             },
+            RingAction(id: "grabText", title: "Grab Text", icon: "text.viewfinder", tint: .mint) {
+                ScreenTextGrabber.start()
+            },
             RingAction(id: "color", title: "Color", icon: "eyedropper", tint: .pink) {
                 NSColorSampler().show { color in
                     guard let hex = color?.usingColorSpace(.sRGB).map(RingMenuController.hexString) else { return }

@@ -15,6 +15,7 @@ enum QuickCommand: Equatable {
     case shutDown
     case logOut
     case ejectAll
+    case grabText
     case quitApp(name: String, pid: pid_t)
     case settings(name: String, pane: String)
     case webSearch(String)
@@ -27,6 +28,7 @@ enum QuickCommand: Equatable {
         case .shutDown: return "Shut Down…"
         case .logOut: return "Log Out…"
         case .ejectAll: return "Eject All Disks"
+        case .grabText: return "Copy Text from Screen"
         case .quitApp(let name, _): return "Quit \(name)"
         case .settings(let name, _): return "\(name) Settings"
         case .webSearch(let text): return "Search the web for “\(text)”"
@@ -38,6 +40,7 @@ enum QuickCommand: Equatable {
         case .restart, .shutDown, .logOut: return "Command · macOS asks to confirm"
         case .settings: return "System Settings"
         case .webSearch: return "Opens in your browser"
+        case .grabText: return "Select an area; its text is copied"
         default: return "Command"
         }
     }
@@ -50,6 +53,7 @@ enum QuickCommand: Equatable {
         case .shutDown: return "power"
         case .logOut: return "rectangle.portrait.and.arrow.right"
         case .ejectAll: return "eject.fill"
+        case .grabText: return "text.viewfinder"
         case .quitApp: return "xmark.app.fill"
         case .settings: return "gearshape.fill"
         case .webSearch: return "globe"
@@ -64,7 +68,8 @@ enum QuickCommand: Equatable {
         (.restart, ["restart", "reboot"]),
         (.shutDown, ["shut down", "shutdown", "power off"]),
         (.logOut, ["log out", "logout", "sign out"]),
-        (.ejectAll, ["eject", "eject all", "eject disks"])
+        (.ejectAll, ["eject", "eject all", "eject disks"]),
+        (.grabText, ["ocr", "grab text", "copy text", "text from screen", "scan text"])
     ]
 
     /// Settings pages by name → pane identifier for x-apple.systempreferences.
@@ -157,6 +162,8 @@ enum QuickCommand: Equatable {
                     try? NSWorkspace.shared.unmountAndEjectDevice(at: volume)
                 }
             }
+        case .grabText:
+            break  // Quick Search starts ScreenTextGrabber itself once its panel has closed.
         case .quitApp(_, let pid):
             NSRunningApplication(processIdentifier: pid)?.terminate()
         case .settings(_, let pane):
