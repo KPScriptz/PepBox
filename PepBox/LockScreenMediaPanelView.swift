@@ -18,7 +18,8 @@ struct LockScreenMediaPanelView: View {
     
     // MARK: - Layout Constants (pixel-perfect, synced with Manager)
     private let panelWidth: CGFloat = 380
-    private let panelHeight: CGFloat = 160
+    /// Must match LockScreenMediaPanelManager.panelHeight (160 + the widgets row).
+    private let panelHeight: CGFloat = 188
     private let cornerRadius: CGFloat = 24
     private let edgePadding: CGFloat = 16
     private let albumArtSize: CGFloat = 56
@@ -130,6 +131,9 @@ struct LockScreenMediaPanelView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                // Row 4: lock screen widgets (battery, running Pomodoro, High Alert)
+                LockScreenWidgetsRow()
             }
             .padding(edgePadding)
             .frame(width: panelWidth, height: panelHeight)
@@ -224,4 +228,49 @@ private struct VisualEffectView: NSViewRepresentable {
             .environmentObject(MusicManager.shared)
     }
     .frame(width: 500, height: 300)
+}
+
+/// Small status pills under the lock screen player.
+private struct LockScreenWidgetsRow: View {
+    @ObservedObject private var battery = BatteryManager.shared
+    private var pomodoro: PomodoroManager { PomodoroManager.shared }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            pill(
+                icon: battery.isCharging ? "battery.100.bolt" : batteryIcon,
+                text: "\(battery.batteryLevel)%",
+                tint: battery.isLowBattery && !battery.isCharging ? .red : .white
+            )
+            if NotchWidgetKind.pomodoro.isAvailable, pomodoro.isRunning {
+                pill(icon: "timer", text: "\(pomodoro.phase.title) \(pomodoro.formattedRemaining)", tint: pomodoro.phase.tint)
+            }
+            if CaffeineManager.shared.isActive {
+                pill(icon: "eyes", text: "Awake", tint: .orange)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var batteryIcon: String {
+        switch battery.batteryLevel {
+        case ..<13: return "battery.0"
+        case ..<38: return "battery.25"
+        case ..<63: return "battery.50"
+        case ..<88: return "battery.75"
+        default: return "battery.100"
+        }
+    }
+
+    private func pill(icon: String, text: String, tint: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+            Text(text).monospacedDigit()
+        }
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(tint.opacity(0.9))
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(.white.opacity(0.1)))
+    }
 }
