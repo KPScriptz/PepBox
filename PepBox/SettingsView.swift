@@ -1289,7 +1289,7 @@ struct SettingsView: View {
                                         .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
                                         .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                                 }
-                                Text("Show quick action drop buttons under Shelf and Basket (AirDrop, Messages, Mail)")
+                                Text("Drop buttons under Shelf and Basket: AirDrop, Messages, Mail, ZIP and more")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -1305,6 +1305,8 @@ struct SettingsView: View {
                     }
 
                     if enableQuickActions {
+                        QuickActionsPicker()
+
                         nativePickerRow(
                             title: "Mail App",
                             subtitle: "Choose which app opens for the Mail quick action"
@@ -5893,5 +5895,40 @@ struct AppPickerRow: View {
         .background(isHovering ? AdaptiveColors.overlayAuto(0.05) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.small, style: .continuous))
         .onHover { isHovering = $0 }
+    }
+}
+
+/// Choose which drop buttons appear in the Shelf and Basket quick actions bar.
+struct QuickActionsPicker: View {
+    @State private var enabled = QuickActionType.isEnabledList
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Buttons")
+            Text("Drag files onto a button, or click it to use everything on the shelf")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            ForEach(QuickActionType.allCases) { action in
+                Toggle(isOn: Binding(
+                    get: { enabled.contains(action) },
+                    set: { isOn in
+                        QuickActionType.setEnabled(action, isOn)
+                        enabled = QuickActionType.isEnabledList
+                    }
+                )) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(action.title)
+                            Text(action.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: action.icon)
+                    }
+                }
+                .disabled(enabled.contains(action) && enabled.count == 1)
+            }
+        }
     }
 }

@@ -22,7 +22,7 @@ struct BasketQuickActionsBar: View {
     
     private let buttonSize: CGFloat = 48
     private let spacing: CGFloat = 12
-    private var isQuickshareEnabled: Bool { !ExtensionType.quickshare.isRemoved }
+    @State private var actions = QuickActionType.enabled
     
     // Colors based on transparency mode
     private var buttonFill: Color {
@@ -32,7 +32,7 @@ struct BasketQuickActionsBar: View {
     
     /// Computed width of expanded bar area: 4 buttons + 3 gaps
     private var expandedBarWidth: CGFloat {
-        let actionCount = isQuickshareEnabled ? 4 : 3
+        let actionCount = max(1, actions.count)
         return (buttonSize * CGFloat(actionCount)) + (spacing * CGFloat(actionCount - 1)) + 16
     }
     
@@ -73,11 +73,10 @@ struct BasketQuickActionsBar: View {
             ZStack {
                 // Keep quick-action buttons mounted to avoid NSViewRepresentable transition ghosting.
                 HStack(spacing: spacing) {
-                    QuickDropActionButton(actionType: .airdrop, basketState: basketState, useTransparent: useTransparentBackground, shareAction: shareViaAirDrop)
-                    QuickDropActionButton(actionType: .messages, basketState: basketState, useTransparent: useTransparentBackground, shareAction: shareViaMessages)
-                    QuickDropActionButton(actionType: .mail, basketState: basketState, useTransparent: useTransparentBackground, shareAction: shareViaMail)
-                    if isQuickshareEnabled {
-                        QuickDropActionButton(actionType: .quickshare, basketState: basketState, useTransparent: useTransparentBackground, shareAction: quickShareTo0x0)
+                    ForEach(actions) { action in
+                        QuickDropActionButton(actionType: action, basketState: basketState, useTransparent: useTransparentBackground) { urls in
+                            action.perform(urls) { hideBasketAfterShare(action) }
+                        }
                     }
                 }
                 .opacity(isExpanded ? 1 : 0)
@@ -112,6 +111,9 @@ struct BasketQuickActionsBar: View {
             .frame(width: isExpanded ? expandedBarWidth : buttonSize, height: buttonSize + 14)
         }
         .animation(PepBoxAnimation.state, value: isExpanded)
+        .onReceive(NotificationCenter.default.publisher(for: .quickActionsChanged)) { _ in
+            actions = QuickActionType.enabled
+        }
         .onHover { hovering in
             isHovering = hovering
         }
@@ -169,34 +171,12 @@ struct BasketQuickActionsBar: View {
     
     // MARK: - Share Actions
     
-    private func shareViaAirDrop(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        NSSharingService(named: .sendViaAirDrop)?.perform(withItems: urls)
+    /// Sharing hands the files to another app, so the basket gets out of the way.
+    /// Local actions (ZIP, Copy) keep it open so the result stays in view.
+    private func hideBasketAfterShare(_ action: QuickActionType) {
+        guard action != .zip && action != .copy else { return }
         basketState.ownerController?.hideBasketPreservingState()
             ?? FloatingBasketWindowController.shared.hideBasket(preserveState: true)
-    }
-    
-    private func shareViaMessages(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        NSSharingService(named: .composeMessage)?.perform(withItems: urls)
-        basketState.ownerController?.hideBasketPreservingState()
-            ?? FloatingBasketWindowController.shared.hideBasket(preserveState: true)
-    }
-    
-    private func shareViaMail(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        _ = MailHelper.composeEmail(with: urls)
-        basketState.ownerController?.hideBasketPreservingState()
-            ?? FloatingBasketWindowController.shared.hideBasket(preserveState: true)
-    }
-    
-    /// PepBox Quickshare - uploads files to 0x0.st and copies shareable link to clipboard
-    /// Multiple files are automatically zipped into a single archive
-    private func quickShareTo0x0(_ urls: [URL]) {
-        PepBoxQuickshare.share(urls: urls) {
-            basketState.ownerController?.hideBasketPreservingState()
-                ?? FloatingBasketWindowController.shared.hideBasket(preserveState: true)
-        }
     }
 }
 
