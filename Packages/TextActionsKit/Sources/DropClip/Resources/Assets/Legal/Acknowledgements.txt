@@ -1,0 +1,21 @@
+Text Actions in PepBox is DropClip, ported to run without Droppy.
+
+DropClip
+  Copyright (c) 2026 Ganesh M and OpenClip Contributors
+  Copyright (c) 2026 Jordy Spruit (DropClip)
+  MIT License - see DropClip-LICENSE.txt, DropClip-NOTICE.md, DropClip-PROVENANCE.md
+  Source: https://gitlab.com/droppyformac1/droplets/-/tree/main/droplets/dropclip
+  Based on OpenClip by Ganesh M, taken while OpenClip was MIT licensed.
+
+OpenSelection
+  Copyright 2026 Ganesh M
+  Apache License 2.0 - see OpenSelection-LICENSE.txt and OpenSelection-NOTICE.txt
+
+KeyboardShortcuts (part re-implemented by DropClip)
+  Copyright (c) Sindre Sorhus
+  MIT License - see KeyboardShortcuts-LICENSE.txt
+
+PepBox changes: the Droppy host layer (DroppyKit, a proprietary SDK) is replaced by
+Sources/DropClip/PepBox/, Droppy settings pages/shortcuts/migration are removed, and
+user-facing text no longer refers to Droppy. Changed files are listed in
+Packages/TextActionsKit/PEPBOX_CHANGES.md in the PepBox repository.

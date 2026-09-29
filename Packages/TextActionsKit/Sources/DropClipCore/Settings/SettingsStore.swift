@@ -1,0 +1,103 @@
+// SettingsStore.swift
+// DropClip
+//
+// Defines the central SettingsStore protocol and DefaultSettingsStore adapter for typed application configuration management through the Settings Door.
+import Foundation
+import Combine
+
+public protocol SettingsStore: AnyObject, Sendable {
+    func get<T>(_ key: SettingKey<T>) -> T
+    func set<T>(_ key: SettingKey<T>, value: T)
+    func publisher<T>(for key: SettingKey<T>) -> AnyPublisher<T, Never>
+    /// Change-tracking info for a key, or `nil` if it was never written through this store
+    /// (e.g. data written before metadata existed).
+    func metadata<T>(for key: SettingKey<T>) -> SettingMetadata?
+    /// Raw stored value, bypassing typed decoding. Escape hatch for storage owned by a third-party
+    /// component (e.g. a keyboard-shortcut library that mixes String and Bool encodings under one
+    /// key); prefer typed `get`/`set` for everything else.
+    func rawObject(forKey name: String) -> Any?
+    /// Writes a raw value (or removes the key when `nil`). Counterpart to `rawObject(forKey:)`.
+    func setRawObject(_ value: Any?, forKey name: String)
+}
+
+public final class DefaultSettingsStore: SettingsStore, @unchecked Sendable {
+    public static let shared = DefaultSettingsStore(backend: UserDefaultsBackend())
+    private let backend: SettingsBackend
+    // Combine's PassthroughSubject is not thread-safe: `set` may be called from any thread, so all
+    // sends are serialized under `lock`. The backend is thread-safe, so `get`/`set` reads
+    // and writes stay unlocked. Using a recursive lock allows subscribers to call `set` during
+    // notification dispatch without deadlocking.
+    private let lock = NSRecursiveLock()
+    private let subject = PassthroughSubject<String, Never>()
+
+    public init(backend: SettingsBackend) {
+        self.backend = backend
+    }
+
+    public convenience init(userDefaults: UserDefaults = .dropclip) {
+        self.init(backend: UserDefaultsBackend(userDefaults: userDefaults))
+    }
+
+    public func get<T>(_ key: SettingKey<T>) -> T {
+        // All branches use conditional casts and fall back to key.defaultValue: stored
+        // preferences can be missing, corrupted, or hold an unexpected type, and setting
+        // retrieval must never crash the host process.
+        if T.self == Set<String>.self {
+            let array = backend.stringArray(forKey: key.name) ?? []
+            return (Set(array) as? T) ?? key.defaultValue
+        }
+        if T.self == Data?.self {
+            return (backend.data(forKey: key.name) as? T) ?? key.defaultValue
+        }
+        return (backend.object(forKey: key.name) as? T) ?? key.defaultValue
+    }
+
+    public func set<T>(_ key: SettingKey<T>, value: T) {
+        lock.lock()
+        defer { lock.unlock() }
+        if let setVal = value as? Set<String> {
+            backend.set(Array(setVal), forKey: key.name)
+        } else {
+            backend.set(value, forKey: key.name)
+        }
+        var metadata = loadMetadataLocked()
+        metadata[key.name] = SettingMetadata(version: key.schemaVersion, lastModified: Date())
+        saveMetadataLocked(metadata)
+        subject.send(key.name)
+    }
+
+    public func metadata<T>(for key: SettingKey<T>) -> SettingMetadata? {
+        lock.lock()
+        defer { lock.unlock() }
+        return loadMetadataLocked()[key.name]
+    }
+
+    public func rawObject(forKey name: String) -> Any? {
+        lock.lock()
+        defer { lock.unlock() }
+        return backend.object(forKey: name)
+    }
+
+    public func setRawObject(_ value: Any?, forKey name: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        backend.set(value, forKey: name)
+    }
+
+    private func loadMetadataLocked() -> [String: SettingMetadata] {
+        guard let data = backend.data(forKey: SettingMetadata.storageKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: SettingMetadata].self, from: data)) ?? [:]
+    }
+
+    private func saveMetadataLocked(_ metadata: [String: SettingMetadata]) {
+        guard let data = try? JSONEncoder().encode(metadata) else { return }
+        backend.set(data, forKey: SettingMetadata.storageKey)
+    }
+
+    public func publisher<T>(for key: SettingKey<T>) -> AnyPublisher<T, Never> {
+        subject
+            .filter { $0 == key.name }
+            .map { [weak self] _ in self?.get(key) ?? key.defaultValue }
+            .eraseToAnyPublisher()
+    }
+}

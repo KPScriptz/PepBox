@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import DropClip
 
 enum UtilityExtensionKind: String, CaseIterable {
     case ring
@@ -50,7 +51,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .ring: RingMenuController.shared.setEnabled(isAvailable)
         case .keySounds: KeySoundsManager.shared.setEnabled(isAvailable)
         case .quickSearch: QuickSearchController.shared.setEnabled(isAvailable)
-        case .textActions: TextActionsController.shared.setEnabled(isAvailable)
+        case .textActions: isAvailable ? TextActions.start() : TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(isAvailable)
         }
     }
@@ -60,7 +61,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .ring: RingMenuController.shared.setEnabled(false)
         case .keySounds: KeySoundsManager.shared.setEnabled(false)
         case .quickSearch: QuickSearchController.shared.setEnabled(false)
-        case .textActions: TextActionsController.shared.setEnabled(false)
+        case .textActions: TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(false)
         }
     }
@@ -145,12 +146,13 @@ struct TextActionsExtension: ExtensionDefinition {
     static let subtitle = "Action bar for selected text"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .cyan
-    static let description = "Select text in any app and a small bar appears: copy, search the web, translate, look it up in Dictionary, read it aloud or drop it on the shelf as a text file. Needs Accessibility; your clipboard isn't touched and password fields are ignored."
+    static let description = "Select text anywhere and a pill appears beside it: copy, search, translate, AI rewrite with your own provider or an on-device model, and every action you set up, including snippets, links, scripts and extensions. Per-app rules, hold-to-summon and a ⌥⌘C search palette. Based on DropClip (MIT) and OpenClip by Ganesh M, with OpenSelection (Apache-2.0)."
     static let features: [(icon: String, text: String)] = [
-        ("cursorarrow.and.square.on.square.dashed", "Appears after dragging or double-clicking text"),
-        ("magnifyingglass", "Search, translate, define, speak"),
-        ("tray.and.arrow.down", "Save the selection to the shelf"),
-        ("lock.shield", "Skips password fields")
+        ("cursorarrow.and.square.on.square.dashed", "Pill beside any selection"),
+        ("sparkles", "AI rewrite: your own key or on-device"),
+        ("square.stack.3d.up", "Custom actions, groups and extensions"),
+        ("app.badge.checkmark", "Per-app rules"),
+        ("doc.plaintext", "Credits and licences under Options")
     ]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }

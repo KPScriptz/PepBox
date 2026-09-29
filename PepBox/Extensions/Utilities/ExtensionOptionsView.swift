@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Carbon.HIToolbox
+import DropClip
 
 enum ExtensionShortcuts {
     static let ringKey = "ring_shortcut"
@@ -34,7 +35,7 @@ struct ExtensionOptionsView: View {
     let extensionType: ExtensionType
 
     static func hasOptions(_ type: ExtensionType) -> Bool {
-        [.ring, .quickSearch, .keySounds].contains(type)
+        [.ring, .quickSearch, .keySounds, .textActions].contains(type)
     }
 
     var body: some View {
@@ -56,6 +57,15 @@ struct ExtensionOptionsView: View {
                 ) { QuickSearchController.shared.reloadShortcut() }
             case .keySounds:
                 KeySoundsVolumeOption()
+            case .textActions:
+                HStack {
+                    Text("Actions, AI, shortcuts and app rules")
+                    Spacer()
+                    Button("Open Settings") { TextActions.openSettings() }
+                }
+                Text("Based on DropClip (MIT) and OpenClip by Ganesh M, with OpenSelection (Apache-2.0). Licences: Text Actions settings → About.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             default:
                 EmptyView()
             }

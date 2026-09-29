@@ -14,6 +14,7 @@
 		BAA56D992F16F4D90041C83B /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = BAA56D982F16F4D90041C83B /* WhisperKit */; };
 		BAA56D9B2F16F4D90041C83B /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = BAA56D9A2F16F4D90041C83B /* whisperkit-cli */; };
 		BAD854462F1D5550000B5751 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = BAD854452F1D5550000B5751 /* SwiftTerm */; };
+		BAFE7A032F2000000TXTACT3 /* TextActionsKit in Frameworks */ = {isa = PBXBuildFile; productRef = BAFE7A022F2000000TXTACT2 /* TextActionsKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -54,6 +55,7 @@
 				BAD854462F1D5550000B5751 /* SwiftTerm in Frameworks */,
 				BAA56D9B2F16F4D90041C83B /* whisperkit-cli in Frameworks */,
 				BA7E8C002F1E00000041LOCK /* SkyLightWindow in Frameworks */,
+				BAFE7A032F2000000TXTACT3 /* TextActionsKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,6 +113,7 @@
 				BAA56D9A2F16F4D90041C83B /* whisperkit-cli */,
 				BAD854452F1D5550000B5751 /* SwiftTerm */,
 				BA7E8C012F1E00000041LOCK /* SkyLightWindow */,
+				BAFE7A022F2000000TXTACT2 /* TextActionsKit */,
 			);
 			productName = PepBox;
 			productReference = BAC4596C2F07C2D10041BC3E /* PepBox.app */;
@@ -144,6 +147,7 @@
 				BAA56D972F16F4D90041C83B /* XCRemoteSwiftPackageReference "WhisperKit" */,
 				BAD854442F1D5550000B5751 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
 				BA7E8C022F1E00000041LOCK /* XCRemoteSwiftPackageReference "SkyLightWindow" */,
+				BAFE7A012F2000000TXTACT1 /* XCLocalSwiftPackageReference "Packages/TextActionsKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BAC4596D2F07C2D10041BC3E /* Products */;
@@ -421,6 +425,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		BAFE7A012F2000000TXTACT1 /* XCLocalSwiftPackageReference "Packages/TextActionsKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/TextActionsKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		BA7E8C022F1E00000041LOCK /* XCRemoteSwiftPackageReference "SkyLightWindow" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -468,6 +479,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BAD854442F1D5550000B5751 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
 			productName = SwiftTerm;
+		};
+		BAFE7A022F2000000TXTACT2 /* TextActionsKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TextActionsKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
