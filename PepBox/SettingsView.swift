@@ -2729,7 +2729,7 @@ struct SettingsView: View {
                             AppleMusicController.shared.refreshState()
                         case .elementCapture, .aiBackgroundRemoval, .windowSnap, .voiceTranscribe, .ffmpegVideoCompression, .terminalNotch, .camera, .quickshare, .notificationHUD, .caffeine, .menuBarManager, .todo:
                             break // No action needed - these have their own configuration UI
-                        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian:
+                        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats:
                             NotchWidgetKind(extensionType: extensionType)?.install()
                         case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll:
                             UtilityExtensionKind(extensionType: extensionType)?.install()

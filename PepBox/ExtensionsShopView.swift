@@ -644,6 +644,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "systemStats",
+                iconPlaceholder: "gauge.with.dots.needle.67percent",
+                iconPlaceholderColor: .teal,
+                title: "System Stats",
+                subtitle: "CPU, GPU, memory and network",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.systemStats.isInstalled,
+                analyticsKey: "systemStats",
+                extensionType: .systemStats
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .systemStats,
+                    onAction: { NotchWidgetKind.systemStats.install() },
+                    installCount: extensionCounts["systemStats"],
+                    rating: extensionRatings["systemStats"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

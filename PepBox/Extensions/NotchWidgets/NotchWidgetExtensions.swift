@@ -120,3 +120,22 @@ struct ObsidianExtension: ExtensionDefinition {
     static let iconPlaceholder = "note.text"
     static let iconPlaceholderColor: Color = .purple
 }
+
+struct SystemStatsExtension: ExtensionDefinition {
+    static let id = "systemStats"
+    static let title = "System Stats"
+    static let subtitle = "CPU, GPU, memory and network"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .teal
+    static let description = "CPU, GPU and memory gauges plus live network speed and free disk space, one click from the shelf. Sampled once a second only while the panel is open; no permissions needed."
+    static let features: [(icon: String, text: String)] = [
+        ("cpu", "CPU and GPU load"),
+        ("memorychip", "Memory used, like Activity Monitor"),
+        ("arrow.up.arrow.down", "Network down/up speed"),
+        ("internaldrive", "Free disk space")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "gauge.with.dots.needle.67percent"
+    static let iconPlaceholderColor: Color = .teal
+}
