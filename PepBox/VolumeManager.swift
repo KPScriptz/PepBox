@@ -32,7 +32,8 @@ final class VolumeManager: NSObject, ObservableObject {
     
     // MARK: - Configuration
     let visibleDuration: TimeInterval = 1.5
-    private let step: Float32 = 1.0 / 16.0
+    /// 7% per volume key press (macOS uses 1/16 = 6.25%).
+    private let step: Float32 = 0.07
     
     // MARK: - Private State
     private var didInitialFetch = false
@@ -91,8 +92,16 @@ final class VolumeManager: NSObject, ObservableObject {
         let divisor = max(stepDivisor, 0.25)
         let delta = step / Float32(divisor)
         let current = readVolumeInternal() ?? rawVolume
-        let target = max(0, min(1, current + delta))
-        setAbsolute(target, screenHint: screenHint)
+        setAbsolute(Self.snappedStep(from: current, delta: delta, up: true), screenHint: screenHint)
+    }
+    
+    /// Next level on the step grid (0, 7, 14 … 98, 100), so a volume that was set some other way
+    /// joins the grid on the next press instead of staying off by a few percent.
+    static func snappedStep(from current: Float32, delta: Float32, up: Bool) -> Float32 {
+        guard delta > 0 else { return current }
+        let position = current / delta
+        let next = up ? (position + 0.001).rounded(.down) + 1 : (position - 0.001).rounded(.up) - 1
+        return max(0, min(1, next * delta))
     }
     
     /// Decrease volume by one step
@@ -100,8 +109,7 @@ final class VolumeManager: NSObject, ObservableObject {
         let divisor = max(stepDivisor, 0.25)
         let delta = step / Float32(divisor)
         let current = readVolumeInternal() ?? rawVolume
-        let target = max(0, min(1, current - delta))
-        setAbsolute(target, screenHint: screenHint)
+        setAbsolute(Self.snappedStep(from: current, delta: delta, up: false), screenHint: screenHint)
     }
     
     /// Toggle mute state
