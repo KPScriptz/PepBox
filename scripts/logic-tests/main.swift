@@ -136,5 +136,34 @@ for key in ["pomodoro_focusMinutes", "pomodoro_shortBreakMinutes", "pomodoro_lon
     defaults.removeObject(forKey: key)
 }
 
+// MARK: - Emoji catalog and recents
+
+expect(EmojiCatalog.all.count > 1000, true, "emoji catalog has 1000+ entries (\(EmojiCatalog.all.count))")
+expect(EmojiCatalog.all.contains { $0.emoji == "😀" && $0.name == "grinning face" }, true, "grinning face is named")
+expect(EmojiCatalog.all.contains { $0.name.contains("heart") }, true, "search finds hearts")
+expect(EmojiCatalog.all.contains { $0.emoji.unicodeScalars.first!.value == 0x1F3FB }, false, "skin-tone modifiers are left out")
+defaults.removeObject(forKey: "emojiPicker_recents")
+for emoji in ["😀", "🎉", "😀"] { EmojiCatalog.noteUsed(emoji) }
+expect(EmojiCatalog.recents, ["😀", "🎉"], "recents: newest first, no duplicates")
+for index in 0..<20 { EmojiCatalog.noteUsed(EmojiCatalog.all[index].emoji) }
+expect(EmojiCatalog.recents.count, 16, "recents are capped at 16")
+defaults.removeObject(forKey: "emojiPicker_recents")
+
+// MARK: - Obsidian vault detection and capture
+
+let temp = FileManager.default.temporaryDirectory.appendingPathComponent("pepbox-obsidian-test-\(UUID().uuidString)")
+let openVault = temp.appendingPathComponent("Open"), newerVault = temp.appendingPathComponent("Newer")
+try! FileManager.default.createDirectory(at: openVault, withIntermediateDirectories: true)
+try! FileManager.default.createDirectory(at: newerVault, withIntermediateDirectories: true)
+let config = temp.appendingPathComponent("obsidian.json")
+try! """
+{"vaults":{"a":{"path":"\(newerVault.path)","ts":1790000000000},"b":{"path":"\(openVault.path)","ts":1700000000000,"open":true}}}
+""".write(to: config, atomically: true, encoding: .utf8)
+expect(ObsidianManager.detectVault(configURL: config)?.lastPathComponent, "Open", "open vault wins over a more recent one")
+try! #"{"vaults":{"a":{"path":"/x/Old","ts":1},"b":{"path":"/x/New","ts":2}}}"#.write(to: config, atomically: true, encoding: .utf8)
+expect(ObsidianManager.detectVault(configURL: config)?.path, "/x/New", "otherwise the most recent vault")
+expect(ObsidianManager.detectVault(configURL: temp.appendingPathComponent("missing.json")) == nil, true, "no config -> no vault")
+try? FileManager.default.removeItem(at: temp)
+
 print(failures == 0 ? "OK \(checks) checks passed" : "\(failures) of \(checks) checks failed")
 exit(failures == 0 ? 0 : 1)
