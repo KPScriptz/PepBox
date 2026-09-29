@@ -756,7 +756,7 @@ struct NotchShelfView: View {
            notchController.fullscreenDisplayIDs.contains(displayID) {
             return false
         }
-        return showMediaPlayer && musicManager.isPlaying && !hudIsVisible && !isExpandedOnThisScreen
+        return showMediaPlayer && musicManager.isPlaying && !hudIsVisible && !isExpandedOnThisScreen && visibleLiveActivity == nil
     }
 
     private var isMediaHUDHoverEligible: Bool {
@@ -770,6 +770,7 @@ struct NotchShelfView: View {
         guard !hudIsVisible && !HUDManager.shared.isVisible else { return false }
         guard !isExpandedOnThisScreen else { return false }
         guard !isCaffeineHoverActive else { return false }
+        guard visibleLiveActivity == nil else { return false }
         guard !shouldLockMediaForTodo else { return false }
 
         if let displayID = targetScreen?.displayID {
@@ -784,6 +785,22 @@ struct NotchShelfView: View {
         shouldShowMediaHUD || (mediaHUDIsHovered && isMediaHUDHoverEligible)
     }
     
+    /// Ongoing activity (e.g. a running Pomodoro) to show beside the closed notch.
+    /// Below transient HUDs and the High Alert hover indicator, above the media HUD.
+    private var visibleLiveActivity: LiveActivity? {
+        guard enableNotchShelf,
+              !isExpandedOnThisScreen,
+              !hudIsVisible,
+              !HUDManager.shared.isVisible,
+              !isCaffeineHoverActive,
+              !(hudManager.isNotificationHUDVisible && notificationHUDManager.isInstalled),
+              !notchController.isTemporarilyHidden else { return nil }
+        if let displayID = targetScreen?.displayID, notchController.fullscreenDisplayIDs.contains(displayID) {
+            return nil
+        }
+        return LiveActivity.current
+    }
+
     /// Whether caffeine hover indicator should show (takes priority over media HUD)
     /// CRITICAL: Uses isHoveringOnThisScreen for multi-monitor awareness
     private var isCaffeineHoverActive: Bool {
@@ -829,6 +846,8 @@ struct NotchShelfView: View {
         } else if hudManager.isNotificationHUDVisible && notificationHUDManager.isInstalled {
             // Notification HUD: mode-aware width
             return isDynamicIslandMode ? hudWidth : expandedWidth
+        } else if visibleLiveActivity != nil {
+            return highAlertHudWidth  // Live activity uses High Alert's wing geometry
         } else if isMediaHUDSurfaceActive {
             return hudWidth  // Media HUD uses tighter wings
         } else if enableNotchShelf && isHoveringOnThisScreen {
@@ -1897,6 +1916,19 @@ struct NotchShelfView: View {
             .zIndex(5)
         }
         
+        // Live activity (running Pomodoro, ...) beside the closed notch
+        if let activity = visibleLiveActivity {
+            LiveActivityHUDView(
+                activity: activity,
+                hudWidth: highAlertHudWidth,
+                targetScreen: targetScreen,
+                notchWidth: notchWidth
+            )
+            .frame(width: highAlertHudWidth, height: notchHeight)
+            .transition(displayHUDTransition)
+            .zIndex(5.1)
+        }
+        
         // High Alert HUD - uses centralized HUDManager
         if HUDManager.shared.isHighAlertHUDVisible && CaffeineManager.shared.isInstalled && caffeineEnabled && !hudIsVisible && !isExpandedOnThisScreen && !isCaffeineHoverActive {
             HighAlertHUDView(
@@ -2050,7 +2082,7 @@ struct NotchShelfView: View {
         // This allows the caffeine timer to temporarily replace the media HUD on hover
         let caffeineHoverIsActive = isHoveringOnThisScreen && CaffeineManager.shared.isActive && !hudIsVisible
         
-        if (shouldShowForced || shouldShowNormal || shouldShowHovered) && !caffeineHoverIsActive {
+        if (shouldShowForced || shouldShowNormal || shouldShowHovered) && !caffeineHoverIsActive && visibleLiveActivity == nil {
             // Title morphing is handled by overlay for both DI and notch modes
             MediaHUDView(musicManager: musicManager, isHovered: $mediaHUDIsHovered, notchWidth: notchWidth, notchHeight: notchHeight, hudWidth: hudWidth, targetScreen: targetScreen, albumArtNamespace: albumArtNamespace, showAlbumArt: false, showVisualizer: false, showTitle: false)
                 .frame(width: hudWidth, alignment: .top)
@@ -2432,6 +2464,7 @@ struct NotchShelfView: View {
         // This allows the caffeine timer to temporarily replace the media HUD on hover
         let caffeineHoverIsActive = isHoveringOnThisScreen && CaffeineManager.shared.isActive && !hudIsVisible
         guard !caffeineHoverIsActive else { return false }
+        guard visibleLiveActivity == nil else { return false }
         
         let noHUDsVisible = !hudIsVisible && !HUDManager.shared.isVisible
         let notExpanded = !isExpandedOnThisScreen

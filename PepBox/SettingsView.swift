@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferenceKey.enableAutoClean) private var enableAutoClean = PreferenceDefault.enableAutoClean
     @AppStorage(AppPreferenceKey.autoAddScreenshots) private var autoAddScreenshots = PreferenceDefault.autoAddScreenshots
     @AppStorage(AppPreferenceKey.rememberShelfItems) private var rememberShelfItems = PreferenceDefault.rememberShelfItems
+    @AppStorage(LiveActivity.enabledKey) private var liveActivitiesEnabled = true
     @AppStorage(AppPreferenceKey.alwaysCopyOnDrag) private var alwaysCopyOnDrag = PreferenceDefault.alwaysCopyOnDrag
     @AppStorage(AppPreferenceKey.enablePowerFolders) private var enablePowerFolders = PreferenceDefault.enablePowerFolders
     @AppStorage(AppPreferenceKey.enableQuickActions) private var enableQuickActions = PreferenceDefault.enableQuickActions
@@ -1072,6 +1073,15 @@ struct SettingsView: View {
                     }
                     .onChange(of: rememberShelfItems) { _, _ in
                         PepBoxState.shared.saveShelfItemsIfRemembering()
+                    }
+                    
+                    Toggle(isOn: $liveActivitiesEnabled) {
+                        VStack(alignment: .leading) {
+                            Text("Live Activities")
+                            Text("Show a running Pomodoro beside the closed notch")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 } header: {
                     Text("Behavior")
