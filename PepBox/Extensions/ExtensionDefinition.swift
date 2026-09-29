@@ -145,6 +145,7 @@ final class ExtensionRegistry {
         register(UpNextExtension.self)
         register(ShortcutsWidgetExtension.self)
         register(AgentsExtension.self)
+        register(QuickNotesExtension.self)
         register(RingExtension.self)
         register(KeySoundsExtension.self)
         register(QuickSearchExtension.self)

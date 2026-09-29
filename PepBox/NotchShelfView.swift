@@ -1152,6 +1152,7 @@ struct NotchShelfView: View {
                     // RESET RULE: When shelf collapses, reset extension views so next open shows default shelf
                     if !isExpanded {
                         NotchWidgetKind.isHoldingShelfOpen = false
+                        NotchWidgetKind.ignoresHoverOut = false
                         showCaffeineView = false
                         showCameraView = false
                         activeNotchWidget = nil
@@ -1161,6 +1162,7 @@ struct NotchShelfView: View {
                 }
                 .onChange(of: visibleNotchWidget) { _, widget in
                     NotchWidgetKind.isHoldingShelfOpen = widget == .teleprompter
+                    NotchWidgetKind.ignoresHoverOut = widget == .notes
                 }
                 .onChange(of: shouldAttachTodoShelfBar) { _, shouldAttach in
                     // Prevent stale ToDo expanded state from leaking height/layout into
@@ -1755,7 +1757,8 @@ struct NotchShelfView: View {
             let isHoveringAnyMethod = isHoveringExpandedContent || isHoveringOnThisScreen || isMouseInExpandedZone
             let isTodoPopoverInteractionActive = ToDoManager.shared.isInteractingWithPopover
             // The teleprompter has to stay on screen while you read, pointer or not.
-            guard !NotchWidgetKind.isHoldingShelfOpen else { return }
+            // Notes stay open while you type even if the pointer wanders; a click outside still closes them.
+            guard !NotchWidgetKind.isHoldingShelfOpen && !NotchWidgetKind.ignoresHoverOut else { return }
             guard isExpandedOnThisScreen && !isHoveringAnyMethod && !state.isDropTargeted && !isTodoPopoverInteractionActive else {
                 notchShelfDebugLog("⏳ AUTO-SHRINK SKIPPED: conditions not met (isHoveringAnyMethod=\(isHoveringAnyMethod))")
                 return

@@ -716,6 +716,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "quickNotes",
+                iconPlaceholder: "note.text.badge.plus",
+                iconPlaceholderColor: .yellow,
+                title: "Notes",
+                subtitle: "A notepad on your shelf",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.notes.isInstalled,
+                analyticsKey: "quickNotes",
+                extensionType: .quickNotes
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .quickNotes,
+                    onAction: { NotchWidgetKind.notes.install() },
+                    installCount: extensionCounts["quickNotes"],
+                    rating: extensionRatings["quickNotes"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

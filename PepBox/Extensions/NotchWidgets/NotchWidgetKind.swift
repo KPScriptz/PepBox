@@ -20,6 +20,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case upNext
     case shortcuts
     case agents
+    case notes
 
     var id: String { rawValue }
 
@@ -40,6 +41,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .upNext: return .upNext
         case .shortcuts: return .shortcuts
         case .agents: return .agents
+        case .notes: return .quickNotes
         }
     }
 
@@ -57,6 +59,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .upNext: return "calendar.badge.clock"
         case .shortcuts: return "square.2.layers.3d.fill"
         case .agents: return "sparkle"
+        case .notes: return "note.text.badge.plus"
         }
     }
 
@@ -72,6 +75,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .upNext: return .orange
         case .shortcuts: return .indigo
         case .agents: return .orange
+        case .notes: return .yellow
         }
     }
 
@@ -103,6 +107,10 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     /// so auto-collapse and click-outside don't close the shelf under it.
     static var isHoldingShelfOpen = false
 
+    /// True while a widget you type into (Notes) is open: the pointer leaving
+    /// doesn't collapse the shelf, but clicking outside still does.
+    static var ignoresHoverOut = false
+
     func install() {
         UserDefaults.standard.set(true, forKey: installedKey)
         extensionType.setRemoved(false)
@@ -116,7 +124,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .teleprompter: TeleprompterManager.shared.pause()
         case .appVolume: AppVolumeManager.shared.resetAll()
         case .agents: AgentsMonitor.shared.setEnabled(false)
-        case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext, .shortcuts: break
+        case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext, .shortcuts, .notes: break
         }
     }
 }
@@ -150,6 +158,8 @@ struct NotchWidgetPanel: View {
                 ShortcutsNotchView(manager: ShortcutsWidgetManager.shared)
             case .agents:
                 AgentsNotchView(monitor: AgentsMonitor.shared)
+            case .notes:
+                QuickNotesNotchView(store: QuickNotesStore.shared)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

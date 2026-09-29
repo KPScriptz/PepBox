@@ -195,3 +195,21 @@ struct AgentsExtension: ExtensionDefinition {
     static let iconPlaceholder = "sparkle"
     static let iconPlaceholderColor: Color = .orange
 }
+
+struct QuickNotesExtension: ExtensionDefinition {
+    static let id = "quickNotes"
+    static let title = "Notes"
+    static let subtitle = "A notepad on your shelf"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .yellow
+    static let description = "Jot something down the moment it crosses your mind, right on the shelf, with no app switch. Notes save as you type and stay until you delete them; right-click a note to copy or delete it."
+    static let features: [(icon: String, text: String)] = [
+        ("square.and.pencil", "New note in one click"),
+        ("arrow.triangle.2.circlepath", "Saves as you type"),
+        ("doc.on.doc", "Copy a note's text from its menu")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "note.text.badge.plus"
+    static let iconPlaceholderColor: Color = .yellow
+}
