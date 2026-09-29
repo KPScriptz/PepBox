@@ -139,3 +139,22 @@ struct SystemStatsExtension: ExtensionDefinition {
     static let iconPlaceholder = "gauge.with.dots.needle.67percent"
     static let iconPlaceholderColor: Color = .teal
 }
+
+struct UpNextExtension: ExtensionDefinition {
+    static let id = "upNext"
+    static let title = "Up Next"
+    static let subtitle = "Weather and your next meetings"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .orange
+    static let description = "Today's weather and your next few calendar events side by side, with a Join button for Zoom, Meet, Teams and Webex links. When a meeting is 10 minutes out it shows as a live activity beside the notch. Weather comes from Open-Meteo for a city you type once, so there's no location permission."
+    static let features: [(icon: String, text: String)] = [
+        ("cloud.sun.fill", "Current weather with today's high and low"),
+        ("calendar", "Next events with countdowns"),
+        ("video.fill", "One-click Join for meeting links"),
+        ("bell.badge", "Live activity before a meeting starts")
+    ]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "calendar.badge.clock"
+    static let iconPlaceholderColor: Color = .orange
+}

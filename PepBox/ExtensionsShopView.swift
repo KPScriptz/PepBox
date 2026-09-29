@@ -662,6 +662,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "upNext",
+                iconPlaceholder: "calendar.badge.clock",
+                iconPlaceholderColor: .orange,
+                title: "Up Next",
+                subtitle: "Weather and your next meetings",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.upNext.isInstalled,
+                analyticsKey: "upNext",
+                extensionType: .upNext
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .upNext,
+                    onAction: { NotchWidgetKind.upNext.install() },
+                    installCount: extensionCounts["upNext"],
+                    rating: extensionRatings["upNext"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

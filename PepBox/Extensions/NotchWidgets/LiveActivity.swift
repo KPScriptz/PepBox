@@ -32,6 +32,18 @@ struct LiveActivity: Equatable {
                 progress: pomodoro.progress
             )
         }
+
+        if NotchWidgetKind.upNext.isAvailable, let meeting = UpNextCalendar.shared.imminentEvent {
+            let calendar = UpNextCalendar.shared
+            let untilStart = meeting.start.timeIntervalSince(calendar.now)
+            return LiveActivity(
+                id: "upNext-\(meeting.id)",
+                icon: meeting.joinURL == nil ? "calendar" : "video.fill",
+                tint: .orange,
+                text: UpNextCalendar.relative(meeting.start, from: calendar.now),
+                progress: max(0, min(1, 1 - untilStart / 600))
+            )
+        }
         return nil
     }
 }

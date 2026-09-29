@@ -17,6 +17,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case appVolume
     case obsidian
     case systemStats
+    case upNext
 
     var id: String { rawValue }
 
@@ -34,6 +35,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .appVolume: return .appVolume
         case .obsidian: return .obsidian
         case .systemStats: return .systemStats
+        case .upNext: return .upNext
         }
     }
 
@@ -48,6 +50,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .appVolume: return "speaker.wave.2.fill"
         case .obsidian: return "note.text"
         case .systemStats: return "gauge.with.dots.needle.67percent"
+        case .upNext: return "calendar.badge.clock"
         }
     }
 
@@ -60,6 +63,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .appVolume: return .green
         case .obsidian: return .purple
         case .systemStats: return .teal
+        case .upNext: return .orange
         }
     }
 
@@ -102,7 +106,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .pomodoro: PomodoroManager.shared.reset()
         case .teleprompter: TeleprompterManager.shared.pause()
         case .appVolume: AppVolumeManager.shared.resetAll()
-        case .emojiPicker, .meetings, .obsidian, .systemStats: break
+        case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext: break
         }
     }
 }
@@ -130,6 +134,8 @@ struct NotchWidgetPanel: View {
                 ObsidianNotchView(manager: ObsidianManager.shared)
             case .systemStats:
                 SystemStatsNotchView(manager: SystemStatsManager.shared)
+            case .upNext:
+                UpNextNotchView(calendar: UpNextCalendar.shared, weather: UpNextWeather.shared)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
