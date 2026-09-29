@@ -165,5 +165,24 @@ expect(ObsidianManager.detectVault(configURL: config)?.path, "/x/New", "otherwis
 expect(ObsidianManager.detectVault(configURL: temp.appendingPathComponent("missing.json")) == nil, true, "no config -> no vault")
 try? FileManager.default.removeItem(at: temp)
 
+// MARK: - Synced lyrics (LRC)
+
+let lrc = SyncedLyrics(lrc: """
+[ar:Someone]
+[00:05.00] First line
+[00:10.50]
+[00:12.20][01:02.00] Chorus
+[1:15.5] Late line
+not a lyric line
+""")
+expect(lrc.lines.count, 5, "LRC: metadata and untimed lines skipped, multi-stamp lines duplicated")
+expect(lrc.line(at: 1), nil, "LRC: nothing before the first line")
+expect(lrc.line(at: 5), "First line", "LRC: line starts exactly at its time")
+expect(lrc.line(at: 9.9), "First line", "LRC: line holds until the next")
+expect(lrc.line(at: 11), nil, "LRC: empty line = instrumental gap")
+expect(lrc.line(at: 30), "Chorus", "LRC: first chorus")
+expect(lrc.line(at: 62.5), "Chorus", "LRC: repeated chorus timestamp")
+expect(lrc.line(at: 80), "Late line", "LRC: m:ss.s timestamps")
+
 print(failures == 0 ? "OK \(checks) checks passed" : "\(failures) of \(checks) checks failed")
 exit(failures == 0 ? 0 : 1)

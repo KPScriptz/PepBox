@@ -64,6 +64,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferenceKey.enableMouseSwipeMediaSwitch) private var enableMouseSwipeMediaSwitch = PreferenceDefault.enableMouseSwipeMediaSwitch
     @AppStorage(AppPreferenceKey.mouseSwipeMediaSwitchModifier) private var mouseSwipeMediaSwitchModifier = PreferenceDefault.mouseSwipeMediaSwitchModifier
     @AppStorage(AppPreferenceKey.autoFadeMediaHUD) private var autoFadeMediaHUD = PreferenceDefault.autoFadeMediaHUD
+    @AppStorage(LyricsManager.enabledKey) private var syncedLyricsEnabled = false
     @AppStorage(AppPreferenceKey.debounceMediaChanges) private var debounceMediaChanges = PreferenceDefault.debounceMediaChanges
     @AppStorage(AppPreferenceKey.enableRealAudioVisualizer) private var enableRealAudioVisualizer = PreferenceDefault.enableRealAudioVisualizer
     @AppStorage(AppPreferenceKey.enableGradientVisualizer) private var enableGradientVisualizer = PreferenceDefault.enableGradientVisualizer
@@ -2153,6 +2154,16 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Hide Incognito Media")
                                 Text("Hide media from private browsing windows")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        // Synced lyrics (sends title + artist to lrclib.net, so off by default)
+                        Toggle(isOn: $syncedLyricsEnabled) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Synced Lyrics")
+                                Text("Show the current line under the title. Looks songs up on lrclib.net")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
