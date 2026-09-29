@@ -9,6 +9,7 @@
 import SwiftUI
 import Darwin
 import IOKit
+import IOKit.ps
 
 struct SystemSnapshot: Equatable {
     var cpu: Double = 0            // 0...1, all cores
@@ -19,6 +20,8 @@ struct SystemSnapshot: Equatable {
     var networkUp: Double = 0
     var diskFree: Double = 0       // bytes
     var diskTotal: Double = 0
+    var battery: Double? = nil     // 0...1, nil on Macs without one
+    var isCharging = false
 }
 
 @Observable
@@ -26,6 +29,10 @@ final class SystemStatsManager {
     static let shared = SystemStatsManager()
 
     private(set) var snapshot = SystemSnapshot()
+    /// The last minute of CPU and memory use (0...1), oldest first, for the graphs.
+    private(set) var cpuHistory: [Double] = []
+    private(set) var memoryHistory: [Double] = []
+    private static let historyLength = 60
     private var timer: Timer?
     private var watchers = 0
 
@@ -58,7 +65,10 @@ final class SystemStatsManager {
         (next.memoryUsed, next.memoryTotal) = Self.memory()
         (next.networkDown, next.networkUp) = networkRates()
         (next.diskFree, next.diskTotal) = Self.disk()
+        (next.battery, next.isCharging) = Self.battery()
         snapshot = next
+        cpuHistory = Array((cpuHistory + [next.cpu]).suffix(Self.historyLength))
+        memoryHistory = Array((memoryHistory + [next.memoryTotal > 0 ? next.memoryUsed / next.memoryTotal : 0]).suffix(Self.historyLength))
     }
 
     // MARK: CPU (delta of host ticks between samples)
@@ -149,6 +159,22 @@ final class SystemStatsManager {
         return (Double(values?.volumeAvailableCapacityForImportantUsage ?? 0), Double(values?.volumeTotalCapacity ?? 0))
     }
 
+    // MARK: Battery (IOPowerSources)
+
+    static func battery() -> (level: Double?, charging: Bool) {
+        guard let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef] else { return (nil, false) }
+        for source in sources {
+            guard let description = IOPSGetPowerSourceDescription(info, source)?.takeUnretainedValue() as? [String: Any],
+                  description[kIOPSTypeKey] as? String == kIOPSInternalBatteryType,
+                  let current = description[kIOPSCurrentCapacityKey] as? Int,
+                  let max = description[kIOPSMaxCapacityKey] as? Int, max > 0 else { continue }
+            let charging = description[kIOPSIsChargingKey] as? Bool ?? false
+            return (Double(current) / Double(max), charging)
+        }
+        return (nil, false)
+    }
+
     static func formatBytes(_ bytes: Double, perSecond: Bool = false) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = perSecond ? .decimal : .memory
@@ -163,14 +189,19 @@ struct SystemStatsNotchView: View {
     var body: some View {
         let s = manager.snapshot
         HStack(spacing: 14) {
-            gauge("CPU", value: s.cpu, tint: .blue)
+            gauge("CPU", value: s.cpu, tint: .blue, history: manager.cpuHistory)
             if let gpu = s.gpu { gauge("GPU", value: gpu, tint: .purple) }
             gauge("RAM", value: s.memoryTotal > 0 ? s.memoryUsed / s.memoryTotal : 0, tint: .green,
-                  caption: SystemStatsManager.formatBytes(s.memoryUsed))
+                  caption: SystemStatsManager.formatBytes(s.memoryUsed), history: manager.memoryHistory)
             VStack(alignment: .leading, spacing: 8) {
                 statLine("arrow.down", SystemStatsManager.formatBytes(s.networkDown, perSecond: true), tint: .cyan)
                 statLine("arrow.up", SystemStatsManager.formatBytes(s.networkUp, perSecond: true), tint: .orange)
                 statLine("internaldrive", "\(SystemStatsManager.formatBytes(s.diskFree)) free", tint: .white)
+                if let battery = s.battery {
+                    statLine(s.isCharging ? "battery.100.bolt" : Self.batteryIcon(battery),
+                             "\(Int((battery * 100).rounded()))%\(s.isCharging ? " charging" : "")",
+                             tint: battery < 0.2 && !s.isCharging ? .red : .green)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -178,7 +209,17 @@ struct SystemStatsNotchView: View {
         .onDisappear { manager.stopWatching() }
     }
 
-    private func gauge(_ title: String, value: Double, tint: Color, caption: String? = nil) -> some View {
+    private static func batteryIcon(_ level: Double) -> String {
+        switch level {
+        case ..<0.13: return "battery.0"
+        case ..<0.38: return "battery.25"
+        case ..<0.63: return "battery.50"
+        case ..<0.88: return "battery.75"
+        default: return "battery.100"
+        }
+    }
+
+    private func gauge(_ title: String, value: Double, tint: Color, caption: String? = nil, history: [Double] = []) -> some View {
         VStack(spacing: 4) {
             ZStack {
                 Circle().stroke(.white.opacity(0.12), lineWidth: 5)
@@ -197,6 +238,11 @@ struct SystemStatsNotchView: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.white.opacity(0.6))
                 .lineLimit(1)
+            if history.count > 1 {
+                Sparkline(values: history)
+                    .stroke(tint.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, lineJoin: .round))
+                    .frame(width: 52, height: 12)
+            }
         }
     }
 
@@ -212,5 +258,22 @@ struct SystemStatsNotchView: View {
                 .foregroundStyle(.white.opacity(0.85))
                 .lineLimit(1)
         }
+    }
+}
+
+/// A tiny line graph of values in 0...1, oldest on the left.
+struct Sparkline: Shape {
+    let values: [Double]
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        guard values.count > 1 else { return path }
+        let step = rect.width / CGFloat(values.count - 1)
+        for (index, value) in values.enumerated() {
+            let point = CGPoint(x: rect.minX + CGFloat(index) * step,
+                                y: rect.maxY - CGFloat(min(1, max(0, value))) * rect.height)
+            index == 0 ? path.move(to: point) : path.addLine(to: point)
+        }
+        return path
     }
 }

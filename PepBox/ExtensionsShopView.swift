@@ -648,7 +648,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholder: "gauge.with.dots.needle.67percent",
                 iconPlaceholderColor: .teal,
                 title: "System Stats",
-                subtitle: "CPU, GPU, memory and network",
+                subtitle: "CPU, GPU, memory, network and battery",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.systemStats.isInstalled,
                 analyticsKey: "systemStats",
