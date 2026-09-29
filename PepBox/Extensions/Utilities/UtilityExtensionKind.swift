@@ -15,6 +15,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case quickSearch
     case textActions
     case smoothScroll
+    case eyeBreaks
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -28,6 +29,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .quickSearch: return .quickSearch
         case .textActions: return .textActions
         case .smoothScroll: return .smoothScroll
+        case .eyeBreaks: return .eyeBreaks
         }
     }
 
@@ -53,6 +55,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .quickSearch: QuickSearchController.shared.setEnabled(isAvailable)
         case .textActions: isAvailable ? TextActions.start() : TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(isAvailable)
+        case .eyeBreaks: EyeBreakManager.shared.setEnabled(isAvailable)
         }
     }
 
@@ -63,6 +66,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .quickSearch: QuickSearchController.shared.setEnabled(false)
         case .textActions: TextActions.stop()
         case .smoothScroll: SmoothScrollController.shared.setEnabled(false)
+        case .eyeBreaks: EyeBreakManager.shared.setEnabled(false)
         }
     }
 

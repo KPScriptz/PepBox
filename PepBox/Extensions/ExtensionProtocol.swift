@@ -40,6 +40,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case quickSearch
     case textActions
     case smoothScroll
+    case eyeBreaks
 
     /// URL-safe ID for deep links
     case finderServices  // Alias for finder
@@ -98,7 +99,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
         case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext:
             return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
-        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll:
+        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks:
             return UtilityExtensionKind(extensionType: self)?.isInstalled ?? false
         }
     }

@@ -127,6 +127,8 @@ struct DisableExtensionButton: View {
             return "This will stop the action bar from appearing when you select text. You can enable it again later."
         case .smoothScroll:
             return "This will return mouse wheels to normal line-by-line scrolling. You can enable it again later."
+        case .eyeBreaks:
+            return "This will stop the 20-20-20 break reminders. You can enable it again later."
         }
     }
     

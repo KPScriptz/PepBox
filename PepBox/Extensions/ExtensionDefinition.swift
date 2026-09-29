@@ -148,6 +148,7 @@ final class ExtensionRegistry {
         register(QuickSearchExtension.self)
         register(TextActionsExtension.self)
         register(SmoothScrollExtension.self)
+        register(EyeBreaksExtension.self)
 
     }
     

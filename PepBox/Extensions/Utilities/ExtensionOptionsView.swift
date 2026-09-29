@@ -35,7 +35,7 @@ struct ExtensionOptionsView: View {
     let extensionType: ExtensionType
 
     static func hasOptions(_ type: ExtensionType) -> Bool {
-        [.ring, .quickSearch, .keySounds, .textActions].contains(type)
+        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks].contains(type)
     }
 
     var body: some View {
@@ -66,6 +66,8 @@ struct ExtensionOptionsView: View {
                 Text("Based on DropClip (MIT) and OpenClip by Ganesh M, with OpenSelection (Apache-2.0). Licences: Text Actions settings → About.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            case .eyeBreaks:
+                EyeBreakOptions()
             default:
                 EmptyView()
             }
@@ -118,5 +120,15 @@ private struct KeySoundsVolumeOption: View {
                 .onChange(of: volume) { _, value in KeySoundsManager.shared.volume = Float(value) }
             Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct EyeBreakOptions: View {
+    @AppStorage(EyeBreakManager.workMinutesKey) private var minutes = 20
+    @AppStorage(EyeBreakManager.soundKey) private var sound = true
+
+    var body: some View {
+        Stepper("Break every \(minutes) minutes", value: $minutes, in: 5...90, step: 5)
+        Toggle("Play a sound at start and end", isOn: $sound)
     }
 }

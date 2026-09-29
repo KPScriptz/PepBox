@@ -22,6 +22,16 @@ struct LiveActivity: Equatable {
     static var current: LiveActivity? {
         guard UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true else { return nil }
 
+        if UtilityExtensionKind.eyeBreaks.isAvailable, let remaining = EyeBreakManager.shared.breakRemaining {
+            return LiveActivity(
+                id: "eyeBreak",
+                icon: "eye",
+                tint: .green,
+                text: "Look away \(remaining)s",
+                progress: 1 - Double(remaining) / Double(EyeBreakManager.breakLength)
+            )
+        }
+
         let pomodoro = PomodoroManager.shared
         if NotchWidgetKind.pomodoro.isAvailable, pomodoro.isRunning {
             return LiveActivity(

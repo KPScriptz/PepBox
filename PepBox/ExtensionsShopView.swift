@@ -770,6 +770,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "eyeBreaks",
+                iconPlaceholder: "eye",
+                iconPlaceholderColor: .green,
+                title: "Eye Breaks",
+                subtitle: "20-20-20 reminders in the notch",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.eyeBreaks.isInstalled,
+                analyticsKey: "eyeBreaks",
+                extensionType: .eyeBreaks
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .eyeBreaks,
+                    onAction: { UtilityExtensionKind.eyeBreaks.install() },
+                    installCount: extensionCounts["eyeBreaks"],
+                    rating: extensionRatings["eyeBreaks"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",
