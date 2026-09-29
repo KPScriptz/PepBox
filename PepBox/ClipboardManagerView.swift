@@ -749,6 +749,12 @@ struct ClipboardManagerView: View {
                                                 Label("Paste as Plain Text", systemImage: "textformat")
                                             }
                                         }
+                                        if item.type == .text || item.type == .url, let text = item.content,
+                                           text.utf8.count <= QRCodeGenerator.maxLength {
+                                            Button { QRCodePanelController.shared.show(text) } label: {
+                                                Label("Show QR Code", systemImage: "qrcode")
+                                            }
+                                        }
                                         Button {
                                             let willBeFavorite = !item.isFavorite
                                             manager.toggleFavorite(item)

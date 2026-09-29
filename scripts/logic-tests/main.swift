@@ -4,6 +4,7 @@ import Foundation
 import CoreAudio
 import AppKit
 import ImageIO
+import CoreImage
 import UniformTypeIdentifiers
 
 var failures = 0
@@ -99,6 +100,19 @@ for (input, expected) in timers {
 expect(QuickTimerParser.format(65), "1:05", "timer format m:ss")
 expect(QuickTimerParser.format(3725), "1:02:05", "timer format h:mm:ss")
 expect(QuickTimerParser.format(0.4), "0:01", "timer format rounds up")
+
+// MARK: - QR codes
+
+for text in ["https://pivotxp.com/booth?id=42", "Hello from PepBox ✨"] {
+    let image = QRCodeGenerator.image(for: text)
+    let decoded = image.flatMap { $0.cgImage(forProposedRect: nil, context: nil, hints: nil) }.flatMap { cg -> String? in
+        let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: nil)
+        return (detector?.features(in: CIImage(cgImage: cg)).first as? CIQRCodeFeature)?.messageString
+    }
+    expect(decoded, text, "QR round trip \(text.prefix(12))")
+}
+expect(QRCodeGenerator.image(for: "") == nil, true, "QR empty text")
+expect(QRCodeGenerator.image(for: String(repeating: "x", count: 5000)) == nil, true, "QR too long")
 
 // MARK: - Currency conversion
 
