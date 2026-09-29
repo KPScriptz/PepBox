@@ -14,14 +14,25 @@ enum ConversionFormat: String, CaseIterable, Identifiable {
     case jpeg = "JPEG"
     case png = "PNG"
     case pdf = "PDF"
+    case m4a = "M4A"
+    case wav = "WAV"
+    case aiff = "AIFF"
+    case pngPages = "PNG Pages"
     
     var id: String { rawValue }
+
+    /// True for audio outputs (made with AVFoundation, from audio or video files).
+    var isAudio: Bool { self == .m4a || self == .wav || self == .aiff }
     
     var fileExtension: String {
         switch self {
         case .jpeg: return "jpg"
         case .png: return "png"
         case .pdf: return "pdf"
+        case .m4a: return "m4a"
+        case .wav: return "wav"
+        case .aiff: return "aiff"
+        case .pngPages: return ""  // a folder of page images
         }
     }
     
@@ -30,6 +41,7 @@ enum ConversionFormat: String, CaseIterable, Identifiable {
         case .jpeg: return .jpeg
         case .png: return .png
         case .pdf: return nil // PDF uses native apps or LibreOffice
+        case .m4a, .wav, .aiff, .pngPages: return nil
         }
     }
     
@@ -38,6 +50,10 @@ enum ConversionFormat: String, CaseIterable, Identifiable {
         case .jpeg: return "JPEG"
         case .png: return "PNG"
         case .pdf: return "PDF"
+        case .m4a: return "Audio (M4A)"
+        case .wav: return "Audio (WAV)"
+        case .aiff: return "Audio (AIFF)"
+        case .pngPages: return "Images (PNG per page)"
         }
     }
     
@@ -46,6 +62,8 @@ enum ConversionFormat: String, CaseIterable, Identifiable {
         case .jpeg: return "photo"
         case .png: return "photo.fill"
         case .pdf: return "doc.richtext"
+        case .m4a, .wav, .aiff: return "waveform"
+        case .pngPages: return "photo.stack"
         }
     }
 }
@@ -88,6 +106,18 @@ class FileConverter {
                 options.append(ConversionOption(format: .jpeg))
                 options.append(ConversionOption(format: .png))
             }
+        }
+        
+        // Video → audio track, and audio → other audio formats (AVFoundation, on this Mac)
+        if fileType.conforms(to: .movie) || fileType.conforms(to: .audio) {
+            for format in [ConversionFormat.m4a, .wav, .aiff] where !fileType.conforms(to: UTType(filenameExtension: format.fileExtension) ?? .data) {
+                options.append(ConversionOption(format: format))
+            }
+        }
+        
+        // PDF → one PNG per page
+        if fileType.conforms(to: .pdf) {
+            options.append(ConversionOption(format: .pngPages))
         }
         
         // Document to PDF conversions (via Cloudmersive API)
@@ -134,6 +164,11 @@ class FileConverter {
         // Route to appropriate converter
         if format == .pdf {
             return await convertDocumentToPDF(from: url, to: finalURL)
+        } else if format.isAudio {
+            return await MediaConverter.exportAudio(from: url, to: finalURL, format: format)
+        } else if format == .pngPages {
+            let folder = uniqueURL(for: tempDirectory.appendingPathComponent(url.deletingPathExtension().lastPathComponent + " pages"))
+            return MediaConverter.renderPDFPages(from: url, into: folder)
         } else {
             return await convertImage(from: url, to: finalURL, format: format)
         }

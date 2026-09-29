@@ -1268,7 +1268,9 @@ struct BasketItemView: View {
                 let requiredApp = FileConverter.requiredAppForPDFConversion(fileType: item.fileType) ?? "Keynote, Pages, Numbers, or LibreOffice"
                 await PepBoxAlertController.shared.showError(
                     title: "Conversion Failed",
-                    message: "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                    message: format == .pdf
+                        ? "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                        : "Could not convert \(item.name) to \(format.displayName). The file may be protected or have no audio."
                 )
             }
         }
