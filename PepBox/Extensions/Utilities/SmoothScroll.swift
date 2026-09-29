@@ -72,7 +72,10 @@ final class SmoothScrollController {
         }
         guard type == .scrollWheel,
               event.getIntegerValueField(.eventSourceUserData) != Self.syntheticMarker,
-              event.getIntegerValueField(.scrollWheelEventIsContinuous) == 0 else {
+              event.getIntegerValueField(.scrollWheelEventIsContinuous) == 0,
+              // Shift+wheel (sideways), Ctrl/Cmd+wheel (zoom) etc. rely on the modifier flags,
+              // which the replayed pixel events wouldn't carry: leave those alone.
+              event.flags.intersection([.maskShift, .maskControl, .maskCommand, .maskAlternate]).isEmpty else {
             return Unmanaged.passUnretained(event)
         }
 

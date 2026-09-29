@@ -76,6 +76,32 @@ final class AppVolumeManager {
         for id in Array(levels.keys) { setLevel(1, for: id, objectIDs: []) }
     }
 
+    private var outputListenerInstalled = false
+
+    /// Taps play through the output device that was current when they were made, so rebuild
+    /// them when the user switches outputs (e.g. to AirPods) instead of leaving apps on the old one.
+    private func followDefaultOutputChanges() {
+        guard !outputListenerInstalled else { return }
+        outputListenerInstalled = true
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main) { [weak self] _, _ in
+            self?.rebuildAllTaps()
+        }
+    }
+
+    private func rebuildAllTaps() {
+        let current = levels
+        let byID = Dictionary(uniqueKeysWithValues: apps.map { ($0.id, $0) })
+        for (id, level) in current {
+            removeTap(id)
+            setLevel(level, for: id, objectIDs: byID[id]?.objectIDs ?? [])
+        }
+    }
+
     private func removeTap(_ id: String) {
         guard #available(macOS 14.2, *) else { return }
         (taps[id] as? AppAudioTap)?.stop()
@@ -101,6 +127,7 @@ final class AppVolumeManager {
             return
         }
         guard !objectIDs.isEmpty else { return }
+        followDefaultOutputChanges()
         do {
             let tap = try AppAudioTap(processObjectIDs: objectIDs, name: "PepBox App Volume \(id)")
             tap.gain = clamped
@@ -228,7 +255,7 @@ final class AppAudioTap {
     private let queue = DispatchQueue(label: "com.pepbox.appvolume", qos: .userInteractive)
 
     init(processObjectIDs: [AudioObjectID], name: String) throws {
-        guard let outputDevice: AudioObjectID = getValue(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultSystemOutputDevice),
+        guard let outputDevice: AudioObjectID = getValue(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice),
               let outputUID = deviceUID(outputDevice) else { throw AppAudioTapError.noOutputDevice }
 
         let description = CATapDescription(stereoMixdownOfProcesses: processObjectIDs)
@@ -294,36 +321,48 @@ final class AppAudioTap {
     }
 
     /// Copies Float32 samples from the tap to the output, channel by channel, with gain.
-    /// Handles interleaved and non-interleaved buffers on either side.
+    /// Handles interleaved and non-interleaved buffers on either side. Runs on the
+    /// real-time audio thread, so it doesn't allocate.
     private static func copy(_ input: UnsafePointer<AudioBufferList>, to output: UnsafeMutablePointer<AudioBufferList>, gain: Float) {
         let inBuffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
         let outBuffers = UnsafeMutableAudioBufferListPointer(output)
 
-        // Flatten both sides into (pointer, stride, frames) per channel.
-        func channels(_ buffers: UnsafeMutableAudioBufferListPointer) -> [(UnsafeMutablePointer<Float>, Int, Int)] {
-            var list: [(UnsafeMutablePointer<Float>, Int, Int)] = []
-            for buffer in buffers {
+        // Total input channels across buffers (1 interleaved buffer or N mono buffers).
+        var inputChannels = 0
+        for buffer in inBuffers where buffer.mData != nil { inputChannels += max(1, Int(buffer.mNumberChannels)) }
+
+        /// (samples, stride, frames) of the n-th input channel.
+        func inputChannel(_ index: Int) -> (UnsafeMutablePointer<Float>, Int, Int)? {
+            var remaining = index
+            for buffer in inBuffers {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 let count = max(1, Int(buffer.mNumberChannels))
-                let frames = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size / count
-                for channel in 0..<count { list.append((data + channel, count, frames)) }
+                if remaining < count {
+                    return (data + remaining, count, Int(buffer.mDataByteSize) / MemoryLayout<Float>.size / count)
+                }
+                remaining -= count
             }
-            return list
+            return nil
         }
 
-        let source = channels(inBuffers)
-        let destination = channels(outBuffers)
-        for (index, out) in destination.enumerated() {
-            guard !source.isEmpty else {
-                for frame in 0..<out.2 { out.0[frame * out.1] = 0 }
-                continue
+        var outputIndex = 0
+        for buffer in outBuffers {
+            guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+            let count = max(1, Int(buffer.mNumberChannels))
+            let frames = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size / count
+            for channel in 0..<count {
+                let out = data + channel
+                // More output than input channels (e.g. 4-channel device): repeat the last input channel.
+                let source = inputChannels > 0 ? inputChannel(min(outputIndex, inputChannels - 1)) : nil
+                let copied = min(frames, source?.2 ?? 0)
+                if let (samples, stride, _) = source {
+                    for frame in 0..<copied {
+                        out[frame * count] = max(-1, min(1, samples[frame * stride] * gain))
+                    }
+                }
+                for frame in copied..<frames { out[frame * count] = 0 }
+                outputIndex += 1
             }
-            let input = source[min(index, source.count - 1)]
-            let frames = min(out.2, input.2)
-            for frame in 0..<frames {
-                out.0[frame * out.1] = max(-1, min(1, input.0[frame * input.1] * gain))
-            }
-            for frame in frames..<out.2 { out.0[frame * out.1] = 0 }
         }
     }
 }

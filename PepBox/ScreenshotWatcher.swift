@@ -16,16 +16,29 @@ final class ScreenshotWatcher: NSObject {
     private var query: NSMetadataQuery?
     /// Paths already added, so Spotlight re-reporting an item doesn't add it twice.
     private var addedPaths = Set<String>()
+    /// Watching only for one screenshot (Ring's Screenshot action) while the setting is off.
+    private var oneShotUntil: Date?
+
+    private var isSettingEnabled: Bool {
+        UserDefaults.standard.preference(AppPreferenceKey.autoAddScreenshots, default: PreferenceDefault.autoAddScreenshots)
+    }
+
+    /// Puts the next screenshot taken in the next minute on the shelf, even with the setting off.
+    func captureNext() {
+        oneShotUntil = Date().addingTimeInterval(60)
+        start()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 61) { [weak self] in
+            guard let self, let until = self.oneShotUntil, until <= Date() else { return }
+            self.oneShotUntil = nil
+            if !self.isSettingEnabled { self.stop() }
+        }
+    }
 
     /// Starts or stops watching to match the "Add new screenshots" setting.
     func updateFromPreferences() {
-        let enabled = UserDefaults.standard.preference(
-            AppPreferenceKey.autoAddScreenshots,
-            default: PreferenceDefault.autoAddScreenshots
-        )
-        if enabled {
+        if isSettingEnabled {
             start()
-        } else {
+        } else if oneShotUntil == nil {
             stop()
         }
     }
@@ -71,6 +84,10 @@ final class ScreenshotWatcher: NSObject {
         guard !urls.isEmpty else { return }
 
         print("📸 ScreenshotWatcher: Adding \(urls.count) new screenshot(s) to shelf")
+        if oneShotUntil != nil {
+            oneShotUntil = nil
+            if !isSettingEnabled { stop() }
+        }
         DispatchQueue.main.async {
             PepBoxState.shared.addItems(from: urls)
         }

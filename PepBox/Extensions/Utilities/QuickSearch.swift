@@ -181,6 +181,8 @@ final class QuickSearchModel {
     }
     private(set) var results: [QuickSearchResult] = []
     var selection = 0
+    /// Bumped on every open so the view re-focuses its field (onAppear only fires once).
+    private(set) var openCount = 0
 
     private var apps: [URL] = []
     private var fileResults: [QuickSearchResult] = []
@@ -188,6 +190,7 @@ final class QuickSearchModel {
     private var fileQueryObserver: NSObjectProtocol?
 
     func prepare() {
+        openCount += 1
         query = ""
         selection = 0
         apps = Self.installedApps()
@@ -431,6 +434,7 @@ struct QuickSearchView: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(.white.opacity(0.12)))
         .frame(maxHeight: .infinity, alignment: .top)
         .onAppear { fieldFocused = true }
+        .onChange(of: model.openCount) { _, _ in fieldFocused = true }
         .onKeyPress(.downArrow) { model.moveSelection(1); return .handled }
         .onKeyPress(.upArrow) { model.moveSelection(-1); return .handled }
         .onKeyPress(.escape) { onClose(); return .handled }

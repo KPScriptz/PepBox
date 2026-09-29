@@ -131,23 +131,20 @@ final class RingMenuController {
         ]
     }
 
-    /// Interactive screenshot (area or window) saved to a temp file and put on the shelf.
+    /// macOS's own area screenshot (⌘⇧4); the next capture goes on the shelf. Running
+    /// screencapture ourselves would need PepBox to have Screen Recording permission,
+    /// otherwise the image only shows the wallpaper.
     private static func screenshotToShelf() {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("PepBoxRingShots", isDirectory: true)
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
-        let url = folder.appendingPathComponent("Screenshot \(formatter.string(from: Date())).png")
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", url.path]
-        process.terminationHandler = { _ in
-            // Cancelled selections leave no file.
-            guard FileManager.default.fileExists(atPath: url.path) else { return }
-            DispatchQueue.main.async { PepBoxState.shared.addItems(from: [url]) }
+        guard AXIsProcessTrusted() else {
+            PermissionManager.shared.requestAccessibilityForUserAction()
+            return
         }
-        try? process.run()
+        ScreenshotWatcher.shared.captureNext()
+        for keyDown in [true, false] {
+            guard let event = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_ANSI_4), keyDown: keyDown) else { continue }
+            event.flags = [.maskCommand, .maskShift]
+            event.post(tap: .cghidEventTap)
+        }
     }
 
     private static func hexString(_ color: NSColor) -> String {

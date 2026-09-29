@@ -61,6 +61,9 @@ final class TextActionsController {
         guard let app = NSWorkspace.shared.frontmostApplication,
               app.bundleIdentifier != Bundle.main.bundleIdentifier else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        // This runs on the main thread: don't let a hung app freeze PepBox (default is ~6 s).
+        // Setting it on the system-wide element makes it the default for every element we query.
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.25)
         if !enabledManualAccessibility.contains(app.processIdentifier) {
             enabledManualAccessibility.insert(app.processIdentifier)
             AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, kCFBooleanTrue)
