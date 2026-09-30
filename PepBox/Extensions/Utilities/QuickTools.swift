@@ -571,3 +571,21 @@ extension QuickTools {
         return EventRequest(title: title.prefix(1).uppercased() + title.dropFirst(), start: date, isAllDay: !hasTime)
     }
 }
+
+// MARK: - App ranking (usage-aware)
+
+extension QuickTools {
+    /// Orders app names for a query: prefix matches first, then the ones you open most, then shorter names.
+    static func rankApps(_ names: [String], query: String, usage: [String: Int]) -> [String] {
+        let lower = query.lowercased()
+        return names
+            .filter { $0.lowercased().contains(lower) }
+            .sorted { lhs, rhs in
+                let lp = lhs.lowercased().hasPrefix(lower), rp = rhs.lowercased().hasPrefix(lower)
+                if lp != rp { return lp }
+                let lu = usage[lhs] ?? 0, ru = usage[rhs] ?? 0
+                if lu != ru { return lu > ru }
+                return lhs.count < rhs.count
+            }
+    }
+}

@@ -89,7 +89,7 @@ final class QuickSearchModel {
         let text = query.trimmingCharacters(in: .whitespaces)
         var list: [QuickSearchResult] = []
         guard !text.isEmpty else {
-            results = []
+            results = suggestions()
             stopFileQuery()
             return
         }
@@ -157,15 +157,10 @@ final class QuickSearchModel {
         }
 
         let lower = text.lowercased()
-        let matchingApps = apps
-            .map { ($0, $0.deletingPathExtension().lastPathComponent) }
-            .filter { $0.1.lowercased().contains(lower) }
-            .sorted { lhs, rhs in
-                // Prefix matches first, then shorter names.
-                let lp = lhs.1.lowercased().hasPrefix(lower), rp = rhs.1.lowercased().hasPrefix(lower)
-                return lp != rp ? lp : lhs.1.count < rhs.1.count
-            }
+        let appsByName = Dictionary(apps.map { ($0.deletingPathExtension().lastPathComponent, $0) }, uniquingKeysWith: { first, _ in first })
+        let matchingApps = QuickTools.rankApps(Array(appsByName.keys), query: lower, usage: Self.appUsage)
             .prefix(6)
+            .compactMap { name in appsByName[name].map { ($0, name) } }
         list += matchingApps.map { url, name in
             QuickSearchResult(id: url.path, title: name, subtitle: "Application", kind: .app(url))
         }
@@ -184,6 +179,40 @@ final class QuickSearchModel {
 
         results = list
         startFileQuery(for: text)
+    }
+
+    // MARK: Usage and suggestions
+
+    private static let usageKey = "quickSearch_appUsage"
+
+    static var appUsage: [String: Int] {
+        UserDefaults.standard.dictionary(forKey: usageKey) as? [String: Int] ?? [:]
+    }
+
+    static func noteAppOpened(_ name: String) {
+        var usage = appUsage
+        usage[name, default: 0] += 1
+        UserDefaults.standard.set(usage, forKey: usageKey)
+    }
+
+    /// What Quick Search shows before you type: running timers / queue, then your most-opened apps.
+    private func suggestions() -> [QuickSearchResult] {
+        var list: [QuickSearchResult] = []
+        let timers = QuickTimerManager.shared
+        list += timers.timers.map { timer in
+            QuickSearchResult(id: "cancel-\(timer.id)", title: "\(timer.title) · \(QuickTimerParser.format(timers.remaining(timer))) left",
+                              subtitle: "Timer · Enter to cancel", kind: .cancelTimer(timer.id))
+        }
+        if PasteQueue.shared.isActive {
+            list.append(QuickSearchResult(id: "queue-stop", title: "Stop Paste Queue (\(PasteQueue.shared.items.count) queued)",
+                                          subtitle: "Paste Queue", kind: .action { PasteQueue.shared.stop() }, customSymbol: "square.stack.3d.up.fill"))
+        }
+        let appsByName = Dictionary(apps.map { ($0.deletingPathExtension().lastPathComponent, $0) }, uniquingKeysWith: { first, _ in first })
+        let favorites = Self.appUsage.sorted { $0.value > $1.value }.prefix(6).compactMap { name, _ in appsByName[name].map { (name, $0) } }
+        list += favorites.map { name, url in
+            QuickSearchResult(id: url.path, title: name, subtitle: "Frequently used", kind: .app(url))
+        }
+        return list
     }
 
     private func startFileQuery(for text: String) {
@@ -239,6 +268,7 @@ final class QuickSearchModel {
         guard let result = result ?? (results.indices.contains(selection) ? results[selection] : nil) else { return false }
         switch result.kind {
         case .app(let url):
+            Self.noteAppOpened(url.deletingPathExtension().lastPathComponent)
             NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
         case .file(let url):
             if revealInFinder {

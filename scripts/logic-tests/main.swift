@@ -359,6 +359,10 @@ do {
     expect(QuickTools.eventRequest("event dentist friday")?.isAllDay, true, "event all day")
     expect(QuickTools.eventRequest("event tomorrow 3pm"), nil, "event needs a title")
     expect(QuickTools.eventRequest("event lunch"), nil, "event needs a date")
+    let appNames = ["Safari", "Slack", "System Settings", "Messages", "Spotify"]
+    expect(QuickTools.rankApps(appNames, query: "s", usage: [:]), ["Slack", "Safari", "Spotify", "System Settings", "Messages"], "rank prefix then short")
+    expect(QuickTools.rankApps(appNames, query: "s", usage: ["Spotify": 9, "Safari": 2]), ["Spotify", "Safari", "Slack", "System Settings", "Messages"], "rank by usage")
+    expect(QuickTools.rankApps(appNames, query: "mess", usage: ["Slack": 50]), ["Messages"], "rank filters")
     expect(QuickTools.portQuery("port 3000"), 3000, "port query")
     expect(QuickTools.portQuery(":8080"), 8080, "port colon")
     expect(QuickTools.portQuery("port 99999"), nil, "port range")
