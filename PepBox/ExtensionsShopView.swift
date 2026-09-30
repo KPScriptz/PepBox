@@ -860,6 +860,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "localSend",
+                iconPlaceholder: "paperplane.fill",
+                iconPlaceholderColor: .teal,
+                title: "LocalSend",
+                subtitle: "AirDrop for every device, no cloud",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.localSend.isInstalled,
+                analyticsKey: "localSend",
+                extensionType: .localSend
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .localSend,
+                    onAction: { UtilityExtensionKind.localSend.install() },
+                    installCount: extensionCounts["localSend"],
+                    rating: extensionRatings["localSend"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

@@ -153,6 +153,7 @@ final class ExtensionRegistry {
         register(SmoothScrollExtension.self)
         register(EyeBreaksExtension.self)
         register(DownloadsActivityExtension.self)
+        register(LocalSendExtension.self)
 
     }
     

@@ -79,6 +79,7 @@ final class LocalSendPanelController {
         transfer.urls = urls
         self.transfer = transfer
         LocalSendDiscovery.shared.start()
+        LocalSendDiscovery.shared.isPicking = true
 
         let hosting = NSHostingView(rootView: LocalSendPanelView(discovery: LocalSendDiscovery.shared, transfer: transfer) { [weak self] in
             self?.close()

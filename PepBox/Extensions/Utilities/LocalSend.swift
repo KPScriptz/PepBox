@@ -121,6 +121,12 @@ final class LocalSendDiscovery {
     private(set) var devices: [LocalSendDevice] = []
     private(set) var error: String?
 
+    /// True while PepBox receives files: it announces itself as an HTTP receiver
+    /// and answers other devices' announcements so they can find it.
+    var receiving = false
+    /// True while the send picker is open; announcements repeat so new devices show up quickly.
+    var isPicking = false
+
     private var socketFD: Int32 = -1
     private var isRunning = false
     private var announceTimer: Timer?
@@ -156,14 +162,18 @@ final class LocalSendDiscovery {
 
         announce()
         let timer = Timer(timeInterval: 3, repeats: true) { [weak self] _ in
-            self?.announce()
-            self?.dropStale()
+            guard let self else { return }
+            if self.isPicking { self.announce() }
+            self.dropStale()
         }
         RunLoop.main.add(timer, forMode: .common)
         announceTimer = timer
     }
 
+    /// Stops discovery unless the receiver still needs it.
     func stop() {
+        isPicking = false
+        guard !receiving else { return }
         isRunning = false
         announceTimer?.invalidate()
         announceTimer = nil
@@ -176,13 +186,21 @@ final class LocalSendDiscovery {
         error = message
     }
 
-    private func announce() {
+    private var myAnnouncement: LocalSendDevice {
+        var me = LocalSendProtocol.me
+        me.protocol = receiving ? "http" : "https"
+        return me
+    }
+
+    private func announce(asReply: Bool = false) {
         guard socketFD >= 0 else { return }
         var group = sockaddr_in()
         group.sin_family = sa_family_t(AF_INET)
         group.sin_port = in_port_t(UInt16(LocalSendProtocol.port).bigEndian)
         group.sin_addr = in_addr(s_addr: inet_addr(LocalSendProtocol.multicastGroup))
-        let data = LocalSendProtocol.announcement()
+        var me = myAnnouncement
+        me.announce = !asReply
+        let data = LocalSendProtocol.announcement(me)
         _ = data.withUnsafeBytes { bytes in
             withUnsafePointer(to: &group) {
                 $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
@@ -205,7 +223,12 @@ final class LocalSendDiscovery {
             inet_ntop(AF_INET, &source.sin_addr, &ipBuffer, socklen_t(INET_ADDRSTRLEN))
             let ip = String(cString: ipBuffer)
             guard let device = LocalSendProtocol.parse(Data(buffer[0..<count]), from: ip, myFingerprint: myFingerprint) else { continue }
-            DispatchQueue.main.async { [weak self] in self?.upsert(device) }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.upsert(device)
+                // Someone new announced: say hello back so they can send to us.
+                if self.receiving && device.announce == true { self.announce(asReply: true) }
+            }
         }
     }
 

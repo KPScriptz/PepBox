@@ -199,6 +199,49 @@ do {
     expect(announcement["ip"] == nil, true, "localsend announce has no ip field")
 }
 
+// MARK: - LocalSend HTTP reader
+
+do {
+    func run(_ raw: String, splitEvery size: Int) -> (head: HTTPRequestHead?, body: Data, ended: Bool, malformed: Bool) {
+        let reader = HTTPRequestReader()
+        let bytes = Data(raw.utf8)
+        var head: HTTPRequestHead?, body = Data(), ended = false, malformed = false
+        var index = 0
+        while index < bytes.count {
+            let piece = bytes[index..<min(index + size, bytes.count)]
+            for event in reader.feed(Data(piece)) {
+                switch event {
+                case .head(let h): head = h
+                case .body(let d): body.append(d)
+                case .end: ended = true
+                case .malformed: malformed = true
+                }
+            }
+            index += size
+        }
+        return (head, body, ended, malformed)
+    }
+    let plain = "POST /api/localsend/v2/upload?sessionId=s1&fileId=f1&token=t%201 HTTP/1.1\r\nHost: x\r\nContent-Length: 11\r\n\r\nhello world"
+    for size in [1, 3, 7, 1000] {
+        let result = run(plain, splitEvery: size)
+        expect(result.head?.path, "/api/localsend/v2/upload", "http path (split \(size))")
+        expect(result.head?.query["token"], "t 1", "http query decoded (split \(size))")
+        expect(String(decoding: result.body, as: UTF8.self), "hello world", "http body (split \(size))")
+        expect(result.ended, true, "http end (split \(size))")
+    }
+    let chunked = "POST /u HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n6;ext=1\r\n world\r\n0\r\n\r\n"
+    for size in [1, 2, 5, 1000] {
+        let result = run(chunked, splitEvery: size)
+        expect(String(decoding: result.body, as: UTF8.self), "hello world", "http chunked body (split \(size))")
+        expect(result.ended, true, "http chunked end (split \(size))")
+    }
+    expect(run("GET /api/localsend/v2/info HTTP/1.1\r\n\r\n", splitEvery: 4).ended, true, "http no body ends")
+    expect(run("POST /u HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n", splitEvery: 100).malformed, true, "http bad chunk size")
+    expect(run("garbage\r\n\r\n", splitEvery: 100).malformed, true, "http bad request line")
+    let response = String(decoding: HTTPRequestReader.response(status: 403), as: UTF8.self)
+    expect(response.hasPrefix("HTTP/1.1 403 Forbidden\r\nContent-Length: 0"), true, "http response line")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

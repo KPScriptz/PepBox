@@ -35,7 +35,7 @@ struct ExtensionOptionsView: View {
     let extensionType: ExtensionType
 
     static func hasOptions(_ type: ExtensionType) -> Bool {
-        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks, .downloadsActivity].contains(type)
+        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks, .downloadsActivity, .localSend].contains(type)
     }
 
     var body: some View {
