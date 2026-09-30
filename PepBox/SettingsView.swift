@@ -350,13 +350,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Per-Display")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Choose exactly which external displays show PepBox")
                             .font(.caption)
@@ -1120,8 +1113,8 @@ struct SettingsView: View {
                         VStack(alignment: .leading) {
                             Text("Floating Basket")
                             Text(instantBasketOnDrag 
-                                ? "Appears instantly when dragging files anywhere. Drag right into Quick Actions to quickly share your files." 
-                                : "Appears when you jiggle files anywhere on screen. Drag right into Quick Actions to quickly share your files.")
+                                ? "Appears instantly when you drag files anywhere" 
+                                : "Appears when you shake files while dragging")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -1200,9 +1193,6 @@ struct SettingsView: View {
                                     .monospacedDigit()
                             }
                             Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                            Text("Time before basket auto-hides when cursor leaves")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 } header: {
@@ -1280,13 +1270,6 @@ struct SettingsView: View {
                             VStack(alignment: .leading) {
                                 HStack(alignment: .center, spacing: 6) {
                                     Text("Quick Actions")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                                 }
                                 Text("Drop buttons under Shelf and Basket: AirDrop, Messages, Mail, ZIP and more")
                                     .font(.caption)
@@ -1386,12 +1369,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         HStack(spacing: 6) {
                             Text("Hide Physical Notch")
-                            Text("new")
-                                .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(Color.pepboxAccent))
                         }
                         Text("Draw a black bar to hide the notch, allowing menu bar icons to use that space. Only applies in Notch mode.")
                             .font(.caption)
@@ -1431,7 +1408,7 @@ struct SettingsView: View {
                 }
 
             } header: {
-                Text("Accessibility")
+                Text("Advanced")
             }
         }
     }
@@ -1663,13 +1640,6 @@ struct SettingsView: View {
                         VStack(alignment: .leading) {
                             HStack(alignment: .center, spacing: 6) {
                                 Text("Protect Originals")
-                                Text("advanced")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                    .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                             }
                             Text("Always copy, never move files")
                                 .font(.caption)
@@ -1710,8 +1680,8 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         Text("Floating Basket")
                         Text(instantBasketOnDrag 
-                            ? "Appears instantly when dragging files anywhere. Drag right into Quick Actions to quickly share your files." 
-                            : "Appears when you jiggle files anywhere on screen. Drag right into Quick Actions to quickly share your files.")
+                            ? "Appears instantly when you drag files anywhere" 
+                            : "Appears when you shake files while dragging")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -1792,9 +1762,6 @@ struct SettingsView: View {
                                 .monospacedDigit()
                         }
                         Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                        Text("Time before basket auto-hides when cursor leaves")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
             } header: {
@@ -1809,13 +1776,6 @@ struct SettingsView: View {
                         VStack(alignment: .leading) {
                             HStack(alignment: .center, spacing: 6) {
                                 Text("Quick Actions")
-                                Text("advanced")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                    .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                             }
                             Text("Show quick action drop buttons under Shelf and Basket")
                                 .font(.caption)
@@ -1849,7 +1809,7 @@ struct SettingsView: View {
                             Text("Floating Basket")
                             Text(instantBasketOnDrag 
                                 ? "Appears instantly when dragging files anywhere" 
-                                : "Appears when you jiggle files anywhere on screen")
+                                : "Appears when you shake files while dragging")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -1931,9 +1891,6 @@ struct SettingsView: View {
                                     .monospacedDigit()
                             }
                             Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                            Text("Time before basket auto-hides when cursor leaves")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 } header: {
@@ -1949,13 +1906,6 @@ struct SettingsView: View {
                             VStack(alignment: .leading) {
                                 HStack(alignment: .center, spacing: 6) {
                                     Text("Quick Actions")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                                 }
                                 Text("Show quick action drop buttons under Shelf and Basket")
                                     .font(.caption)
@@ -2117,13 +2067,6 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
                                     Text("Stabilize Media")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                                 }
                                 Text("Prevent flickering from rapid song changes")
                                     .font(.caption)
@@ -2213,13 +2156,6 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(alignment: .center, spacing: 6) {
                                 Text("Media Key Target")
-                                Text("beta")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(Color.orange.opacity(0.95))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(Color.orange.opacity(0.18)))
-                                    .overlay(Capsule().stroke(Color.orange.opacity(0.45), lineWidth: 1))
                             }
                             Text("Choose whether volume and brightness follow your active display")
                                 .font(.caption)
@@ -3234,7 +3170,7 @@ struct SettingsView: View {
                 Toggle(isOn: $enableClipboard) {
                     VStack(alignment: .leading) {
                         Text("Clipboard Manager")
-                        Text("History with Preview")
+                        Text("Searchable history with previews")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -3484,7 +3420,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle.fill")
-                    Text("Add App...")
+                    Text("Add App…")
                 }
             }
             .buttonStyle(PepBoxPillButtonStyle(size: .small))
@@ -3909,7 +3845,7 @@ struct JiggleToShowInfoButton: View {
                     
                     VStack(alignment: .leading, spacing: 6) {
                         Label("Hides after configurable delay", systemImage: "timer")
-                        Label("Jiggle while dragging files still works", systemImage: "arrow.left.arrow.right")
+                        Label("Shaking files while dragging still works", systemImage: "arrow.left.arrow.right")
                         Label("Use Basket Switcher shortcut to reveal hidden baskets", systemImage: "keyboard")
                         Label("Baskets with items are preserved", systemImage: "tray.full.fill")
                     }
@@ -5134,13 +5070,6 @@ struct TrackedFoldersSettingsRow: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Tracked Folders")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Watch folders and auto-add new files")
                             .font(.caption)
@@ -5287,13 +5216,6 @@ struct MediaSourceFilterSettingsRow: View {
                 VStack(alignment: .leading) {
                     HStack(alignment: .center, spacing: 6) {
                         Text("Filter Media Sources")
-                        Text("advanced")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                            .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                     }
                     Text("Only show selected apps in media player")
                         .font(.caption)
@@ -5484,13 +5406,6 @@ struct AdvancedAutofadeSettingsRow: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Auto-Hide Preview")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Fade out mini player after delay")
                             .font(.caption)

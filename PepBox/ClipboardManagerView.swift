@@ -2845,7 +2845,7 @@ struct ZoomedDocumentPreviewSheet: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "eye")
-                        Text("QuickLook")
+                        Text("Quick Look")
                     }
                 }
                 .buttonStyle(PepBoxPillButtonStyle(size: .medium))

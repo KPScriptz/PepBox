@@ -316,13 +316,6 @@ struct SmartExportSettingsRow: View {
                 VStack(alignment: .leading) {
                     HStack(alignment: .center, spacing: 6) {
                         Text("Smart Export")
-                        Text("advanced")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                            .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                     }
                     Text("Auto-save processed files to designated folders")
                         .font(.caption)
@@ -351,13 +344,6 @@ struct SmartExportSettingsRow: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Smart Export")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Auto-save processed files to designated folders")
                             .font(.caption)
