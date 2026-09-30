@@ -64,6 +64,15 @@ extension ClipboardItem {
         copy.rtfData = nil
         return copy
     }
+
+    /// The same item with its text transformed (formatting dropped), or nil if the transform doesn't apply.
+    func transformed(_ transform: TextTransform) -> ClipboardItem? {
+        guard let content, let result = transform.apply(content) else { return nil }
+        var copy = self
+        copy.content = result
+        copy.rtfData = nil
+        return copy
+    }
 }
 
 struct ClipboardItem: Identifiable, Codable, Hashable {

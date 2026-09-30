@@ -618,6 +618,50 @@ struct NotchItemView: View {
                 }
             }
             
+            // File tools: resize, PDFs, checksum
+            let toolTargets = (state.selectedItems.count > 1 && state.selectedItems.contains(item.id))
+                ? state.items.filter { state.selectedItems.contains($0.id) } : [item]
+            let allImages = toolTargets.allSatisfy(\.isImage)
+            let allPDFs = toolTargets.allSatisfy { $0.fileType?.conforms(to: .pdf) == true }
+            if allImages || (allPDFs && toolTargets.count > 1) || (toolTargets.count == 1 && !item.isDirectory) {
+                Menu {
+                    if allImages {
+                        ForEach([("Half Size", 0), ("1080 px", 1080), ("2048 px", 2048), ("3840 px (4K)", 3840)], id: \.1) { title, size in
+                            Button(title) { runFileTool(toolTargets) { url in
+                                if size == 0 {
+                                    let pixels = CGImageSourceCreateWithURL(url as CFURL, nil)
+                                        .flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) as? [CFString: Any] }
+                                    let longest = max(pixels?[kCGImagePropertyPixelWidth] as? Int ?? 0, pixels?[kCGImagePropertyPixelHeight] as? Int ?? 0)
+                                    return longest > 1 ? FileTools.resizeImage(url, maxDimension: longest / 2) : nil
+                                }
+                                return FileTools.resizeImage(url, maxDimension: size)
+                            } }
+                        }
+                        Button(toolTargets.count > 1 ? "Combine into PDF" : "Make PDF") {
+                            runFileToolOnAll(toolTargets) { FileTools.imagesToPDF($0) }
+                        }
+                    }
+                    if allPDFs && toolTargets.count > 1 {
+                        Button("Merge \(toolTargets.count) PDFs") { runFileToolOnAll(toolTargets) { FileTools.mergePDFs($0) } }
+                    }
+                    if toolTargets.count == 1 && !item.isDirectory {
+                        Button("Copy SHA-256 Checksum") {
+                            let url = item.url
+                            Task.detached {
+                                guard let hash = FileTools.sha256(url) else { return }
+                                await MainActor.run {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(hash, forType: .string)
+                                    HapticFeedback.copy()
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Tools", systemImage: "wrench.and.screwdriver")
+                }
+            }
+            
             // Remove Location & Metadata - single image
             if state.selectedItems.count <= 1 && item.isImage {
                 Button {
@@ -901,6 +945,33 @@ struct NotchItemView: View {
                 )
             }
         }
+    }
+    
+    /// Runs a file tool on each item in the background and puts the results on the shelf.
+    private func runFileTool(_ items: [DroppedItem], _ tool: @escaping (URL) -> URL?) {
+        let urls = items.map(\.url)
+        Task.detached {
+            let outputs = urls.compactMap(tool)
+            await MainActor.run { finishFileTool(outputs) }
+        }
+    }
+    
+    /// Runs a tool that combines all items into one file (merge, images → PDF).
+    private func runFileToolOnAll(_ items: [DroppedItem], _ tool: @escaping ([URL]) -> URL?) {
+        let urls = items.map(\.url)
+        Task.detached {
+            let output = tool(urls)
+            await MainActor.run { finishFileTool(output.map { [$0] } ?? []) }
+        }
+    }
+    
+    private func finishFileTool(_ outputs: [URL]) {
+        guard !outputs.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        state.addItems(from: outputs)
+        HapticFeedback.copy()
     }
     
     /// Replaces the item with a copy that has no GPS, camera or date metadata.

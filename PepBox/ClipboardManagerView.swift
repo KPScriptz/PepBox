@@ -749,6 +749,18 @@ struct ClipboardManagerView: View {
                                                 Label("Paste as Plain Text", systemImage: "textformat")
                                             }
                                         }
+                                        if item.type == .text, let text = item.content {
+                                            Menu {
+                                                ForEach(TextTransform.allCases) { transform in
+                                                    if let result = item.transformed(transform) {
+                                                        Button(transform.rawValue) { onPaste(result) }
+                                                    }
+                                                }
+                                            } label: {
+                                                Label("Paste Transformed", systemImage: "wand.and.stars")
+                                            }
+                                            .disabled(text.isEmpty)
+                                        }
                                         if item.type == .text || item.type == .url, let text = item.content,
                                            text.utf8.count <= QRCodeGenerator.maxLength {
                                             Button { QRCodePanelController.shared.show(text) } label: {

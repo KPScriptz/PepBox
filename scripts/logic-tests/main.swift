@@ -4,6 +4,7 @@ import Foundation
 import CoreAudio
 import AppKit
 import ImageIO
+import PDFKit
 import CoreImage
 import UniformTypeIdentifiers
 
@@ -330,6 +331,53 @@ do {
     let lsof = QuickTools.parseLsof("p123\ncnode\nn*:3000\nn[::]:3000\np456\ncPython\nn127.0.0.1:3000\n")
     expect(lsof.map(\.pid), [123, 456], "lsof pids")
     expect(lsof.map(\.command), ["node", "Python"], "lsof commands")
+}
+
+// MARK: - File tools and text transforms
+
+do {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pepbox-filetools-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+
+    // A 400×200 JPEG with orientation 6 (rotated): resizing to 100 must bake the rotation in → 50×100.
+    let context = CGContext(data: nil, width: 400, height: 200, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    context.setFillColor(CGColor(red: 0, green: 0.5, blue: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: 400, height: 200))
+    let photo = dir.appendingPathComponent("photo.jpg")
+    let dest = CGImageDestinationCreateWithURL(photo as CFURL, UTType.jpeg.identifier as CFString, 1, nil)!
+    CGImageDestinationAddImage(dest, context.makeImage()!, [kCGImagePropertyOrientation: 6] as CFDictionary)
+    CGImageDestinationFinalize(dest)
+    let resized = FileTools.resizeImage(photo, maxDimension: 100, into: dir)
+    let props = resized.flatMap { CGImageSourceCreateWithURL($0 as CFURL, nil) }.flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) as? [CFString: Any] }
+    expect(props?[kCGImagePropertyPixelWidth] as? Int, 50, "resize width (rotation applied)")
+    expect(props?[kCGImagePropertyPixelHeight] as? Int, 100, "resize height")
+    expect(resized?.pathExtension, "jpg", "resize keeps format")
+
+    // Images → PDF, then merge two PDFs.
+    let png = dir.appendingPathComponent("a.png")
+    try? NSBitmapImageRep(cgImage: context.makeImage()!).representation(using: .png, properties: [:])?.write(to: png)
+    let single = FileTools.imagesToPDF([photo, png], into: dir)
+    expect(single.flatMap { PDFDocument(url: $0) }?.pageCount, 2, "images to PDF pages")
+    let merged = single.flatMap { FileTools.mergePDFs([$0, $0], into: dir) }
+    expect(merged.flatMap { PDFDocument(url: $0) }?.pageCount, 4, "merge PDFs pages")
+    expect(FileTools.mergePDFs([png], into: dir) == nil, true, "merge rejects non-PDF")
+
+    // Checksum
+    let text = dir.appendingPathComponent("hello.txt")
+    try? Data("hello".utf8).write(to: text)
+    expect(FileTools.sha256(text), "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", "sha256")
+
+    // Text transforms
+    expect(TextTransform.titleCase.apply("hello big world"), "Hello Big World", "title case")
+    expect(TextTransform.sentenceCase.apply("HELLO THERE. how are you? fine"), "Hello there. How are you? Fine", "sentence case")
+    expect(TextTransform.trim.apply("  a  \n   b \n\n"), "a\nb", "trim lines")
+    expect(TextTransform.singleLine.apply("one\n two\n\nthree"), "one two three", "single line")
+    expect(TextTransform.sortLines.apply("b\na10\na2"), "a2\na10\nb", "sort lines naturally")
+    expect(TextTransform.uniqueLines.apply("x\ny\nx\nz\ny"), "x\ny\nz", "unique lines")
+    expect(TextTransform.prettyJSON.apply(#"{"b":1,"a":[1,2]}"#), "{\n  \"a\" : [\n    1,\n    2\n  ],\n  \"b\" : 1\n}", "pretty JSON")
+    expect(TextTransform.prettyJSON.apply("not json"), nil, "pretty JSON rejects text")
+    expect(TextTransform.slug.apply("Héllo, World! 2026"), "hello-world-2026", "slug")
 }
 
 // MARK: - Currency conversion
