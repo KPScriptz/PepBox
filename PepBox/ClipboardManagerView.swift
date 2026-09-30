@@ -48,6 +48,7 @@ struct ClipboardManagerView: View {
     
     // Tag Filter State
     @State private var selectedTagFilter: UUID? = nil  // nil = show all
+    @State private var typeFilter: ClipboardType? = nil  // nil = all kinds
     @State private var isTagPopoverVisible = false
     @State private var showTagManagement = false
     
@@ -110,6 +111,9 @@ struct ClipboardManagerView: View {
         } else {
             filtered = historySnapshot
         }
+        if let typeFilter {
+            filtered = filtered.filter { $0.type == typeFilter }
+        }
         
         // Then apply search filter
         if !searchSnapshot.isEmpty {
@@ -150,6 +154,9 @@ struct ClipboardManagerView: View {
                 updateSortedHistory()
             }
             .onChange(of: selectedTagFilter) { _, _ in
+                updateSortedHistory()
+            }
+            .onChange(of: typeFilter) { _, _ in
                 updateSortedHistory()
             }
             .onChange(of: tagsEnabled) { _, enabled in
@@ -212,6 +219,24 @@ struct ClipboardManagerView: View {
                             .opacity(tagsEnabled ? 1 : 0)
                             .allowsHitTesting(tagsEnabled)
                             .help("Filter by Tag")
+                        }
+                        
+                        // Kind filter: text, links, images, files, colors
+                        ToolbarItem(placement: .automatic) {
+                            Menu {
+                                Picker("Show", selection: $typeFilter) {
+                                    Label("All", systemImage: "square.grid.2x2").tag(ClipboardType?.none)
+                                    Label("Text", systemImage: "text.alignleft").tag(ClipboardType?.some(.text))
+                                    Label("Links", systemImage: "link").tag(ClipboardType?.some(.url))
+                                    Label("Images", systemImage: "photo").tag(ClipboardType?.some(.image))
+                                    Label("Files", systemImage: "doc").tag(ClipboardType?.some(.file))
+                                    Label("Colors", systemImage: "paintpalette").tag(ClipboardType?.some(.color))
+                                }
+                                .pickerStyle(.inline)
+                            } label: {
+                                Image(systemName: typeFilter == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                            }
+                            .help("Show only one kind")
                         }
                         
                         // Search button in sidebar
