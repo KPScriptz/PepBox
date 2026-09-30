@@ -5,6 +5,7 @@ import SwiftUI
 
 struct ExtensionsShopView: View {
     @State private var selectedCategory: ExtensionCategory? = nil  // nil = show all
+    @State private var searchText = ""
     @Namespace private var categoryAnimation
     @State private var extensionCounts: [String: Int] = [:]
     @State private var extensionRatings: [String: AnalyticsService.ExtensionRating] = [:]
@@ -250,9 +251,30 @@ struct ExtensionsShopView: View {
                     Text("All Extensions")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(AdaptiveColors.primaryTextAuto)
+                    Text("\(filteredExtensions.count)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
                 }
                 
                 Spacer()
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Search extensions", text: $searchText)
+                        .textFieldStyle(.plain)
+                    if !searchText.isEmpty {
+                        Button { searchText = "" } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .font(.system(size: 12))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(width: 200)
+                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.06)))
             }
             
             // Category filter pills
@@ -927,6 +949,14 @@ struct ExtensionsShopView: View {
                 ))
             },
         ]
+        
+        // Search narrows everything (including disabled ones) by name or description.
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        if !query.isEmpty {
+            return allExtensions
+                .filter { $0.title.localizedCaseInsensitiveContains(query) || $0.subtitle.localizedCaseInsensitiveContains(query) }
+                .sorted { $0.title < $1.title }
+        }
         
         // nil = show all, otherwise filter by category
         guard let category = selectedCategory else {
