@@ -93,9 +93,6 @@ struct SettingsView: View {
     @State private var showDNDAccessAlert = false  // Full Disk Access alert for Focus Mode HUD
     @State private var showMenuBarHiddenWarning = false  // Warning when hiding menu bar icon (Issue #57)
     @State private var showProtectOriginalsWarning = false  // Warning when disabling Protect Originals
-    @State private var showStabilizeMediaWarning = false  // Warning when enabling Stabilize Media
-    @State private var showAutoFocusSearchWarning = false  // Warning when enabling Auto-Focus Search
-    @State private var showQuickActionsWarning = false
     @State private var showLicenses = false  // Warning when enabling Quick Actions
     @State private var basketDragRevealShortcut: SavedShortcut?
     @State private var basketSwitcherShortcut: SavedShortcut?
@@ -1276,14 +1273,6 @@ struct SettingsView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .onChange(of: enableQuickActions) { _, newValue in
-                            if newValue {
-                                showQuickActionsWarning = true
-                            }
-                        }
-                        .sheet(isPresented: $showQuickActionsWarning) {
-                            QuickActionsInfoSheet(enableQuickActions: $enableQuickActions)
-                        }
                     }
 
                     if enableQuickActions {
@@ -1553,18 +1542,10 @@ struct SettingsView: View {
                                 HStack(spacing: 6) {
                                     Text("Stabilize Media")
                                 }
-                                Text("Prevent flickering from rapid song changes")
+                                Text("Waits a moment before showing a new song, so rapid skips don't flicker")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                        }
-                        .onChange(of: debounceMediaChanges) { _, newValue in
-                            if newValue {
-                                showStabilizeMediaWarning = true
-                            }
-                        }
-                        .sheet(isPresented: $showStabilizeMediaWarning) {
-                            StabilizeMediaInfoSheet(debounceMediaChanges: $debounceMediaChanges)
                         }
 
                         // Media Source Filter (inline list like Tracked Folders)
@@ -2024,12 +2005,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-            } header: {
-                Text("Audio")
-            }
-            
-            // MARK: Screen State (Focus Mode only - Lock Screen moved to dedicated tab)
-            Section {
+
                 // Focus Mode
                 HStack(spacing: 12) {
                     FocusModeHUDIcon()
@@ -2080,7 +2056,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } header: {
-                Text("Focus")
+                Text("Devices & Focus")
             }
         }
     }
@@ -2584,9 +2560,6 @@ struct SettingsView: View {
                         label: "Auto-Focus",
                         isSelected: autoFocusSearch,
                         action: {
-                            if !autoFocusSearch {
-                                showAutoFocusSearchWarning = true
-                            }
                             autoFocusSearch.toggle()
                         }
                     ) {
@@ -2594,9 +2567,6 @@ struct SettingsView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(autoFocusSearch ? Color.blue : AdaptiveColors.overlayAuto(0.5))
                     }
-                }
-                .sheet(isPresented: $showAutoFocusSearchWarning) {
-                    AutoFocusSearchInfoSheet(autoFocusSearch: $autoFocusSearch)
                 }
                 
                 // Shortcut row appears when Copy+Favorite is enabled
