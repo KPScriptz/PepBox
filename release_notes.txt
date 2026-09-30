@@ -1,6 +1,6 @@
 ## What's New in PepBox 1.0.0
 
-- First release of PepBox, based on Droppy 11.0.0
+- First release of PepBox
 - New name, icon and bundle identifier (com.pivotxp.PepBox)
 - Extension icons and previews now ship inside the app
 - No analytics

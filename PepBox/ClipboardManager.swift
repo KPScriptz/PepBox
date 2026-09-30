@@ -864,8 +864,9 @@ class ClipboardManager: ObservableObject {
         HapticFeedback.copy()
     }
     
-    /// Batch paste multiple items to the clipboard (Issue #154)
-    /// Writes all items to pasteboard in a single operation, then simulates one paste
+    /// Pastes a stack of items in order (Issue #154). Text runs go in as one paste joined with the
+    /// chosen separator; files and images follow as their own pastes. Stack pastes aren't added
+    /// back into history.
     func paste(items: [ClipboardItem], targetPID: pid_t? = nil) {
         guard !items.isEmpty else { return }
         
@@ -886,50 +887,48 @@ class ClipboardManager: ObservableObject {
             }
         }
         
+        let itemsByID = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let chunks = ClipboardStack.plan(items.compactMap(Self.stackEntry), separator: .current)
+        pasteChunks(chunks, at: 0, itemsByID: itemsByID, targetPID: targetPID)
+    }
+    
+    static func stackEntry(_ item: ClipboardItem) -> ClipboardStack.Entry? {
+        switch item.type {
+        case .text, .url, .color: return item.content.map { .text($0) }
+        case .file: return item.content.map { .file($0) }
+        case .image: return .image(item.id)
+        }
+    }
+    
+    /// Writes one chunk, pastes it, then moves on to the next once the target app has taken it.
+    private func pasteChunks(_ chunks: [ClipboardStack.Chunk], at index: Int, itemsByID: [UUID: ClipboardItem], targetPID: pid_t?) {
+        guard index < chunks.count else {
+            HapticFeedback.copy()
+            return
+        }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        
-        // Collect all content types
-        var strings: [String] = []
-        var urls: [URL] = []
-        var images: [NSImage] = []
-        
-        for item in items {
-            switch item.type {
-            case .text:
-                if let str = item.content {
-                    strings.append(str)
-                }
-            case .url:
-                if let str = item.content {
-                    strings.append(str)
-                }
-            case .file:
-                if let path = item.content {
-                    urls.append(URL(fileURLWithPath: path))
-                }
-            case .image:
-                if let data = item.loadImageData(), let img = NSImage(data: data) {
-                    images.append(img)
-                }
-            default: break
+        switch chunks[index] {
+        case .text(let text):
+            pasteboard.setString(text, forType: .string)
+        case .files(let paths):
+            pasteboard.writeObjects(paths.map { URL(fileURLWithPath: $0) as NSURL })
+        case .image(let id):
+            if let data = itemsByID[id]?.loadImageData(), let image = NSImage(data: data) {
+                pasteboard.writeObjects([image])
             }
         }
+        // Our own write: don't record it as a new history entry.
+        lastChangeCount = pasteboard.changeCount
+        simulatePasteCommand(targetPID: targetPID)
         
-        // Write all content in order of priority
-        // Note: Multiple images/files are written together; text is joined with newlines
-        if !strings.isEmpty {
-            pasteboard.setString(strings.joined(separator: "\n"), forType: .string)
+        guard index + 1 < chunks.count else {
+            HapticFeedback.copy()
+            return
         }
-        if !urls.isEmpty {
-            pasteboard.writeObjects(urls as [NSURL])
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.pasteChunks(chunks, at: index + 1, itemsByID: itemsByID, targetPID: targetPID)
         }
-        if !images.isEmpty {
-            pasteboard.writeObjects(images)
-        }
-        
-        self.simulatePasteCommand(targetPID: targetPID)
-        HapticFeedback.copy()
     }
     
     private func simulatePasteCommand(targetPID: pid_t?) {

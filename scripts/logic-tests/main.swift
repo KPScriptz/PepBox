@@ -426,6 +426,28 @@ do {
     expect(FocusHistory.streak(["2026-09-27": 1], now: now, calendar: calendar), 0, "focus streak broken")
 }
 
+// MARK: - Clipboard stacking
+
+do {
+    let img1 = UUID(), img2 = UUID()
+    let mixed: [ClipboardStack.Entry] = [.text("a"), .text("b"), .file("/x.pdf"), .file("/y.pdf"), .image(img1), .image(img2), .text("c")]
+    expect(ClipboardStack.plan(mixed, separator: .newline),
+           [.text("a\nb"), .files(["/x.pdf", "/y.pdf"]), .image(img1), .image(img2), .text("c")], "stack plan mixed")
+    expect(ClipboardStack.plan([.text("a"), .text("b"), .text("c")], separator: .comma), [.text("a, b, c")], "stack comma")
+    expect(ClipboardStack.plan([.text("a"), .text("b")], separator: .blankLine), [.text("a\n\nb")], "stack blank line")
+    expect(ClipboardStack.plan([.text("a"), .text("b")], separator: .none), [.text("ab")], "stack no separator")
+    expect(ClipboardStack.plan([], separator: .space), [], "stack empty")
+
+    let a = UUID(), b = UUID(), c = UUID(), d = UUID()
+    let base = Date(timeIntervalSince1970: 1_000)
+    let dates = [a: base, b: base.addingTimeInterval(10), c: base.addingTimeInterval(20), d: base.addingTimeInterval(30)]
+    // ⌘-click order c, a is kept; then a range adds b and d oldest-first.
+    expect(ClipboardStack.reconcile(order: [c, a], selected: [a, c], dates: dates), [c, a], "stack keeps click order")
+    expect(ClipboardStack.reconcile(order: [c, a], selected: [a, b, c, d], dates: dates), [c, a, b, d], "stack range appends oldest first")
+    expect(ClipboardStack.reconcile(order: [c, a, b], selected: [a, b], dates: dates), [a, b], "stack drops deselected")
+    expect(ClipboardStack.reconcile(order: [], selected: [d, b, a, c], dates: dates), [a, b, c, d], "stack select all is copy order")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

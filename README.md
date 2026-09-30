@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>The native productivity layer macOS is missing.</b><br>
-  <sub>100% Swift · Based on <a href="https://github.com/iordv/Droppy">Droppy</a> by Jordy Spruit · GPL-3.0 + Commons Clause</sub>
+  <sub>100% Swift · GPL-3.0 + Commons Clause · see <a href="NOTICE">NOTICE</a></sub>
 </p>
 
 <p align="center">
@@ -118,7 +118,7 @@ PepBox checks the latest GitHub release of KPScriptz/PepBox once a day and can i
 <details>
 <summary><b>Does PepBox collect any data?</b></summary>
 <br>
-No. The analytics and extension-rating service from upstream Droppy has been removed.
+No. PepBox has no analytics or usage tracking.
 </details>
 
 ## Building
@@ -168,7 +168,7 @@ off until `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set in `docs/extensions.htm
 
 ## What's New in PepBox 1.0.0
 
-- First release of PepBox, based on Droppy 11.0.0
+- First release of PepBox
 - New name, icon and bundle identifier (com.pivotxp.PepBox)
 - Extension icons and previews now ship inside the app
 - No analytics

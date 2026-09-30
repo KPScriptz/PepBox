@@ -1,0 +1,46 @@
+PepBox
+Copyright (c) 2026 PivotXP
+
+PepBox is a modified version of Droppy (https://github.com/iordv/Droppy),
+Copyright (c) 2026 Jordy Spruit, licensed under the GNU General Public
+License v3.0 with the Commons Clause License Condition v1.0 (see LICENSE).
+PepBox is distributed under the same terms.
+
+Modifications by PivotXP, starting 2026-09-27:
+- Renamed the app, bundle identifier (com.pivotxp.PepBox), URL scheme
+  (pepbox://), helper tools and all user-facing text from Droppy to PepBox,
+  per the Droppy trademark policy (see TRADEMARK).
+- Replaced the app icon, menu bar icon and Alfred workflow icon.
+- Removed the upstream analytics and extension-ratings service; PepBox sends
+  no usage data.
+- Bundled extension icons and screenshots in the app (PepBox/ExtensionMedia)
+  instead of loading them from the Droppy website.
+- Pointed the update checker, crash-report links, website, Homebrew cask and
+  release script at KPScriptz/PepBox; the release script takes the signing
+  identity and team from the environment and no longer expects Gumroad keys.
+- Replaced Droppy's logos on the website; its stats backend is disabled.
+- Kept Droppy's original README, release notes and launch post, unmodified,
+  in upstream/.
+
+Third-party code added in PepBox:
+- Text Actions (Packages/TextActionsKit) is DropClip, MIT License, Copyright (c)
+  2026 Ganesh M and OpenClip Contributors and Copyright (c) 2026 Jordy Spruit,
+  based on OpenClip by Ganesh M; with OpenSelection, Apache License 2.0,
+  Copyright 2026 Ganesh M (unmodified); and part of KeyboardShortcuts, MIT
+  License, Copyright (c) Sindre Sorhus. Licence texts and notices are in
+  Packages/TextActionsKit/Legal and ship inside the app; PepBox's changes to
+  DropClip are listed in Packages/TextActionsKit/PEPBOX_CHANGES.md.
+
+Code derived from Atoll:
+- Parallax3DModifier.swift, LockScreenManager.swift,
+  TemporaryFileStorageService.swift, BrightnessManager.swift,
+  VolumeManager.swift and MediaKeyInterceptor.swift contain code derived
+  from Atoll (DynamicIsland), https://github.com/Ebullioscopic/Atoll,
+  Copyright (C) 2024-2026 Atoll Contributors, licensed under the GNU General
+  Public License v3 (some of it originally from boring.notch). Each file
+  carries Atoll's copyright notice and the GPL v3 header, as requested in
+  the DMCA notice github/dmca 2026-02-10-atoll.md that removed the upstream
+  Droppy repository.
+
+"Droppy" and the Droppy logo are trademarks of Jordy Spruit. PepBox is not
+affiliated with or endorsed by the Droppy project.

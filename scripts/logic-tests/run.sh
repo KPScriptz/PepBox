@@ -6,6 +6,9 @@ OUT="${TMPDIR:-/tmp}/pepbox-logic-tests"
 # Agents.swift depends on app UI types, so only its parser section is compiled.
 AGENTS_PARSER="${TMPDIR:-/tmp}/pepbox-agents-parser.swift"
 { echo "import Foundation"; sed -n '/^\/\/ MARK: - Parsing/,/^\/\/ MARK: - Monitor/p' "$ROOT/PepBox/Extensions/NotchWidgets/Agents.swift"; } > "$AGENTS_PARSER"
+# The app bundles copies of NOTICE and LICENSE for its licenses screen; keep them identical.
+cmp -s "$ROOT/NOTICE" "$ROOT/PepBox/Legal/NOTICE.txt" || { echo "FAIL PepBox/Legal/NOTICE.txt differs from NOTICE"; exit 1; }
+cmp -s "$ROOT/LICENSE" "$ROOT/PepBox/Legal/LICENSE.txt" || { echo "FAIL PepBox/Legal/LICENSE.txt differs from LICENSE"; exit 1; }
 swiftc -O -o "$OUT" \
     "$ROOT/PepBox/Extensions/Utilities/QuickSearchMath.swift" \
     "$ROOT/PepBox/Extensions/Utilities/ScrollEasing.swift" \
@@ -23,5 +26,6 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/Extensions/Utilities/LocalSendHTTP.swift" \
     "$ROOT/PepBox/Extensions/Utilities/QuickTools.swift" \
     "$ROOT/PepBox/FileTools.swift" \
+    "$ROOT/PepBox/ClipboardStack.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

@@ -95,7 +95,8 @@ struct SettingsView: View {
     @State private var showProtectOriginalsWarning = false  // Warning when disabling Protect Originals
     @State private var showStabilizeMediaWarning = false  // Warning when enabling Stabilize Media
     @State private var showAutoFocusSearchWarning = false  // Warning when enabling Auto-Focus Search
-    @State private var showQuickActionsWarning = false  // Warning when enabling Quick Actions
+    @State private var showQuickActionsWarning = false
+    @State private var showLicenses = false  // Warning when enabling Quick Actions
     @State private var basketDragRevealShortcut: SavedShortcut?
     @State private var basketSwitcherShortcut: SavedShortcut?
     
@@ -2995,7 +2996,13 @@ struct SettingsView: View {
                 
                 LabeledContent("Developer", value: "PivotXP")
                 
-                LabeledContent("Based on", value: "Droppy by Jordy Spruit (GPL-3.0)")
+                HStack {
+                    Text("Open-Source Licenses")
+                    Spacer()
+                    Button("View") { showLicenses = true }
+                        .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
+                .sheet(isPresented: $showLicenses) { LicensesSheet() }
                 
                 HStack {
                     Text("Introduction")
@@ -3024,11 +3031,6 @@ struct SettingsView: View {
                         url: "https://github.com/KPScriptz/PepBox"
                     )
                     
-                    LinkButton(
-                        title: "Original Project",
-                        icon: "arrow.triangle.branch",
-                        url: "https://github.com/iordv/Droppy"
-                    )
                 }
             } header: {
                 Text("Links")
@@ -5930,5 +5932,37 @@ struct QuickActionsPicker: View {
                 .disabled(enabled.contains(action) && enabled.count == 1)
             }
         }
+    }
+}
+
+/// The copyright and license notices PepBox is required to show (GPL-3.0 §5):
+/// NOTICE and LICENSE, bundled from the repository root.
+struct LicensesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private static func bundled(_ name: String) -> String {
+        Bundle.main.url(forResource: name, withExtension: "txt")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Open-Source Licenses").font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+            ScrollView {
+                Text(Self.bundled("NOTICE") + "\n\n" + Self.bundled("LICENSE"))
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Text("Text Actions has its own notices under Text Actions → Settings → About.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .frame(width: 560, height: 480)
     }
 }

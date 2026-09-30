@@ -54,9 +54,21 @@ struct ClipboardManagerView: View {
     // Cached sorted/filtered history (updated only when needed)
     @State private var cachedSortedHistory: [ClipboardItem] = []
     
-    /// Helper to get selected items as array, respecting visual order
+    /// Order items were picked in, for stacked paste (see ClipboardStack.reconcile).
+    @State private var selectionOrder: [UUID] = []
+    
+    /// Selected items in stack order: the order you picked them, ranges oldest first.
     private var selectedItemsArray: [ClipboardItem] {
-        cachedSortedHistory.filter { selectedItems.contains($0.id) }
+        let byID = Dictionary(manager.history.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let order = ClipboardStack.reconcile(order: selectionOrder, selected: selectedItems,
+                                             dates: byID.mapValues(\.date))
+        return order.compactMap { byID[$0] }
+    }
+    
+    /// 1-based position in the stack, shown on rows when more than one item is selected.
+    private func stackNumber(for id: UUID) -> Int? {
+        guard selectedItems.count > 1, selectedItems.contains(id) else { return nil }
+        return selectedItemsArray.firstIndex { $0.id == id }.map { $0 + 1 }
     }
     
     /// Alias for cached history (compatibility)
@@ -246,6 +258,10 @@ struct ClipboardManagerView: View {
         .frame(minWidth: 1040, maxWidth: .infinity, minHeight: 640, maxHeight: .infinity)
         .background(pasteShortcutButton)
         .background(navigationShortcutButtons)
+        .onChange(of: selectedItems) { _, selected in
+            let dates = Dictionary(manager.history.map { ($0.id, $0.date) }, uniquingKeysWith: { first, _ in first })
+            selectionOrder = ClipboardStack.reconcile(order: selectionOrder, selected: selected, dates: dates)
+        }
     }
     
     private var pasteShortcutButton: some View {
@@ -695,11 +711,12 @@ struct ClipboardManagerView: View {
                                         }
                                     },
                                     // Force DraggableArea to update when selection changes
-                                    selectionSignature: selectedItems.contains(item.id) ? 1 : 0
+                                    selectionSignature: (stackNumber(for: item.id) ?? 0) * 2 + (selectedItems.contains(item.id) ? 1 : 0)
                                 ) {
                                     ClipboardItemRow(
                                         item: item, 
                                         isSelected: selectedItems.contains(item.id),
+                                        stackNumber: stackNumber(for: item.id),
                                         renamingItemId: $renamingItemId,
                                         renamingText: $renamingText,
                                         onRename: { newName in
@@ -712,7 +729,7 @@ struct ClipboardManagerView: View {
                                 // CRITICAL: Make view identity depend on selection state
                                 // This forces SwiftUI to recreate the entire DraggableArea (including NSHostingView)
                                 // when selection changes, ensuring the row visual always matches the state
-                                .id("\(item.id.uuidString)-\(selectedItems.contains(item.id) ? "sel" : "unsel")")
+                                .id("\(item.id.uuidString)-\(selectedItems.contains(item.id) ? "sel\(stackNumber(for: item.id) ?? 0)" : "unsel")")
                                 .contextMenu {
                                     if selectedItems.count > 1 {
                                         // Multi-select context menu
@@ -1065,7 +1082,7 @@ struct ClipboardManagerView: View {
         
         // Write all content types in batches
         if !strings.isEmpty {
-            pasteboard.setString(strings.joined(separator: "\n"), forType: .string)
+            pasteboard.setString(strings.joined(separator: StackSeparator.current.string), forType: .string)
         }
         if !urls.isEmpty {
             pasteboard.writeObjects(urls as [NSURL])
@@ -1152,9 +1169,8 @@ struct ClipboardManagerView: View {
                 MultiSelectPreviewView(
                     items: selectedItemsArray,
                     onPasteAll: {
-                        for item in selectedItemsArray {
-                            onPaste(item)
-                        }
+                        // One stacked paste (the old per-item loop raced and lost items).
+                        onPasteItems(selectedItemsArray)
                     },
                     onCopyAll: copySelectedToClipboard,
                     onSaveAll: bulkSaveSelectedItems,
@@ -1311,6 +1327,8 @@ struct FlaggedGridItemView: View {
 struct ClipboardItemRow: View {
     let item: ClipboardItem
     let isSelected: Bool
+    /// Position in a multi-item stack (1, 2, 3…), shown as a badge.
+    var stackNumber: Int? = nil
     @Binding var renamingItemId: UUID?
     @Binding var renamingText: String
     let onRename: (String) -> Void
@@ -1340,6 +1358,18 @@ struct ClipboardItemRow: View {
                     Image(systemName: iconName(for: item.type))
                         .foregroundStyle(isSelected ? .white : AdaptiveColors.primaryTextAuto)
                         .font(.system(size: 12))
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if let stackNumber {
+                    Text("\(stackNumber)")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 15, minHeight: 15)
+                        .background(Circle().fill(Color.blue))
+                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
+                        .offset(x: -5, y: -5)
+                        .help("Pasted \(stackNumber)\(stackNumber == 1 ? "st" : stackNumber == 2 ? "nd" : stackNumber == 3 ? "rd" : "th") in the stack")
                 }
             }
             .task(id: item.id) {
@@ -2962,6 +2992,7 @@ struct ZoomedDocumentPreviewSheet: View {
 
 struct MultiSelectPreviewView: View {
     let items: [ClipboardItem]
+    @AppStorage(StackSeparator.key) private var separator = StackSeparator.newline.rawValue
     let onPasteAll: () -> Void
     let onCopyAll: () -> Void
     let onSaveAll: () -> Void
@@ -2993,7 +3024,7 @@ struct MultiSelectPreviewView: View {
             HStack(spacing: 6) {
                 Image(systemName: "rectangle.stack.fill")
                     .foregroundStyle(.blue)
-                Text("\(items.count) items selected")
+                Text("\(items.count) items · pasted in the numbered order")
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(.primary)
@@ -3001,6 +3032,14 @@ struct MultiSelectPreviewView: View {
             .padding(.vertical, 8)
             .background(Capsule().fill(AdaptiveColors.overlayAuto(0.12)))
 
+            if items.filter({ $0.type == .text || $0.type == .url || $0.type == .color }).count > 1 {
+                Picker("Join text with", selection: $separator) {
+                    ForEach(StackSeparator.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                .font(.system(size: 12))
+            }
             
             Spacer()
             
