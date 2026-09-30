@@ -86,6 +86,30 @@ final class SnippetController {
         }
     }
 
+    /// Asks for a trigger and adds the text as a snippet (turning Snippets on if needed).
+    static func saveAsSnippet(_ text: String) {
+        let alert = NSAlert()
+        alert.messageText = "Save as Snippet"
+        alert.informativeText = "Type this trigger anywhere and it turns into the text. Start it with ; so normal typing doesn't set it off."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 220, height: 24))
+        field.stringValue = ";"
+        field.placeholderString = ";sig"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let trigger = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard trigger.count >= 2 else { return }
+        var list = snippets.filter { $0.trigger != trigger }
+        list.append(Snippet(trigger: trigger, text: text))
+        snippets = list
+        if !UtilityExtensionKind.snippets.isAvailable { UtilityExtensionKind.snippets.install() }
+        FlashActivity.shared.show(LiveActivity(id: "snippet-\(UUID())", icon: "text.insert", tint: .orange,
+                                               text: "Snippet \(trigger) saved", progress: nil))
+    }
+
     static let defaults: [Snippet] = [
         Snippet(trigger: ";date", text: "{date}"),
         Snippet(trigger: ";time", text: "{time}"),

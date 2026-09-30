@@ -110,6 +110,17 @@ enum QuickLookups {
             }
         }
 
+        // Snippets: ";" lists them, ";si" narrows; Enter copies the expansion
+        if lower.hasPrefix(";") {
+            let matches = SnippetController.snippets.filter { $0.trigger.lowercased().hasPrefix(lower) || lower == ";" }
+            results += matches.prefix(8).map { snippet in
+                let expanded = SnippetEngine.expand(snippet.text, clipboard: NSPasteboard.general.string(forType: .string))
+                let preview = expanded.replacingOccurrences(of: "\n", with: " ")
+                return QuickSearchResult(id: "snippet-\(snippet.id)", title: "\(snippet.trigger)  \(preview.prefix(70))",
+                                         subtitle: "Snippet · Enter to copy", kind: .answer(expanded), customSymbol: "text.insert")
+            }
+        }
+
         // Emoji: ":fire", ":heart eyes"
         if lower.hasPrefix(":"), lower.count >= 3 {
             let needle = String(lower.dropFirst())

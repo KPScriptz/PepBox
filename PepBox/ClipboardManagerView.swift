@@ -806,6 +806,13 @@ struct ClipboardManagerView: View {
                                                 Label("Paste as Plain Text", systemImage: "textformat")
                                             }
                                         }
+                                        if item.type == .text, let text = item.content, !text.isEmpty {
+                                            Button {
+                                                SnippetController.saveAsSnippet(text)
+                                            } label: {
+                                                Label("Save as Snippet…", systemImage: "text.insert")
+                                            }
+                                        }
                                         if item.type == .text, let text = item.content {
                                             Menu {
                                                 ForEach(TextTransform.allCases) { transform in
