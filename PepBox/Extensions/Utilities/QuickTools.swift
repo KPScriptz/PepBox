@@ -444,3 +444,42 @@ extension QuickTools {
         return results
     }
 }
+
+extension QuickTools {
+    /// "remind stretch in 20m", "remind me to call mom in 1h 30m" → a labelled timer.
+    static func reminder(_ text: String) -> QuickTimerParser.Request? {
+        let lower = text.lowercased().trimmingCharacters(in: .whitespaces)
+        let labelStart = lower.index(lower.startIndex, offsetBy: 7, limitedBy: lower.endIndex) ?? lower.endIndex
+        guard lower.hasPrefix("remind "), let inRange = lower.range(of: " in ", options: .backwards),
+              inRange.lowerBound > labelStart else { return nil }
+        var label = String(lower[labelStart..<inRange.lowerBound])
+        for filler in ["me to ", "me ", "to "] where label.hasPrefix(filler) { label.removeFirst(filler.count) }
+        let label2 = label.trimmingCharacters(in: .whitespaces)
+        guard !label2.isEmpty,
+              let request = QuickTimerParser.parse("timer " + lower[inRange.upperBound...]),
+              request.label == nil else { return nil }
+        return QuickTimerParser.Request(seconds: request.seconds, label: label2)
+    }
+
+    /// The text after a command word: "note buy milk" → "buy milk" for "note".
+    static func argument(_ text: String, after commands: [String]) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        for command in commands {
+            let prefix = command + " "
+            if trimmed.lowercased().hasPrefix(prefix) {
+                let rest = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                return rest.isEmpty ? nil : rest
+            }
+        }
+        return nil
+    }
+}
+
+extension QuickTools {
+    /// "2:35" from `pmset -g batt` ("…; 2:35 remaining present: true"); nil while calculating or on AC.
+    static func pmsetRemaining(_ output: String) -> String? {
+        guard let range = output.range(of: #"\d{1,2}:\d{2} remaining"#, options: .regularExpression) else { return nil }
+        let time = output[range].replacingOccurrences(of: " remaining", with: "")
+        return time == "0:00" ? nil : time
+    }
+}

@@ -22,6 +22,7 @@ struct QuickSearchResult: Identifiable {
         case openURL(URL)
         case stopProcess(pid_t)
         case awake(CaffeineDuration?)   // nil turns keep-awake off
+        case action(() -> Void)          // runs, then Quick Search closes
     }
 
     let id: String
@@ -39,6 +40,7 @@ struct QuickSearchResult: Identifiable {
         case .cancelTimer: return "xmark.circle.fill"
         case .command(let command): return command.symbol
         case .openURL: return "book.fill"
+        case .action: return "bolt.fill"
         case .stopProcess: return "stop.circle.fill"
         case .awake: return "cup.and.saucer.fill"
         default: return "equal.circle.fill"
@@ -49,7 +51,7 @@ struct QuickSearchResult: Identifiable {
         switch kind {
         case .app(let url), .file(let url):
             return NSWorkspace.shared.icon(forFile: url.path)
-        case .answer, .startTimer, .cancelTimer, .command, .openURL, .stopProcess, .awake:
+        case .answer, .startTimer, .cancelTimer, .command, .openURL, .stopProcess, .awake, .action:
             return nil
         }
     }
@@ -228,6 +230,8 @@ final class QuickSearchModel {
             command.run()
         case .openURL(let url):
             NSWorkspace.shared.open(url)
+        case .action(let run):
+            run()
         case .stopProcess(let pid):
             kill(pid, SIGTERM)
         case .awake(let duration):

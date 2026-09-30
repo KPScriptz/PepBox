@@ -154,6 +154,8 @@ struct QuickSearchExtension: ExtensionDefinition {
         ("globe", "Search the web when nothing matches"),
         ("wand.and.stars", "Tools: colors, time zones, dates, hex, %, UUID, passwords, base64"),
         ("book.fill", "define <word>, cb <text>, downloads, ip, port 3000, awake 1h, :emoji, count"),
+        ("checklist", "note …, todo …, remind … in 20m, join, agenda, weather, play/next"),
+        ("xmark.app", "force quit / hide <app>, battery, uptime"),
         ("keyboard", "Arrow keys to pick, Esc to close")
     ]
     static var screenshotURL: URL? { nil }

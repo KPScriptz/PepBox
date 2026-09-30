@@ -46,6 +46,14 @@ final class QuickNotesStore {
 
     var selected: QuickNote? { notes.first { $0.id == selectedID } }
 
+    /// A new note with this text, shown first (from Quick Search "note …").
+    func addNote(text: String) {
+        let note = QuickNote(text: text, modified: Date())
+        notes.insert(note, at: 0)
+        selectedID = note.id
+        scheduleSave()
+    }
+
     func update(_ id: UUID, text: String) {
         guard let index = notes.firstIndex(where: { $0.id == id }), notes[index].text != text else { return }
         notes[index].text = text

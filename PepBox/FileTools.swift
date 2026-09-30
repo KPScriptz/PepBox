@@ -8,6 +8,7 @@
 //
 
 import AppKit
+import AVFoundation
 import CryptoKit
 import ImageIO
 import PDFKit
@@ -73,6 +74,63 @@ enum FileTools {
             hasher.update(data: data)
         }
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: Video → GIF
+
+    /// Makes a looping GIF from the start of a video: up to `maxSeconds`, `fps` frames a second, `maxWidth` wide.
+    static func videoToGIF(_ url: URL, maxWidth: CGFloat = 480, fps: Double = 12, maxSeconds: Double = 15,
+                           into directory: URL = FileManager.default.temporaryDirectory) async -> URL? {
+        let asset = AVURLAsset(url: url)
+        guard let duration = try? await asset.load(.duration).seconds, duration > 0 else { return nil }
+        let length = min(duration, maxSeconds)
+        let frameCount = max(1, Int(length * fps))
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: maxWidth, height: maxWidth * 4)
+        generator.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 60)
+        generator.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 60)
+
+        let output = unique(directory.appendingPathComponent(url.deletingPathExtension().lastPathComponent).appendingPathExtension("gif"))
+        guard let destination = CGImageDestinationCreateWithURL(output as CFURL, UTType.gif.identifier as CFString, frameCount, nil) else { return nil }
+        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        let frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1 / fps]] as CFDictionary
+
+        let times = (0..<frameCount).map { CMTime(seconds: Double($0) / fps, preferredTimescale: 600) }
+        var added = 0
+        for await result in generator.images(for: times) {
+            if let image = try? result.image {
+                CGImageDestinationAddImage(destination, image, frameProperties)
+                added += 1
+            }
+        }
+        guard added > 0, CGImageDestinationFinalize(destination) else {
+            try? FileManager.default.removeItem(at: output)
+            return nil
+        }
+        return output
+    }
+
+    // MARK: Copy helpers
+
+    /// "data:image/png;base64,…" for pasting an image into HTML/CSS. Nil above 5 MB.
+    static func dataURI(_ url: URL) -> String? {
+        guard let data = try? Data(contentsOf: url), data.count <= 5_000_000 else { return nil }
+        let mime = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+        return "data:\(mime);base64,\(data.base64EncodedString())"
+    }
+
+    /// Text of a plain-text file (code, Markdown, CSV…) up to 2 MB.
+    static func textContents(_ url: URL) -> String? {
+        guard (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map({ $0 <= 2_000_000 }) == true,
+              let data = try? Data(contentsOf: url) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// "Photo" × 12 → "Photo 01" … "Photo 12" (zero-padded to the widest number).
+    static func sequentialNames(base: String, count: Int) -> [String] {
+        let width = String(count).count
+        return (1...max(count, 1)).map { base + " " + String(format: "%0\(width)d", $0) }
     }
 
     static func unique(_ url: URL) -> URL {

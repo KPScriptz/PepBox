@@ -623,7 +623,7 @@ struct NotchItemView: View {
                 ? state.items.filter { state.selectedItems.contains($0.id) } : [item]
             let allImages = toolTargets.allSatisfy(\.isImage)
             let allPDFs = toolTargets.allSatisfy { $0.fileType?.conforms(to: .pdf) == true }
-            if allImages || (allPDFs && toolTargets.count > 1) || (toolTargets.count == 1 && !item.isDirectory) {
+            if allImages || (allPDFs && toolTargets.count > 1) || toolTargets.count >= 1 {
                 Menu {
                     if allImages {
                         ForEach([("Half Size", 0), ("1080 px", 1080), ("2048 px", 2048), ("3840 px (4K)", 3840)], id: \.1) { title, size in
@@ -643,6 +643,31 @@ struct NotchItemView: View {
                     }
                     if allPDFs && toolTargets.count > 1 {
                         Button("Merge \(toolTargets.count) PDFs") { runFileToolOnAll(toolTargets) { FileTools.mergePDFs($0) } }
+                    }
+                    if toolTargets.count == 1, item.fileType?.conforms(to: .movie) == true {
+                        Button("Make GIF (first 15 s)") {
+                            let url = item.url
+                            Task.detached {
+                                let gif = await FileTools.videoToGIF(url)
+                                await MainActor.run { finishFileTool(gif.map { [$0] } ?? []) }
+                            }
+                        }
+                    }
+                    if toolTargets.count == 1, item.isImage {
+                        Button("Copy as Data URI") { copyString(FileTools.dataURI(item.url)) }
+                    }
+                    if toolTargets.count == 1, item.fileType?.conforms(to: .text) == true || item.fileType?.conforms(to: .sourceCode) == true {
+                        Button("Copy Text Contents") { copyString(FileTools.textContents(item.url)) }
+                    }
+                    if toolTargets.count > 1 {
+                        Button("Rename Sequentially…") { renameSequentially(toolTargets) }
+                    }
+                    if toolTargets.count == 1, item.isDirectory {
+                        Button("Open in Terminal") {
+                            if let terminal = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") {
+                                NSWorkspace.shared.open([item.url], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
+                            }
+                        }
                     }
                     if toolTargets.count == 1 && !item.isDirectory {
                         Button("Copy SHA-256 Checksum") {
@@ -963,6 +988,40 @@ struct NotchItemView: View {
             let output = tool(urls)
             await MainActor.run { finishFileTool(output.map { [$0] } ?? []) }
         }
+    }
+    
+    private func copyString(_ text: String?) {
+        guard let text else {
+            NSSound.beep()
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        HapticFeedback.copy()
+    }
+    
+    /// Asks for a base name, then renames the files on disk to "Name 1", "Name 2"… in shelf order.
+    private func renameSequentially(_ items: [DroppedItem]) {
+        let alert = NSAlert()
+        alert.messageText = "Rename \(items.count) Files"
+        alert.informativeText = "They'll be numbered in shelf order, like “Trip 1”, “Trip 2”. Extensions stay the same."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = items.first.map { $0.url.deletingPathExtension().lastPathComponent } ?? "File"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let base = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !base.isEmpty else { return }
+        let ordered = state.items.filter { candidate in items.contains { $0.id == candidate.id } }
+        for (old, name) in zip(ordered, FileTools.sequentialNames(base: base, count: ordered.count)) {
+            if let renamed = old.renamed(to: name) {
+                state.replaceItem(old, with: renamed)
+            }
+        }
+        HapticFeedback.copy()
     }
     
     private func finishFileTool(_ outputs: [URL]) {
