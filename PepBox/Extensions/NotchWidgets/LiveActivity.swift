@@ -150,11 +150,15 @@ struct LiveActivityHUDView: View {
     }
 
     private func status(adjusted: Bool) -> some View {
+        // Rounded (narrower than monospaced) with fixed-width digits so countdowns don't jiggle;
+        // kept inside the wing so long labels never slide under the notch.
         Text(activity.text)
-            .font(.system(size: layout.labelFontSize, weight: .semibold, design: .monospaced))
+            .font(.system(size: layout.labelFontSize, weight: .semibold, design: .rounded))
             .foregroundStyle(color(adjusted))
             .contentTransition(.numericText())
             .monospacedDigit()
-            .fixedSize()
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .truncationMode(.tail)
     }
 }

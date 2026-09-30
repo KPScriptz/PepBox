@@ -378,7 +378,7 @@ final class AgentsMonitor {
 
     var liveActivity: LiveActivity? {
         guard let snapshot, let text = statusText else { return nil }
-        let short = text.count > 22 ? String(text.prefix(21)) + "…" : text
+        let short = text.count > 18 ? String(text.prefix(17)) + "…" : text
         let icon: String
         switch snapshot.state {
         case .waiting: icon = "hand.raised.fill"
