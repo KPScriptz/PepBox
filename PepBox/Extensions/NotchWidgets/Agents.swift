@@ -30,6 +30,8 @@ struct AgentSnapshot: Equatable {
     var toolCount: Int
     var editCount: Int
     var promptStart: Date?
+    /// Raw name of a tool call still waiting for its result ("Edit", "Bash"), if any.
+    var pendingTool: String? = nil
 }
 
 enum AgentTranscriptParser {
@@ -48,6 +50,7 @@ enum AgentTranscriptParser {
         var promptStart: Date?
         var state: AgentSnapshot.State?
         var pendingTool = false
+        var pendingName: String?
 
         for line in lines {
             guard let data = line.data(using: .utf8),
@@ -94,6 +97,7 @@ enum AgentTranscriptParser {
                         if ["Edit", "Write", "MultiEdit", "NotebookEdit"].contains(name) { edits += 1 }
                         state = .tool(label)
                         pendingTool = true
+                        pendingName = name
                     default: break
                     }
                 }
@@ -105,7 +109,8 @@ enum AgentTranscriptParser {
         }
         guard let state else { return nil }
         return AgentSnapshot(agent: .claude, project: project, state: pendingTool ? .tool(tools.last ?? "") : state,
-                             tools: Array(tools.suffix(20)), toolCount: toolCount, editCount: edits, promptStart: promptStart)
+                             tools: Array(tools.suffix(20)), toolCount: toolCount, editCount: edits, promptStart: promptStart,
+                             pendingTool: pendingTool ? pendingName : nil)
     }
 
     /// Codex rollout log lines (JSONL), oldest first.
@@ -198,7 +203,10 @@ final class AgentsMonitor {
     static let shared = AgentsMonitor()
 
     /// The most recently active session, if one was active in the last few minutes.
+    /// The session to show beside the notch: one that needs you first, else the most recent.
     private(set) var snapshot: AgentSnapshot?
+    /// Every session active in the last few minutes, most recent first (up to 4).
+    private(set) var sessions: [AgentSnapshot] = []
     private(set) var lastActivity: Date?
     private(set) var now = Date()
 
@@ -233,29 +241,36 @@ final class AgentsMonitor {
     /// Treat a session as over after this long without log changes.
     private static let staleAfter: TimeInterval = 180
 
+    /// Tools that normally finish instantly. If one sits unanswered, Claude Code is almost
+    /// certainly showing a permission prompt; long runners like Bash are just busy.
+    private static let instantTools: Set<String> = ["Edit", "MultiEdit", "Write", "NotebookEdit", "Read", "Glob", "Grep", "WebFetch"]
+
     private func poll() {
         queue.async { [weak self] in
             guard let self else { return }
-            let candidates = self.recentLogs()
-            guard let newest = candidates.max(by: { $0.modified < $1.modified }),
-                  Date().timeIntervalSince(newest.modified) < Self.staleAfter else {
-                DispatchQueue.main.async { self.snapshot = nil; self.now = Date() }
-                return
+            let now = Date()
+            let recent = self.recentLogs()
+                .filter { now.timeIntervalSince($0.modified) < Self.staleAfter }
+                .sorted { $0.modified > $1.modified }
+                .prefix(4)
+            var sessions: [AgentSnapshot] = []
+            for log in recent {
+                // The first line carries the working folder (Codex session_meta), which the tail may miss.
+                let lines = (Self.firstLine(of: log.url).map { [$0] } ?? []) + Self.tailLines(of: log.url, bytes: 400_000)
+                guard var parsed = log.agent == .claude ? AgentTranscriptParser.parseClaude(lines) : AgentTranscriptParser.parseCodex(lines) else { continue }
+                let idle = now.timeIntervalSince(log.modified)
+                if case .tool = parsed.state, idle > Self.waitingAfter, log.agent == .claude,
+                   let pending = parsed.pendingTool, Self.instantTools.contains(pending) {
+                    parsed.state = .waiting
+                }
+                if parsed.state == .done, idle > Self.doneLinger { continue }
+                sessions.append(parsed)
             }
-            // The first line carries the working folder (Codex session_meta), which the tail may miss.
-            let lines = (Self.firstLine(of: newest.url).map { [$0] } ?? []) + Self.tailLines(of: newest.url, bytes: 400_000)
-            var parsed = newest.agent == .claude ? AgentTranscriptParser.parseClaude(lines) : AgentTranscriptParser.parseCodex(lines)
-            let idle = Date().timeIntervalSince(newest.modified)
-            if var snapshot = parsed, case .tool = snapshot.state, idle > Self.waitingAfter, newest.agent == .claude {
-                snapshot.state = .waiting
-                parsed = snapshot
-            }
-            if let snapshot = parsed, snapshot.state == .done, idle > Self.doneLinger {
-                parsed = nil
-            }
+            let primary = sessions.first { $0.state == .waiting } ?? sessions.first
             DispatchQueue.main.async {
-                self.snapshot = parsed
-                self.lastActivity = newest.modified
+                self.sessions = sessions
+                self.snapshot = primary
+                self.lastActivity = recent.first?.modified
                 self.now = Date()
             }
         }
@@ -318,8 +333,9 @@ final class AgentsMonitor {
 
     // MARK: Presentation
 
-    var statusText: String? {
-        guard let snapshot else { return nil }
+    var statusText: String? { snapshot.map(Self.status) }
+
+    static func status(_ snapshot: AgentSnapshot) -> String {
         switch snapshot.state {
         case .thinking: return "Thinking"
         case .writing: return "Writing"
@@ -329,8 +345,9 @@ final class AgentsMonitor {
         }
     }
 
-    var tint: Color {
-        guard let snapshot else { return .orange }
+    var tint: Color { snapshot.map(Self.tint) ?? .orange }
+
+    static func tint(_ snapshot: AgentSnapshot) -> Color {
         if snapshot.state == .waiting { return .yellow }
         if snapshot.state == .done { return .green }
         return snapshot.agent == .claude ? Color(red: 0.85, green: 0.47, blue: 0.34) : .cyan
@@ -355,7 +372,9 @@ struct AgentsNotchView: View {
     var monitor: AgentsMonitor
 
     var body: some View {
-        if let snapshot = monitor.snapshot {
+        if monitor.sessions.count > 1 {
+            sessionList
+        } else if let snapshot = monitor.snapshot {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: snapshot.agent == .claude ? "sparkle" : "chevron.left.forwardslash.chevron.right")
@@ -397,6 +416,37 @@ struct AgentsNotchView: View {
                 Text("Start Claude Code or Codex and its progress shows up here and beside the notch.")
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+    }
+
+    /// Several agents at once: one compact row each.
+    private var sessionList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("\(monitor.sessions.count) agents running")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.6))
+            ForEach(Array(monitor.sessions.enumerated()), id: \.offset) { _, session in
+                HStack(spacing: 8) {
+                    Image(systemName: session.agent == .claude ? "sparkle" : "chevron.left.forwardslash.chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AgentsMonitor.tint(session))
+                        .frame(width: 14)
+                    Text(session.project.isEmpty ? session.agent.rawValue : session.project)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .frame(width: 130, alignment: .leading)
+                    Text(AgentsMonitor.status(session))
+                        .font(.system(size: 11))
+                        .foregroundStyle(AgentsMonitor.tint(session))
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text("\(session.toolCount) calls · \(session.editCount) edits")
+                        .font(.system(size: 10))
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.45))
+                }
             }
         }
     }
