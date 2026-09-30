@@ -129,10 +129,17 @@ private struct KeySoundsVolumeOption: View {
 private struct EyeBreakOptions: View {
     @AppStorage(EyeBreakManager.workMinutesKey) private var minutes = 20
     @AppStorage(EyeBreakManager.soundKey) private var sound = true
+    @AppStorage(EyeBreakManager.waterMinutesKey) private var water = 0
 
     var body: some View {
         Stepper("Break every \(minutes) minutes", value: $minutes, in: 5...90, step: 5)
         Toggle("Play a sound at start and end", isOn: $sound)
+        Picker("Water reminder", selection: $water) {
+            Text("Off").tag(0)
+            Text("Every 45 min").tag(45)
+            Text("Every hour").tag(60)
+            Text("Every 90 min").tag(90)
+        }
     }
 }
 

@@ -145,12 +145,7 @@ final class RingMenuController {
                 ScreenTextGrabber.start()
             },
             RingAction(id: "color", title: "Color", icon: "eyedropper", tint: .pink) {
-                NSColorSampler().show { color in
-                    guard let hex = color?.usingColorSpace(.sRGB).map(RingMenuController.hexString) else { return }
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(hex, forType: .string)
-                    HapticFeedback.copy()
-                }
+                RingMenuController.pickColor()
             },
             RingAction(id: "pomodoro", title: PomodoroManager.shared.isRunning ? "Pause" : "Focus", icon: "timer", tint: .red) {
                 PomodoroManager.shared.toggle()
@@ -182,7 +177,7 @@ final class RingMenuController {
     /// macOS's own area screenshot (⌘⇧4); the next capture goes on the shelf. Running
     /// screencapture ourselves would need PepBox to have Screen Recording permission,
     /// otherwise the image only shows the wallpaper.
-    private static func screenshotToShelf() {
+    static func screenshotToShelf() {
         guard AXIsProcessTrusted() else {
             PermissionManager.shared.requestAccessibilityForUserAction()
             return
@@ -192,6 +187,16 @@ final class RingMenuController {
             guard let event = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_ANSI_4), keyDown: keyDown) else { continue }
             event.flags = [.maskCommand, .maskShift]
             event.post(tap: .cghidEventTap)
+        }
+    }
+
+    /// macOS's color sampler; the picked color is copied as hex.
+    static func pickColor() {
+        NSColorSampler().show { color in
+            guard let hex = color?.usingColorSpace(.sRGB).map(RingMenuController.hexString) else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(hex, forType: .string)
+            HapticFeedback.copy()
         }
     }
 

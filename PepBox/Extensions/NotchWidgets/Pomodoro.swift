@@ -142,6 +142,7 @@ final class PomodoroManager {
     private func advance() {
         switch phase {
         case .focus:
+            FocusHistory.record(minutes: focusMinutes)
             completedFocusSessions += 1
             if completedFocusSessions >= sessionsPerLongBreak {
                 completedFocusSessions = 0
@@ -173,5 +174,53 @@ final class PomodoroManager {
         if self.phase == phase && !isRunning {
             remaining = duration(of: phase)
         }
+    }
+}
+
+/// Finished focus sessions per day, for "today" and streak counts.
+enum FocusHistory {
+    private static let key = "pomodoro_history"  // ["2026-09-30": sessions]
+    private static let minutesKey = "pomodoro_history_minutes"
+
+    static func dayKey(_ date: Date, calendar: Calendar = .current) -> String {
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
+    static var sessionsByDay: [String: Int] {
+        UserDefaults.standard.dictionary(forKey: key) as? [String: Int] ?? [:]
+    }
+
+    static func record(minutes: Int, on date: Date = Date()) {
+        let day = dayKey(date)
+        var sessions = sessionsByDay
+        sessions[day, default: 0] += 1
+        // Keep the last year only.
+        if sessions.count > 400 { sessions = sessions.filter { $0.key >= dayKey(date.addingTimeInterval(-366 * 86_400)) } }
+        UserDefaults.standard.set(sessions, forKey: key)
+        var totals = UserDefaults.standard.dictionary(forKey: minutesKey) as? [String: Int] ?? [:]
+        totals[day, default: 0] += minutes
+        UserDefaults.standard.set(totals.filter { sessions[$0.key] != nil }, forKey: minutesKey)
+    }
+
+    static func today(_ now: Date = Date()) -> (sessions: Int, minutes: Int) {
+        let day = dayKey(now)
+        let minutes = (UserDefaults.standard.dictionary(forKey: minutesKey) as? [String: Int])?[day] ?? 0
+        return (sessionsByDay[day] ?? 0, minutes)
+    }
+
+    /// Days in a row with at least one session, ending today (or yesterday, so the streak survives until you focus today).
+    static func streak(_ sessions: [String: Int], now: Date, calendar: Calendar = .current) -> Int {
+        var day = calendar.startOfDay(for: now)
+        if (sessions[dayKey(day, calendar: calendar)] ?? 0) == 0 {
+            day = calendar.date(byAdding: .day, value: -1, to: day) ?? day
+        }
+        var count = 0
+        while (sessions[dayKey(day, calendar: calendar)] ?? 0) > 0 {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
+        }
+        return count
     }
 }

@@ -71,6 +71,13 @@ struct PomodoroNotchView: View {
                         .font(.system(size: 10))
                         .foregroundStyle(.white.opacity(0.45))
                 }
+
+                let today = FocusHistory.today()
+                let streak = FocusHistory.streak(FocusHistory.sessionsByDay, now: Date())
+                Text("Today \(today.sessions) · \(today.minutes) min\(streak > 1 ? " · 🔥 \(streak)-day streak" : "")")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .id(manager.completedFocusSessions)  // refresh when a session finishes
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

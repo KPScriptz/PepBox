@@ -156,6 +156,7 @@ struct QuickSearchExtension: ExtensionDefinition {
         ("book.fill", "define <word>, cb <text>, downloads, ip, port 3000, awake 1h, :emoji, count"),
         ("checklist", "note …, todo …, remind … in 20m, join, agenda, weather, play/next"),
         ("xmark.app", "force quit / hide <app>, battery, uptime"),
+        ("safari", "Open github.com, yt/gh/wiki/maps searches, mail, ~/paths, qr, screenshot"),
         ("keyboard", "Arrow keys to pick, Esc to close")
     ]
     static var screenshotURL: URL? { nil }

@@ -187,6 +187,13 @@ enum QuickLookups {
                 let summary = "\(Int(now.temperature.rounded()))° · H \(Int(now.high.rounded()))° L \(Int(now.low.rounded()))°"
                 results.append(QuickSearchResult(id: "weather", title: summary, subtitle: "\(weather.city ?? "") · Open-Meteo",
                                                  kind: .answer(summary), customSymbol: UpNextWeather.symbol(for: now.code)))
+                let hourFormat = DateFormatter()
+                hourFormat.dateFormat = "h a"
+                results += now.hourly.map { hour in
+                    let line = "\(hourFormat.string(from: hour.time))  \(Int(hour.temperature.rounded()))°"
+                    return QuickSearchResult(id: "weather-\(hour.time.timeIntervalSince1970)", title: line, subtitle: "Forecast",
+                                             kind: .answer(line), customSymbol: UpNextWeather.symbol(for: hour.code))
+                }
             } else {
                 results.append(QuickSearchResult(id: "weather-setup", title: "Set your city in the Up Next panel", subtitle: "Weather",
                                                  kind: .action {}, customSymbol: "cloud.sun"))
@@ -206,6 +213,52 @@ enum QuickLookups {
             let seconds = Int(ProcessInfo.processInfo.systemUptime)
             let summary = "Up \(seconds / 86_400)d \((seconds % 86_400) / 3600)h \((seconds % 3600) / 60)m · macOS \(ProcessInfo.processInfo.operatingSystemVersionString)"
             results.append(QuickSearchResult(id: "uptime", title: summary, subtitle: "Since last restart", kind: .answer(summary), customSymbol: "clock.arrow.circlepath"))
+        }
+
+        if let url = QuickTools.typedURL(text) {
+            results.append(QuickSearchResult(id: "open-url", title: "Open \(url.host ?? url.absoluteString)\(url.path.count > 1 ? url.path : "")",
+                                             subtitle: url.absoluteString, kind: .openURL(url), customSymbol: "safari"))
+        }
+        if let (site, url) = QuickTools.webShortcut(text) {
+            results.append(QuickSearchResult(id: "web-\(site)", title: "Search \(site) for “\(text.split(separator: " ", maxSplits: 1).last ?? "")”",
+                                             subtitle: "Opens in your browser", kind: .openURL(url), customSymbol: "magnifyingglass.circle.fill"))
+        }
+        if let mail = QuickTools.mailto(text) {
+            results.append(QuickSearchResult(id: "mailto", title: "Email \(mail.absoluteString.dropFirst(7))", subtitle: "New message",
+                                             kind: .openURL(mail), customSymbol: "envelope.fill"))
+        }
+        if let path = QuickTools.typedPath(text) {
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) {
+                results.append(QuickSearchResult(id: "path-\(path)", title: (path as NSString).abbreviatingWithTildeInPath,
+                                                 subtitle: isDirectory.boolValue ? "Folder · Enter to open" : "File · Enter to open",
+                                                 kind: .file(URL(fileURLWithPath: path))))
+            }
+        }
+        if let payload = QuickTools.argument(text, after: ["qr"]) {
+            results.append(QuickSearchResult(id: "qr", title: "Show QR code for “\(payload.prefix(40))”", subtitle: "Scan with your phone",
+                                             kind: .action { DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { QRCodePanelController.shared.show(payload) } },
+                                             customSymbol: "qrcode"))
+        }
+        switch lower {
+        case "screenshot", "screen shot", "capture":
+            results.append(QuickSearchResult(id: "screenshot", title: "Screenshot to Shelf", subtitle: "Select an area",
+                                             kind: .action { DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { RingMenuController.screenshotToShelf() } },
+                                             customSymbol: "camera.viewfinder"))
+        case "focus stats", "pomodoro stats", "streak":
+            let today = FocusHistory.today()
+            let streak = FocusHistory.streak(FocusHistory.sessionsByDay, now: Date())
+            let summary = "Today \(today.sessions) sessions · \(today.minutes) min · \(streak)-day streak"
+            results.append(QuickSearchResult(id: "focus-stats", title: summary, subtitle: "Pomodoro", kind: .answer(summary), customSymbol: "flame.fill"))
+        case "clear clipboard", "empty clipboard":
+            results.append(QuickSearchResult(id: "clear-clipboard", title: "Clear Clipboard", subtitle: "History is kept",
+                                             kind: .action { NSPasteboard.general.clearContents() }, customSymbol: "clipboard"))
+        case "pick color", "color picker", "eyedropper":
+            results.append(QuickSearchResult(id: "pick-color", title: "Pick a Color on Screen", subtitle: "Copied as hex",
+                                             kind: .action { DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { RingMenuController.pickColor() } },
+                                             customSymbol: "eyedropper"))
+        default:
+            break
         }
 
         let music = MusicManager.shared

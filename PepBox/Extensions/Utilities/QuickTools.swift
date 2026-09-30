@@ -483,3 +483,64 @@ extension QuickTools {
         return time == "0:00" ? nil : time
     }
 }
+
+// MARK: - Web, mail and paths
+
+extension QuickTools {
+    /// "github.com", "https://x.com/a", "localhost:3000" → a URL to open. Plain words aren't URLs.
+    static func typedURL(_ text: String) -> URL? {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.contains(" "), trimmed.count >= 4 else { return nil }
+        let lower = trimmed.lowercased()
+        if lower.hasPrefix("http://") || lower.hasPrefix("https://") {
+            return URL(string: trimmed).flatMap { $0.host == nil ? nil : $0 }
+        }
+        if lower.hasPrefix("localhost:") || lower.range(of: #"^\d{1,3}(\.\d{1,3}){3}(:\d+)?(/.*)?$"#, options: .regularExpression) != nil {
+            return URL(string: "http://" + trimmed)
+        }
+        // domain.tld with a real-looking TLD (letters, 2–12), optional path.
+        guard lower.range(of: #"^([a-z0-9-]+\.)+[a-z]{2,12}(:\d+)?(/\S*)?$"#, options: .regularExpression) != nil else { return nil }
+        let tld = lower.split(separator: "/").first?.split(separator: ".").last.map(String.init) ?? ""
+        // Common file extensions aren't websites ("notes.txt").
+        let fileExtensions: Set<String> = ["txt", "pdf", "png", "jpg", "jpeg", "gif", "swift", "md", "json", "zip", "mov", "mp4", "doc", "docx", "csv", "html", "js", "py"]
+        guard !fileExtensions.contains(tld) else { return nil }
+        return URL(string: "https://" + trimmed)
+    }
+
+    static let webShortcuts: [String: (name: String, url: String)] = [
+        "yt": ("YouTube", "https://www.youtube.com/results?search_query="),
+        "gh": ("GitHub", "https://github.com/search?q="),
+        "wiki": ("Wikipedia", "https://en.wikipedia.org/w/index.php?search="),
+        "maps": ("Maps", "https://maps.apple.com/?q="),
+        "amazon": ("Amazon", "https://www.amazon.com/s?k="),
+        "reddit": ("Reddit", "https://www.reddit.com/search/?q="),
+        "so": ("Stack Overflow", "https://stackoverflow.com/search?q="),
+        "img": ("Google Images", "https://www.google.com/search?tbm=isch&q=")
+    ]
+
+    /// "yt lofi beats" → (YouTube, search URL).
+    static func webShortcut(_ text: String) -> (name: String, url: URL)? {
+        let parts = text.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1).map(String.init)
+        guard parts.count == 2, let site = webShortcuts[parts[0].lowercased()],
+              let query = parts[1].addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&+=?#"))),
+              let url = URL(string: site.url + query) else { return nil }
+        return (site.name, url)
+    }
+
+    /// "mail sam@x.com" or a bare email address → mailto URL.
+    static func mailto(_ text: String) -> URL? {
+        var address = text.trimmingCharacters(in: .whitespaces)
+        if address.lowercased().hasPrefix("mail ") { address = String(address.dropFirst(5)).trimmingCharacters(in: .whitespaces) }
+        guard address.range(of: #"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$"#, options: .regularExpression) != nil else { return nil }
+        return URL(string: "mailto:" + address)
+    }
+
+    /// "~/Documents", "/Applications", "~" → an absolute path (not checked for existence here).
+    static func typedPath(_ text: String, home: String = NSHomeDirectory()) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard trimmed.hasPrefix("/") || trimmed.hasPrefix("~") else { return nil }
+        if trimmed == "~" { return home }
+        if trimmed.hasPrefix("~/") { return home + trimmed.dropFirst(1) }
+        return trimmed.hasPrefix("/") ? trimmed : nil
+    }
+}

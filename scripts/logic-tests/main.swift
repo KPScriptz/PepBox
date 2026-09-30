@@ -335,6 +335,22 @@ do {
     expect(QuickTools.argument("todo  ", after: ["todo"]), nil, "argument needs text")
     expect(QuickTools.pmsetRemaining(" -InternalBattery-0 (id=7602275)\t33%; charging; 2:35 remaining present: true"), "2:35", "pmset remaining")
     expect(QuickTools.pmsetRemaining("33%; charging; (no estimate) present: true"), nil, "pmset no estimate")
+    expect(QuickTools.typedURL("github.com")?.absoluteString, "https://github.com", "url bare domain")
+    expect(QuickTools.typedURL("docs.swift.org/guide")?.absoluteString, "https://docs.swift.org/guide", "url with path")
+    expect(QuickTools.typedURL("localhost:3000")?.absoluteString, "http://localhost:3000", "url localhost")
+    expect(QuickTools.typedURL("192.168.1.20:8080")?.absoluteString, "http://192.168.1.20:8080", "url ip")
+    expect(QuickTools.typedURL("notes.txt"), nil, "url ignores file names")
+    expect(QuickTools.typedURL("hello world"), nil, "url ignores words")
+    expect(QuickTools.typedURL("3.14"), nil, "url ignores numbers")
+    expect(QuickTools.webShortcut("yt lofi beats")?.url.absoluteString, "https://www.youtube.com/results?search_query=lofi%20beats", "web shortcut")
+    expect(QuickTools.webShortcut("gh a&b")?.url.absoluteString, "https://github.com/search?q=a%26b", "web shortcut escapes &")
+    expect(QuickTools.webShortcut("yt") == nil, true, "web shortcut needs a query")
+    expect(QuickTools.mailto("mail sam@pivotxp.com")?.absoluteString, "mailto:sam@pivotxp.com", "mailto command")
+    expect(QuickTools.mailto("sam@pivotxp.com")?.absoluteString, "mailto:sam@pivotxp.com", "mailto bare")
+    expect(QuickTools.mailto("sam@"), nil, "mailto invalid")
+    expect(QuickTools.typedPath("~/Documents", home: "/Users/kp"), "/Users/kp/Documents", "path tilde")
+    expect(QuickTools.typedPath("/Applications"), "/Applications", "path absolute")
+    expect(QuickTools.typedPath("docs"), nil, "path needs / or ~")
     expect(QuickTools.portQuery("port 3000"), 3000, "port query")
     expect(QuickTools.portQuery(":8080"), 8080, "port colon")
     expect(QuickTools.portQuery("port 99999"), nil, "port range")
@@ -395,6 +411,19 @@ do {
     expect(TextTransform.prettyJSON.apply(#"{"b":1,"a":[1,2]}"#), "{\n  \"a\" : [\n    1,\n    2\n  ],\n  \"b\" : 1\n}", "pretty JSON")
     expect(TextTransform.prettyJSON.apply("not json"), nil, "pretty JSON rejects text")
     expect(TextTransform.slug.apply("Héllo, World! 2026"), "hello-world-2026", "slug")
+}
+
+// MARK: - Focus streaks
+
+do {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "America/Chicago")!
+    let now = Date(timeIntervalSince1970: 1790776800)  // Sep 30 2026, 9:00 CDT
+    let history = ["2026-09-30": 2, "2026-09-29": 1, "2026-09-28": 4, "2026-09-26": 1]
+    expect(FocusHistory.dayKey(now, calendar: calendar), "2026-09-30", "focus day key")
+    expect(FocusHistory.streak(history, now: now, calendar: calendar), 3, "focus streak through today")
+    expect(FocusHistory.streak(history.filter { $0.key != "2026-09-30" }, now: now, calendar: calendar), 2, "focus streak survives until today's session")
+    expect(FocusHistory.streak(["2026-09-27": 1], now: now, calendar: calendar), 0, "focus streak broken")
 }
 
 // MARK: - Currency conversion

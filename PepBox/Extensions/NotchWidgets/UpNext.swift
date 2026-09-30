@@ -122,6 +122,14 @@ final class UpNextWeather {
         let high: Double
         let low: Double
         let code: Int
+        /// The next few hours: (hour start, temperature, weather code).
+        var hourly: [Hour] = []
+    }
+
+    struct Hour: Equatable {
+        let time: Date
+        let temperature: Double
+        let code: Int
     }
 
     private enum Keys {
@@ -184,6 +192,9 @@ final class UpNextWeather {
                 URLQueryItem(name: "longitude", value: String(longitude)),
                 URLQueryItem(name: "current", value: "temperature_2m,weather_code"),
                 URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min"),
+                URLQueryItem(name: "hourly", value: "temperature_2m,weather_code"),
+                URLQueryItem(name: "forecast_hours", value: "7"),
+                URLQueryItem(name: "timeformat", value: "unixtime"),
                 URLQueryItem(name: "forecast_days", value: "1"),
                 URLQueryItem(name: "timezone", value: "auto"),
                 URLQueryItem(name: "temperature_unit", value: usesFahrenheit ? "fahrenheit" : "celsius")
@@ -200,7 +211,16 @@ final class UpNextWeather {
                 lastFetch = nil
                 return
             }
-            current = Current(temperature: temperature, high: high, low: low, code: code)
+            var hours: [Hour] = []
+            if let hourly = json["hourly"] as? [String: Any],
+               let times = hourly["time"] as? [Double],
+               let temps = hourly["temperature_2m"] as? [Double],
+               let codes = hourly["weather_code"] as? [Int] {
+                hours = zip(times, zip(temps, codes))
+                    .map { Hour(time: Date(timeIntervalSince1970: $0), temperature: $1.0, code: $1.1) }
+                    .filter { $0.time > Date() }
+            }
+            current = Current(temperature: temperature, high: high, low: low, code: code, hourly: Array(hours.prefix(5)))
         }
     }
 

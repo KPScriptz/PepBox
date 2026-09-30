@@ -17,6 +17,9 @@ final class EyeBreakManager {
 
     static let workMinutesKey = "eyeBreaks_workMinutes"
     static let soundKey = "eyeBreaks_sound"
+    /// Minutes of screen time between "drink some water" nudges; 0 = off.
+    static let waterMinutesKey = "eyeBreaks_waterMinutes"
+    private var waterSeconds: TimeInterval = 0
 
     /// Seconds left in the current break, or nil while working.
     private(set) var breakRemaining: Int?
@@ -69,6 +72,16 @@ final class EyeBreakManager {
             return
         }
         activeSeconds += elapsed
+        let waterMinutes = UserDefaults.standard.integer(forKey: Self.waterMinutesKey)
+        if waterMinutes > 0 {
+            waterSeconds += elapsed
+            if waterSeconds >= TimeInterval(waterMinutes * 60) {
+                waterSeconds = 0
+                if UserDefaults.standard.object(forKey: Self.soundKey) as? Bool ?? true { NSSound(named: "Tink")?.play() }
+                FlashActivity.shared.show(LiveActivity(id: "water-\(UUID())", icon: "drop.fill", tint: .cyan,
+                                                       text: "Drink some water", progress: nil), for: 8)
+            }
+        }
         if activeSeconds >= workInterval, !Self.isScreenLocked {
             breakRemaining = Self.breakLength
             if UserDefaults.standard.object(forKey: Self.soundKey) as? Bool ?? true { NSSound(named: "Glass")?.play() }
@@ -95,6 +108,7 @@ struct EyeBreaksExtension: ExtensionDefinition {
     static let features: [(icon: String, text: String)] = [
         ("eye", "20-second break every 20 minutes"),
         ("figure.walk", "Time away resets the timer"),
+        ("drop.fill", "Optional water reminders"),
         ("slider.horizontal.3", "Interval and sound in Options")
     ]
     static var screenshotURL: URL? { nil }
