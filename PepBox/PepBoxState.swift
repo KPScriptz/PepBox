@@ -26,6 +26,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
     case messages
     case mail
     case quickshare
+    case toPhone
     case zip
     case copy
     case notes
@@ -41,6 +42,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         case .messages: return "message.fill"
         case .mail: return "envelope.fill"
         case .quickshare: return "drop.fill"
+        case .toPhone: return "qrcode"
         case .zip: return "doc.zipper"
         case .copy: return "doc.on.doc.fill"
         case .notes: return "note.text"
@@ -56,6 +58,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         case .messages: return "Messages"
         case .mail: return "Mail"
         case .quickshare: return "Quickshare"
+        case .toPhone: return "To Phone"
         case .zip: return "ZIP"
         case .copy: return "Copy"
         case .notes: return "Notes"
@@ -71,6 +74,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         case .messages: return "Share files via iMessage or SMS"
         case .mail: return "Attach files to a new email"
         case .quickshare: return "Upload to cloud and copy shareable link"
+        case .toPhone: return "Upload, then show a QR code any phone can scan to download"
         case .zip: return "Compress into one ZIP and put it on the shelf"
         case .copy: return "Copy the files, ready to paste in Finder or any app"
         case .notes: return "Add the files to a new note in Apple Notes"
@@ -83,7 +87,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
     /// The actions shown in the Shelf and Basket bars, in order.
     static var enabled: [QuickActionType] {
         let saved = UserDefaults.standard.stringArray(forKey: enabledKey)?.compactMap(QuickActionType.init(rawValue:)) ?? defaultEnabled
-        return saved.filter { $0 != .quickshare || !ExtensionType.quickshare.isRemoved }
+        return saved.filter { ($0 != .quickshare && $0 != .toPhone) || !ExtensionType.quickshare.isRemoved }
     }
 
     static func setEnabled(_ action: QuickActionType, _ isOn: Bool) {
@@ -132,6 +136,14 @@ enum QuickActionType: String, CaseIterable, Identifiable {
             completion?()
         case .quickshare:
             PepBoxQuickshare.share(urls: urls) { completion?() }
+        case .toPhone:
+            // Quickshare copies the link on success; show it as a QR code.
+            PepBoxQuickshare.share(urls: urls) {
+                if let link = NSPasteboard.general.string(forType: .string) {
+                    QRCodePanelController.shared.show(link)
+                }
+                completion?()
+            }
         case .zip:
             Task { @MainActor in
                 let name = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
