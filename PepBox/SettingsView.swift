@@ -2439,6 +2439,7 @@ struct SettingsView: View {
     }
     
     private var clipboardSettings: some View {
+        Group {
         Section {
             HStack(spacing: 8) {
                 ClipboardShortcutInfoButton(shortcut: currentShortcut)
@@ -2629,14 +2630,17 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
-                // MARK: - Excluded Apps Section
-                excludedAppsSection
             }
         } header: {
             Text("Clipboard")
         } footer: {
             Text("Requires Accessibility permissions to paste. Shortcuts may conflict with other apps.")
+        }
+        
+        // Its own section (it used to be nested inside the one above)
+        if enableClipboard {
+            excludedAppsSection
+        }
         }
         .onAppear {
             loadShortcut()
