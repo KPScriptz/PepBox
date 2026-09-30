@@ -84,48 +84,8 @@ struct ExtensionInfoView: View {
                 .font(.title2.bold())
                 .foregroundStyle(.primary)
             
-            // Stats row: installs + rating + category badge
+            // Category and status badges
             HStack(spacing: 12) {
-                if !disableAnalytics {
-                    // Installs
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 12))
-                        Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                            .font(.caption.weight(.medium))
-                    }
-                    .foregroundStyle(.secondary)
-                    
-                    // Rating (clickable)
-                    Button {
-                        showReviewsSheet = true
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.yellow)
-                            if let r = rating, r.ratingCount > 0 {
-                                Text(String(format: "%.1f", r.averageRating))
-                                    .font(.caption.weight(.medium))
-                                Text("(\(r.ratingCount))")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            } else {
-                                Text("–")
-                                    .font(.caption.weight(.medium))
-                            }
-                        }
-                        .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(PepBoxSelectableButtonStyle(isSelected: false))
-                }
-                
-                if disableAnalytics {
-                    Text("Analytics off")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.tertiary)
-                }
-                
                 // Category badge
                 Text(extensionType.category)
                     .font(.caption.weight(.semibold))
@@ -146,12 +106,6 @@ struct ExtensionInfoView: View {
                         Capsule()
                             .fill((isInstalled ? Color.green : Color.orange).opacity(0.15))
                     )
-            }
-            
-            if disableAnalytics {
-                Text("Install/download stats and reviews are hidden.")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
             }
             
             // Subtitle

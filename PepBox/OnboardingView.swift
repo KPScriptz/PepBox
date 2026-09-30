@@ -1104,14 +1104,6 @@ private struct ReadyContent: View {
                 )
             }
             .frame(width: 420)
-
-            OnboardingToggle(
-                icon: "hand.raised.fill",
-                title: "Skip all analytics",
-                color: .orange,
-                isOn: $disableAnalytics
-            )
-            .frame(width: 420)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .onAppear {

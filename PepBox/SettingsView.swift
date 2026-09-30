@@ -585,8 +585,6 @@ struct SettingsView: View {
     // MARK: General Tab (Startup, Menu Bar, Core Settings)
     private var generalSettings: some View {
         Group {
-            LicenseSettingsSection()
-
             // MARK: Startup
             Section {
                 nativePickerRow(
@@ -1432,26 +1430,6 @@ struct SettingsView: View {
                     }
                 }
 
-                Toggle(isOn: $disableAnalytics) {
-                    VStack(alignment: .leading) {
-                        Text("Skip All Analytics")
-                        Text("Disable usage analytics and hide extension install/download stats")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .onChange(of: disableAnalytics) { _, isDisabled in
-                    if isDisabled {
-                        downloadCount = nil
-                    } else {
-                        Task {
-                            if let count = try? await AnalyticsService.shared.fetchDownloadCount() {
-                                downloadCount = count
-                            }
-                        }
-                    }
-                }
-                
             } header: {
                 Text("Accessibility")
             }
@@ -2983,11 +2961,6 @@ struct SettingsView: View {
                         Text("Version \(UpdateChecker.shared.currentVersion)")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
-                        if let downloads = downloadCount {
-                            Text("\(downloads) users")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.tertiary)
-                        }
                     }
                     
                     Spacer()
@@ -3078,17 +3051,6 @@ struct SettingsView: View {
                 Text(hardResetIncludeClipboard
                     ? "This will reset ALL settings and clear clipboard history. PepBox will restart."
                     : "This will reset ALL settings (clipboard history will be preserved). PepBox will restart.")
-            }
-        }
-        .onAppear {
-            Task {
-                guard !disableAnalytics else {
-                    downloadCount = nil
-                    return
-                }
-                if let count = try? await AnalyticsService.shared.fetchDownloadCount() {
-                    downloadCount = count
-                }
             }
         }
     }

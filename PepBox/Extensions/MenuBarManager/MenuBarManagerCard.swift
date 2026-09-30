@@ -34,29 +34,6 @@ struct MenuBarManagerCard: View {
                 
                 // Stats row: installs + rating + badge
                 HStack(spacing: 8) {
-                    // Installs
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 10))
-                        Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                            .font(.caption2.weight(.medium))
-                    }
-                    .foregroundStyle(.secondary)
-                    
-                    // Rating
-                    HStack(spacing: 2) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.yellow)
-                        if let r = rating, r.ratingCount > 0 {
-                            Text(String(format: "%.1f", r.averageRating))
-                                .font(.caption2.weight(.medium))
-                        } else {
-                            Text("–")
-                                .font(.caption2.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
                     
                     // Category badge - shows "Installed" if enabled
                     Text(manager.isEnabled ? "Installed" : "Productivity")
