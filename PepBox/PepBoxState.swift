@@ -22,6 +22,7 @@ enum QuickShareStatus: Equatable {
 enum QuickActionType: String, CaseIterable, Identifiable {
     case airdrop
     case privateAirdrop
+    case localSend
     case messages
     case mail
     case quickshare
@@ -36,6 +37,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         switch self {
         case .airdrop: return "dot.radiowaves.left.and.right"
         case .privateAirdrop: return "location.slash.fill"
+        case .localSend: return "paperplane.fill"
         case .messages: return "message.fill"
         case .mail: return "envelope.fill"
         case .quickshare: return "drop.fill"
@@ -50,6 +52,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         switch self {
         case .airdrop: return "AirDrop"
         case .privateAirdrop: return "Private AirDrop"
+        case .localSend: return "LocalSend"
         case .messages: return "Messages"
         case .mail: return "Mail"
         case .quickshare: return "Quickshare"
@@ -64,6 +67,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
         switch self {
         case .airdrop: return "Send files wirelessly to nearby Apple devices"
         case .privateAirdrop: return "Remove location and camera data from photos, then AirDrop"
+        case .localSend: return "Send to Android, Windows and Linux devices running LocalSend"
         case .messages: return "Share files via iMessage or SMS"
         case .mail: return "Attach files to a new email"
         case .quickshare: return "Upload to cloud and copy shareable link"
@@ -74,7 +78,7 @@ enum QuickActionType: String, CaseIterable, Identifiable {
     }
 
     private static let enabledKey = "quickActionsEnabled"
-    static let defaultEnabled: [QuickActionType] = [.airdrop, .privateAirdrop, .messages, .mail, .quickshare, .zip, .copy]
+    static let defaultEnabled: [QuickActionType] = [.airdrop, .privateAirdrop, .localSend, .messages, .mail, .quickshare, .zip, .copy]
 
     /// The actions shown in the Shelf and Basket bars, in order.
     static var enabled: [QuickActionType] {
@@ -117,6 +121,9 @@ enum QuickActionType: String, CaseIterable, Identifiable {
                     completion?()
                 }
             }
+        case .localSend:
+            LocalSendPanelController.shared.show(urls)
+            completion?()
         case .messages:
             NSSharingService(named: .composeMessage)?.perform(withItems: urls)
             completion?()

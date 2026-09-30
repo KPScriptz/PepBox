@@ -19,5 +19,6 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/QRCodePanel.swift" \
     "$ROOT/PepBox/Extensions/Utilities/QuickCommands.swift" \
     "$AGENTS_PARSER" \
+    "$ROOT/PepBox/Extensions/Utilities/LocalSend.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

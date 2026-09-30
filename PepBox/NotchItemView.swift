@@ -543,6 +543,15 @@ struct NotchItemView: View {
                 Label("Share", systemImage: "square.and.arrow.up")
             }
             
+            Button {
+                let urls = state.selectedItems.isEmpty
+                    ? [item.url]
+                    : state.items.filter { state.selectedItems.contains($0.id) }.map { $0.url }
+                LocalSendPanelController.shared.show(urls)
+            } label: {
+                Label("Send with LocalSend…", systemImage: "paperplane")
+            }
+            
             // PepBox Quickshare - upload and get shareable link
             if !ExtensionType.quickshare.isRemoved {
                 Button {

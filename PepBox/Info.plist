@@ -60,6 +60,8 @@
 	<string>PepBox needs Reminders access to sync reminder items into your Reminders tasks.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>PepBox needs full Reminders access to keep Reminders tasks synced with Apple Reminders changes.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>PepBox finds nearby phones and computers running LocalSend so you can send them files over your Wi-Fi.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>PepBox needs Calendar access to show upcoming events in your task overview.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>

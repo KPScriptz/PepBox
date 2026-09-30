@@ -171,6 +171,34 @@ do {
     expect(AgentTranscriptParser.parseCodex(codex + [json(["type": "event_msg", "payload": ["type": "task_complete"]])])?.state, .done, "codex done")
 }
 
+// MARK: - LocalSend protocol
+
+do {
+    let pixel = #"{"alias":"Pixel","version":"2.0","deviceModel":"Pixel 9","deviceType":"mobile","fingerprint":"abc","port":53317,"protocol":"https","download":false,"announce":true}"#
+    let device = LocalSendProtocol.parse(Data(pixel.utf8), from: "192.168.1.20", myFingerprint: "me")
+    expect(device?.alias, "Pixel", "localsend alias")
+    expect(device?.symbol, "iphone", "localsend mobile symbol")
+    expect(device?.baseURL?.absoluteString, "https://192.168.1.20:53317", "localsend base URL")
+    expect(LocalSendProtocol.parse(Data(pixel.utf8), from: "x", myFingerprint: "abc") == nil, true, "localsend ignores own announce")
+    expect(LocalSendProtocol.parse(Data("junk".utf8), from: "x", myFingerprint: "me") == nil, true, "localsend junk")
+    let minimal = LocalSendProtocol.parse(Data(#"{"alias":"Old","fingerprint":"f"}"#.utf8), from: "10.0.0.2", myFingerprint: "me")
+    expect(minimal?.baseURL?.absoluteString, "https://10.0.0.2:53317", "localsend defaults port/protocol")
+
+    let me = LocalSendDevice(alias: "Mac", version: "2.0", deviceModel: "PepBox", deviceType: "desktop", fingerprint: "fp",
+                             port: 53317, protocol: "https", download: false, announce: true)
+    let body = LocalSendProtocol.prepareUploadBody(files: [.init(id: "file0", fileName: "a.png", size: 12, fileType: "image/png")], sender: me)
+    let json = try! JSONSerialization.jsonObject(with: body) as! [String: Any]
+    let info = json["info"] as! [String: Any]
+    let files = json["files"] as! [String: [String: Any]]
+    expect(info["alias"] as? String, "Mac", "localsend prepare info alias")
+    expect(info["announce"] == nil, true, "localsend prepare omits announce")
+    expect(files["file0"]?["fileName"] as? String, "a.png", "localsend prepare file name")
+    expect((files["file0"]?["size"] as? NSNumber)?.int64Value, 12, "localsend prepare size")
+    let announcement = try! JSONSerialization.jsonObject(with: LocalSendProtocol.announcement(me)) as! [String: Any]
+    expect(announcement["announce"] as? Bool, true, "localsend announce flag")
+    expect(announcement["ip"] == nil, true, "localsend announce has no ip field")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]
