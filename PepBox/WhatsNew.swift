@@ -43,7 +43,8 @@ enum WhatsNew {
         guard defaults.integer(forKey: seenKey) < revision else { return }
         defaults.set(revision, forKey: seenKey)
         guard defaults.bool(forKey: AppPreferenceKey.hasCompletedOnboarding) else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { WhatsNewWindowController.shared.show() }
+        // Appears without taking focus, so it never swallows what you're typing.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { WhatsNewWindowController.shared.show(takingFocus: false) }
     }
 }
 
@@ -51,7 +52,7 @@ final class WhatsNewWindowController {
     static let shared = WhatsNewWindowController()
     private var window: NSWindow?
 
-    func show() {
+    func show(takingFocus: Bool = true) {
         if let window {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -65,8 +66,12 @@ final class WhatsNewWindowController {
         window.isReleasedWhenClosed = false
         window.contentView = hosting
         window.center()
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if takingFocus {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else {
+            window.orderFrontRegardless()
+        }
         self.window = window
     }
 
