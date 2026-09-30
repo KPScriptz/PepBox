@@ -103,7 +103,8 @@ struct QuickNotesNotchView: View {
     var store: QuickNotesStore
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        // Wide gap: macOS puts its Writing Tools button at the editor's top-left corner.
+        HStack(alignment: .top, spacing: 22) {
             noteList
                 .frame(width: 130)
             editor

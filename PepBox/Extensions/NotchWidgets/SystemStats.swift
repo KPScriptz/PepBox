@@ -32,6 +32,7 @@ final class SystemStatsManager {
     /// The last minute of CPU and memory use (0...1), oldest first, for the graphs.
     private(set) var cpuHistory: [Double] = []
     private(set) var memoryHistory: [Double] = []
+    private(set) var gpuHistory: [Double] = []
     private static let historyLength = 60
     private var timer: Timer?
     private var watchers = 0
@@ -69,6 +70,7 @@ final class SystemStatsManager {
         snapshot = next
         cpuHistory = Array((cpuHistory + [next.cpu]).suffix(Self.historyLength))
         memoryHistory = Array((memoryHistory + [next.memoryTotal > 0 ? next.memoryUsed / next.memoryTotal : 0]).suffix(Self.historyLength))
+        if let gpu = next.gpu { gpuHistory = Array((gpuHistory + [gpu]).suffix(Self.historyLength)) }
     }
 
     // MARK: CPU (delta of host ticks between samples)
@@ -190,7 +192,7 @@ struct SystemStatsNotchView: View {
         let s = manager.snapshot
         HStack(spacing: 14) {
             gauge("CPU", value: s.cpu, tint: .blue, history: manager.cpuHistory)
-            if let gpu = s.gpu { gauge("GPU", value: gpu, tint: .purple) }
+            if let gpu = s.gpu { gauge("GPU", value: gpu, tint: .purple, history: manager.gpuHistory) }
             gauge("RAM", value: s.memoryTotal > 0 ? s.memoryUsed / s.memoryTotal : 0, tint: .green,
                   caption: SystemStatsManager.formatBytes(s.memoryUsed), history: manager.memoryHistory)
             VStack(alignment: .leading, spacing: 8) {
@@ -238,11 +240,9 @@ struct SystemStatsNotchView: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.white.opacity(0.6))
                 .lineLimit(1)
-            if history.count > 1 {
-                Sparkline(values: history)
-                    .stroke(tint.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, lineJoin: .round))
-                    .frame(width: 52, height: 12)
-            }
+            Sparkline(values: history)
+                .stroke(tint.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, lineJoin: .round))
+                .frame(width: 52, height: 12)
         }
     }
 

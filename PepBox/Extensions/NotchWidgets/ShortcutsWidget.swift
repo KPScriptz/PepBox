@@ -25,7 +25,8 @@ final class ShortcutsWidgetManager {
     /// Pinned shortcuts, or the first few in the library until you pin some.
     var shown: [String] {
         let existing = pinned.filter { all.isEmpty || all.contains($0) }
-        return existing.isEmpty ? Array(all.prefix(8)) : existing
+        // Until you pin some, show the first six, skipping ones you've archived.
+        return existing.isEmpty ? Array(all.filter { !$0.lowercased().hasPrefix("archived") }.prefix(6)) : existing
     }
 
     func reload() {
@@ -87,7 +88,7 @@ final class ShortcutsWidgetManager {
 struct ShortcutsNotchView: View {
     var manager: ShortcutsWidgetManager
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
