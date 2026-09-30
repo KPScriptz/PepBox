@@ -955,7 +955,7 @@ private struct ExtensionsContent: View {
                 HStack(spacing: 0) {
                     OnboardingExtensionIcon(definition: VoiceTranscribeExtension.self, name: "Transcribe")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: AIBackgroundRemovalExtension.self, name: "AI Removal")
+                    OnboardingExtensionIcon(definition: AIBackgroundRemovalExtension.self, name: "Backgrounds")
                         .frame(maxWidth: .infinity)
                     OnboardingExtensionIcon(definition: TermiNotchExtension.self, name: "Terminal")
                         .frame(maxWidth: .infinity)

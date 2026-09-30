@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AppleMusicExtension: ExtensionDefinition {
     static let id = "appleMusic"
-    static let title = "Apple Music Integration"
+    static let title = "Apple Music"
     static let subtitle = "Native controls for Apple Music"
     static let category: ExtensionGroup = .media
     static let categoryColor = Color(red: 0.98, green: 0.34, blue: 0.40) // Apple Music pink

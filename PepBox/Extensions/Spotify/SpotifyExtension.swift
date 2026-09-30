@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SpotifyExtension: ExtensionDefinition {
     static let id = "spotify"
-    static let title = "Spotify Integration"
+    static let title = "Spotify"
     static let subtitle = "Control playback from your notch"
     static let category: ExtensionGroup = .media
     static let categoryColor = Color(red: 0.12, green: 0.84, blue: 0.38) // Spotify green

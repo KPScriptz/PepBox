@@ -107,7 +107,7 @@ struct ExtensionsShopView: View {
             HStack(spacing: 12) {
                 FeaturedExtensionCardCompact(
                     category: "",
-                    title: "Remove Backgrounds",
+                    title: "Background Removal",
                     subtitle: "Local AI processing",
                     iconURL: "pepbox-media://icons/ai-bg.jpg",
                     screenshotURL: "pepbox-media://images/ai-bg-screenshot.png",
@@ -123,7 +123,7 @@ struct ExtensionsShopView: View {
                 FeaturedExtensionCardCompact(
                     category: "",
                     title: "Voice Transcribe",
-                    subtitle: "Speech to text",
+                    subtitle: "Speech to text, on your Mac",
                     iconURL: "pepbox-media://icons/voice-transcribe.jpg",
                     screenshotURL: "pepbox-media://images/voice-transcribe-screenshot.png",
                     accentColor: .cyan,
@@ -159,7 +159,7 @@ struct ExtensionsShopView: View {
                 FeaturedExtensionCardCompact(
                     category: "COMMUNITY",
                     title: "Reminders",
-                    subtitle: "Tasks & Notes",
+                    subtitle: "Natural language tasks",
                     iconURL: "pepbox-media://icons/reminders.png",
                     iconPlaceholder: "checklist",
                     iconPlaceholderColor: .blue,
@@ -178,7 +178,7 @@ struct ExtensionsShopView: View {
                 FeaturedExtensionCardCompact(
                     category: "COMMUNITY",
                     title: "Notify me!",
-                    subtitle: "Show notifications",
+                    subtitle: "Show notifications in your notch",
                     iconURL: "pepbox-media://icons/notification-hud.png",
                     screenshotURL: "pepbox-media://images/notification-hud-screenshot.png",
                     accentColor: .red,
@@ -191,7 +191,7 @@ struct ExtensionsShopView: View {
                 FeaturedExtensionCardCompact(
                     category: "COMMUNITY",
                     title: "High Alert",
-                    subtitle: "Keep Mac awake",
+                    subtitle: "Keep your Mac awake",
                     iconURL: "pepbox-media://icons/high-alert.jpg",
                     screenshotURL: "pepbox-media://images/high-alert-screenshot.gif",
                     accentColor: .orange,
@@ -300,7 +300,7 @@ struct ExtensionsShopView: View {
             ExtensionListItem(
                 id: "aiBackgroundRemoval",
                 iconURL: "pepbox-media://icons/ai-bg.jpg",
-                title: "AI Background Removal",
+                title: "Background Removal",
                 subtitle: "Remove backgrounds instantly",
                 category: .ai,
                 isInstalled: isAIInstalled,
@@ -316,7 +316,7 @@ struct ExtensionsShopView: View {
                 id: "voiceTranscribe",
                 iconURL: "pepbox-media://icons/voice-transcribe.jpg",
                 title: "Voice Transcribe",
-                subtitle: "Speech to text with AI",
+                subtitle: "Speech to text, on your Mac",
                 category: .ai,
                 isInstalled: isVoiceTranscribeInstalled,
                 analyticsKey: "voiceTranscribe",
@@ -405,7 +405,7 @@ struct ExtensionsShopView: View {
             ExtensionListItem(
                 id: "spotify",
                 iconURL: "pepbox-media://icons/spotify.png",
-                title: "Spotify Integration",
+                title: "Spotify",
                 subtitle: "Control music playback",
                 category: .media,
                 isInstalled: isSpotifyInstalled,
@@ -510,7 +510,7 @@ struct ExtensionsShopView: View {
                 id: "notificationHUD",
                 iconURL: "pepbox-media://icons/notification-hud.png",
                 title: "Notify me!",
-                subtitle: "Show notifications in notch",
+                subtitle: "Show notifications in your notch",
                 category: .productivity,
                 isInstalled: isNotificationHUDInstalled,
                 analyticsKey: "notificationHUD",

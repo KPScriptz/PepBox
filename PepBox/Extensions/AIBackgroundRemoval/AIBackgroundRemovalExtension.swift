@@ -9,8 +9,8 @@ import SwiftUI
 
 struct AIBackgroundRemovalExtension: ExtensionDefinition {
     static let id = "aiBackgroundRemoval"
-    static let title = "AI Background Removal"
-    static let subtitle = "InSPyReNet - State of the Art Quality"
+    static let title = "Background Removal"
+    static let subtitle = "Remove image backgrounds on your Mac"
     static let category: ExtensionGroup = .ai
     static let categoryColor: Color = .blue
     

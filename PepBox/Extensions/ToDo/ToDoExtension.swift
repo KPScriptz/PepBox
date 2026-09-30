@@ -10,7 +10,7 @@ import SwiftUI
 struct ToDoExtension: ExtensionDefinition {
     static let id = "todo"
     static let title = "Reminders"
-    static let subtitle = "Tasks & Notes"
+    static let subtitle = "Natural language tasks"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .blue
     

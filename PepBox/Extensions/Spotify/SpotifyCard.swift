@@ -51,7 +51,7 @@ struct SpotifyExtensionCard: View {
             
             // Title & Description
             VStack(alignment: .leading, spacing: 4) {
-                Text("Spotify Integration")
+                Text("Spotify")
                     .font(.headline)
                     .foregroundStyle(.primary)
                 
