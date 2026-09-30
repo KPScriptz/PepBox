@@ -75,6 +75,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             defer: false
         )
         
+        // Below this the sidebar and the content column start overlapping.
+        newWindow.contentMinSize = NSSize(width: 820, height: 560)
         newWindow.center()
         newWindow.title = "Settings"
         newWindow.titlebarAppearsTransparent = true

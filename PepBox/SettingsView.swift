@@ -254,19 +254,25 @@ struct SettingsView: View {
         subtitle: String,
         @ViewBuilder picker: () -> PickerContent
     ) -> some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            HStack(alignment: .center, spacing: 8) {
-                picker()
-            }
+        let label = VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        let buttons = HStack(alignment: .center, spacing: 8) { picker() }
             .fixedSize(horizontal: true, vertical: false)
+        // Side by side when there's room for readable text; otherwise text above the buttons,
+        // instead of squeezing the description into a one-word-wide column.
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 16) {
+                label.frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                buttons
+            }
+            VStack(alignment: .leading, spacing: 10) {
+                label.frame(maxWidth: .infinity, alignment: .leading)
+                buttons
+            }
         }
     }
     

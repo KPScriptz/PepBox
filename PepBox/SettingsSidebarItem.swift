@@ -242,7 +242,10 @@ struct SettingsSidebar: View {
             updateButton
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 12)
+        // The window's content runs under the title bar; start below the close/minimize/zoom
+        // buttons and the sidebar toggle so they never sit on top of the first item.
+        .padding(.top, 50)
+        .padding(.bottom, 12)
         .frame(minWidth: 200)
     }
     
