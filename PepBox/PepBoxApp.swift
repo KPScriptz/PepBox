@@ -564,6 +564,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showOnboardingIfNeeded() {
         guard !UserDefaults.standard.bool(forKey: AppPreferenceKey.hasCompletedOnboarding) else {
+            WhatsNew.showIfNeeded()
             return
         }
 

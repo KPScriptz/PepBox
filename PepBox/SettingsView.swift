@@ -2152,6 +2152,13 @@ struct SettingsView: View {
                 LabeledContent("Developer", value: "PivotXP")
                 
                 HStack {
+                    Text("What's New")
+                    Spacer()
+                    Button("Show") { WhatsNewWindowController.shared.show() }
+                        .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
+                
+                HStack {
                     Text("Open-Source Licenses")
                     Spacer()
                     Button("View") { showLicenses = true }

@@ -953,25 +953,25 @@ private struct ExtensionsContent: View {
                 
                 // Top row - spread evenly
                 HStack(spacing: 0) {
-                    OnboardingExtensionIcon(definition: VoiceTranscribeExtension.self, name: "Transcribe")
+                    OnboardingExtensionIcon(definition: AgentsExtension.self, name: "Agents")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: AIBackgroundRemovalExtension.self, name: "Backgrounds")
+                    OnboardingExtensionIcon(definition: SnippetsExtension.self, name: "Snippets")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: TermiNotchExtension.self, name: "Terminal")
+                    OnboardingExtensionIcon(definition: LocalSendExtension.self, name: "LocalSend")
                         .frame(maxWidth: .infinity)
                 }
                 
                 // Bottom row - spread evenly
                 HStack(spacing: 0) {
-                    OnboardingExtensionIcon(definition: SpotifyExtension.self, name: "Spotify")
+                    OnboardingExtensionIcon(definition: QuickSearchExtension.self, name: "Search")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: VideoTargetSizeExtension.self, name: "Compress")
+                    OnboardingExtensionIcon(definition: UpNextExtension.self, name: "Up Next")
                         .frame(maxWidth: .infinity)
                     OnboardingExtensionIcon(definition: ElementCaptureExtension.self, name: "Capture")
                         .frame(maxWidth: .infinity)
                 }
                 
-                Text("And many more...")
+                Text("And 40 more in Settings → Extensions")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
             }
