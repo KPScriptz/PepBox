@@ -1266,61 +1266,62 @@ struct SettingsView: View {
                 } header: {
                     Text("Multi-Basket")
                 }
+            }
 
-                Section {
-                    HStack(spacing: 8) {
-                        QuickActionsInfoButton()
-                        Toggle(isOn: $enableQuickActions) {
-                            VStack(alignment: .leading) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    Text("Quick Actions")
-                                }
-                                Text("Drop buttons under Shelf and Basket: AirDrop, Messages, Mail, ZIP and more")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+            // Quick Actions (the send buttons under the island) work without the basket too.
+            Section {
+                HStack(spacing: 8) {
+                    QuickActionsInfoButton()
+                    Toggle(isOn: $enableQuickActions) {
+                        VStack(alignment: .leading) {
+                            HStack(alignment: .center, spacing: 6) {
+                                Text("Quick Actions")
                             }
-                        }
-                    }
-
-                    if enableQuickActions {
-                        QuickActionsPicker()
-
-                        nativePickerRow(
-                            title: "Mail App",
-                            subtitle: "Choose which app opens for the Mail quick action"
-                        ) {
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.systemDefault.icon,
-                                label: QuickActionsMailApp.systemDefault.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.systemDefault.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.systemDefault.rawValue }
-                            )
-
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.appleMail.icon,
-                                label: QuickActionsMailApp.appleMail.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.appleMail.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.appleMail.rawValue }
-                            )
-
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.outlook.icon,
-                                label: QuickActionsMailApp.outlook.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.outlook.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.outlook.rawValue }
-                            )
-                        }
-
-                        if quickActionsMailApp == QuickActionsMailApp.outlook.rawValue &&
-                            !MailHelper.isMailClientInstalled(.outlook) {
-                            Text("Outlook is not installed. PepBox will fall back to the system Mail action.")
+                            Text("Drop buttons under Shelf and Basket: AirDrop, Messages, Mail, ZIP and more")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                } header: {
-                    Text("Quick Actions")
                 }
+
+                if enableQuickActions {
+                    QuickActionsPicker()
+
+                    nativePickerRow(
+                        title: "Mail App",
+                        subtitle: "Choose which app opens for the Mail quick action"
+                    ) {
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.systemDefault.icon,
+                            label: QuickActionsMailApp.systemDefault.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.systemDefault.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.systemDefault.rawValue }
+                        )
+
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.appleMail.icon,
+                            label: QuickActionsMailApp.appleMail.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.appleMail.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.appleMail.rawValue }
+                        )
+
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.outlook.icon,
+                            label: QuickActionsMailApp.outlook.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.outlook.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.outlook.rawValue }
+                        )
+                    }
+
+                    if quickActionsMailApp == QuickActionsMailApp.outlook.rawValue &&
+                        !MailHelper.isMailClientInstalled(.outlook) {
+                        Text("Outlook is not installed. PepBox will fall back to the system Mail action.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text("Quick Actions")
             }
         }
     }

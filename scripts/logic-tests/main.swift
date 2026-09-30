@@ -545,6 +545,7 @@ let defaults = UserDefaults.standard
 defaults.removeObject(forKey: "clipboardShortcut")
 expect(SavedShortcut.storedClipboardShortcut(), SavedShortcut.clipboardDefault, "no saved shortcut -> Option+Space")
 expect(SavedShortcut.clipboardDefault.description, "⌥Space", "default shortcut description")
+expect(SavedShortcut(keyCode: 8, modifiers: NSEvent.ModifierFlags([.command, .control, .option, .shift]).rawValue).description, "⌃⌥⇧⌘C", "modifiers in Apple's order")
 
 let legacy = SavedShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue)
 defaults.set(try! JSONEncoder().encode(legacy), forKey: "clipboardShortcut")

@@ -167,8 +167,8 @@ struct ExtensionsShopView: View {
                     screenshotURL: "pepbox-media://images/reminders-screenshot.gif",
                     accentColor: .blue,
                     isInstalled: isTodoInstalled,
-                    isNew: true,
-                    isCommunity: true
+                    isNew: false,
+                    isCommunity: false
                 ) {
                     ToDoInfoView(
                         installCount: extensionCounts["todo"],
@@ -184,7 +184,7 @@ struct ExtensionsShopView: View {
                     screenshotURL: "pepbox-media://images/notification-hud-screenshot.png",
                     accentColor: .red,
                     isInstalled: isNotificationHUDInstalled,
-                    isCommunity: true
+                    isCommunity: false
                 ) {
                     NotificationHUDInfoView()
                 }
@@ -197,7 +197,7 @@ struct ExtensionsShopView: View {
                     screenshotURL: "pepbox-media://images/high-alert-screenshot.gif",
                     accentColor: .orange,
                     isInstalled: isCaffeineInstalled,
-                    isCommunity: true
+                    isCommunity: false
                 ) {
                     CaffeineInfoView(
                         installCount: extensionCounts["caffeine"],
@@ -212,29 +212,28 @@ struct ExtensionsShopView: View {
     // MARK: - Category Swiper
     
     private var categorySwiperHeader: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                // Filter out .all - it's now the default when no filter selected
-                ForEach(ExtensionCategory.allCases.filter { $0 != .all }) { category in
-                    CategoryPillButton(
-                        category: category,
-                        isSelected: selectedCategory == category,
-                        namespace: categoryAnimation
-                    ) {
-                        withAnimation(PepBoxAnimation.state) {
-                            // Double-click/toggle behavior: clicking selected category deselects it
-                            if selectedCategory == category {
-                                selectedCategory = nil  // Back to "all"
-                            } else {
-                                selectedCategory = category
-                            }
+        // Wraps onto a second line when the window is narrow instead of running off the edge.
+        FlowLayout(spacing: 10) {
+            // Filter out .all - it's now the default when no filter selected
+            ForEach(ExtensionCategory.allCases.filter { $0 != .all }) { category in
+                CategoryPillButton(
+                    category: category,
+                    isSelected: selectedCategory == category,
+                    namespace: categoryAnimation
+                ) {
+                    withAnimation(PepBoxAnimation.state) {
+                        // Double-click/toggle behavior: clicking selected category deselects it
+                        if selectedCategory == category {
+                            selectedCategory = nil  // Back to "all"
+                        } else {
+                            selectedCategory = category
                         }
                     }
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 4)
         }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
     }
     
     // MARK: - Extensions List
@@ -537,7 +536,7 @@ struct ExtensionsShopView: View {
                 isInstalled: isNotificationHUDInstalled,
                 analyticsKey: "notificationHUD",
                 extensionType: .notificationHUD,
-                isCommunity: true
+                isCommunity: false
             ) {
                 AnyView(NotificationHUDInfoView())
             },
@@ -550,7 +549,7 @@ struct ExtensionsShopView: View {
                 isInstalled: isCaffeineInstalled,
                 analyticsKey: "caffeine",
                 extensionType: .caffeine,
-                isCommunity: true
+                isCommunity: false
             ) {
                 AnyView(CaffeineInfoView(
                     installCount: extensionCounts["caffeine"],
@@ -941,7 +940,7 @@ struct ExtensionsShopView: View {
                 isInstalled: isTodoInstalled,
                 analyticsKey: "todo",
                 extensionType: .todo,
-                isCommunity: true
+                isCommunity: false
             ) {
                 AnyView(ToDoInfoView(
                     installCount: extensionCounts["todo"],
@@ -1896,5 +1895,49 @@ struct ElementCaptureInfoViewWrapper: View {
             installCount: installCount,
             rating: rating
         )
+    }
+}
+
+/// Lays children out left to right, wrapping to a new line when the row is full.
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(width: proposal.width ?? .infinity, subviews: subviews)
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        let width = rows.map(\.width).max() ?? 0
+        return CGSize(width: proposal.width ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(width: bounds.width, subviews: subviews) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row { var indices: [Int] = []; var width: CGFloat = 0; var height: CGFloat = 0 }
+
+    private func arrange(width: CGFloat, subviews: Subviews) -> [Row] {
+        var rows = [Row()]
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let needed = rows[rows.count - 1].indices.isEmpty ? size.width : rows[rows.count - 1].width + spacing + size.width
+            if needed > width && !rows[rows.count - 1].indices.isEmpty {
+                rows.append(Row())
+            }
+            var row = rows[rows.count - 1]
+            row.width = row.indices.isEmpty ? size.width : row.width + spacing + size.width
+            row.height = max(row.height, size.height)
+            row.indices.append(index)
+            rows[rows.count - 1] = row
+        }
+        return rows
     }
 }
