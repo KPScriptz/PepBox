@@ -152,6 +152,8 @@ struct QuickSearchExtension: ExtensionDefinition {
         ("power", "Commands: lock, sleep, restart, eject, quit an app"),
         ("gearshape", "Jump to any System Settings page"),
         ("globe", "Search the web when nothing matches"),
+        ("wand.and.stars", "Tools: colors, time zones, dates, hex, %, UUID, passwords, base64"),
+        ("book.fill", "define <word>, cb <text>, downloads, ip, port 3000, awake 1h, :emoji, count"),
         ("keyboard", "Arrow keys to pick, Esc to close")
     ]
     static var screenshotURL: URL? { nil }

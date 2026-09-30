@@ -21,5 +21,6 @@ swiftc -O -o "$OUT" \
     "$AGENTS_PARSER" \
     "$ROOT/PepBox/Extensions/Utilities/LocalSend.swift" \
     "$ROOT/PepBox/Extensions/Utilities/LocalSendHTTP.swift" \
+    "$ROOT/PepBox/Extensions/Utilities/QuickTools.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

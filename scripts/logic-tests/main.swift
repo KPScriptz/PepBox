@@ -242,6 +242,96 @@ do {
     expect(response.hasPrefix("HTTP/1.1 403 Forbidden\r\nContent-Length: 0"), true, "http response line")
 }
 
+// MARK: - Quick Search tools
+
+do {
+    // 2026-09-30 14:00:00 UTC, a Wednesday.
+    let now = Date(timeIntervalSince1970: 1790776800)
+    let chicago = TimeZone(identifier: "America/Chicago")!
+    var counter: UInt64 = 0
+    let fakeRandom: () -> UInt64 = { counter &+= 7919; return counter }
+    func titles(_ q: String) -> [String] { QuickTools.answers(for: q, now: now, timeZone: chicago, random: fakeRandom).map(\.title) }
+    func first(_ q: String) -> String? { titles(q).first }
+
+    // Colors
+    expect(titles("#ff8800"), ["#FF8800", "rgb(255, 136, 0)", "hsl(32, 100%, 50%)"], "color hex")
+    expect(first("#f80"), "#FF8800", "color short hex")
+    expect(first("rgb(0, 128, 255)"), "#0080FF", "color rgb")
+    expect(first("ff8800"), "#FF8800", "color bare mixed hex")
+    expect(titles("facade"), [], "color ignores words")
+    expect(titles("add"), [], "color ignores short words")
+    expect(titles("123456").contains("#123456"), false, "color ignores plain numbers")
+
+    // Time zones
+    expect(first("time in tokyo"), "11:00 PM, Wed in Tokyo", "tz time in city")
+    expect(first("3pm est in pst"), "12:00 PM, Wed in PST", "tz convert abbreviations")
+    expect(first("15:30 london to new york"), "10:30 AM, Wed in New York", "tz convert cities 24h")
+    expect(titles("time in narnia"), [], "tz unknown")
+
+    // Dates
+    expect(first("days until dec 25"), "86 days", "days until month day")
+    expect(first("days until christmas"), "86 days", "days until named")
+    expect(first("days until 2026-09-30"), "Today", "days until today")
+    expect(first("days until 2026-09-01"), "29 days ago", "days until past")
+    expect(first("today + 30 days"), "Friday, October 30, 2026", "date plus days")
+    expect(first("in 2 weeks"), "Wednesday, October 14, 2026", "date in weeks")
+    expect(first("3 months ago"), "Tuesday, June 30, 2026", "date ago")
+    expect(titles("30 days"), [], "date needs a direction")
+
+    // Bases
+    expect(titles("0xff"), ["255", "0b11111111"], "base hex in")
+    expect(titles("255 in hex"), ["0xFF"], "base to hex")
+    expect(titles("10 to binary"), ["0b1010"], "base to binary")
+    expect(titles("0b1010"), ["10", "0xA"], "base binary in")
+
+    // Percent
+    expect(first("15% of 80"), "12", "percent of")
+    expect(titles("tip 20% of $64.50"), ["12.90", "Total 77.40"], "percent tip")
+    expect(first("30 is what % of 120"), "25%", "percent what")
+    expect(first("80 - 15%"), "68", "percent change")
+
+    // Timestamps
+    expect(first("timestamp"), "1790776800", "unix now")
+    expect(first("1790776800"), "Wed, Sep 30, 2026 at 9:00:00 AM CDT", "unix to date")
+    expect(first("1790776800000"), "Wed, Sep 30, 2026 at 9:00:00 AM CDT", "unix ms to date")
+    expect(titles("1234567890123456"), [], "unix ignores long numbers")
+
+    // Encodings
+    expect(first("base64 hello"), "aGVsbG8=", "base64 encode")
+    expect(first("base64 decode aGVsbG8"), "hello", "base64 decode unpadded")
+    expect(first("url encode a b&c"), "a%20b%26c", "url encode")
+    expect(first("url decode a%20b"), "a b", "url decode")
+
+    // Generators
+    let uuid = first("uuid") ?? ""
+    expect(UUID(uuidString: uuid) != nil && uuid.dropFirst(14).first == "4", true, "uuid v4 format")
+    let password = first("password 24") ?? ""
+    expect(password.count, 24, "password length")
+    expect(password.contains(where: \.isUppercase) && password.contains(where: \.isLowercase)
+           && password.contains(where: \.isNumber) && password.contains(where: { "!@#$%^&*-_=+?".contains($0) }), true, "password has every kind")
+    expect(first("password 3").map(\.count), 8, "password minimum length")
+    expect(QuickTools.answers(for: "lorem 2").first?.copy.components(separatedBy: "\n\n").count, 2, "lorem paragraphs")
+    expect(first("roll 2d6")?.hasPrefix("🎲 "), true, "roll dice")
+    expect(titles("roll d1"), [], "roll needs 2+ sides")
+    expect(["🪙 Heads", "🪙 Tails"].contains(first("flip") ?? ""), true, "coin flip")
+    expect(titles("hello world"), [], "tools stay quiet on plain text")
+
+    expect(QuickTools.awakeRequest("awake"), .indefinite, "awake default")
+    expect(QuickTools.awakeRequest("awake 1h"), .minutes(60), "awake hours")
+    expect(QuickTools.awakeRequest("awake 90 min"), .minutes(90), "awake minutes spaced")
+    expect(QuickTools.awakeRequest("caffeinate 30"), .minutes(30), "awake bare minutes")
+    expect(QuickTools.awakeRequest("stay awake 2 hours"), .minutes(120), "stay awake")
+    expect(QuickTools.awakeRequest("awake off"), .off, "awake off")
+    expect(QuickTools.awakeRequest("awake 48h"), nil, "awake too long")
+    expect(QuickTools.awakeRequest("awakening"), nil, "awake needs the word")
+    expect(QuickTools.portQuery("port 3000"), 3000, "port query")
+    expect(QuickTools.portQuery(":8080"), 8080, "port colon")
+    expect(QuickTools.portQuery("port 99999"), nil, "port range")
+    let lsof = QuickTools.parseLsof("p123\ncnode\nn*:3000\nn[::]:3000\np456\ncPython\nn127.0.0.1:3000\n")
+    expect(lsof.map(\.pid), [123, 456], "lsof pids")
+    expect(lsof.map(\.command), ["node", "Python"], "lsof commands")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

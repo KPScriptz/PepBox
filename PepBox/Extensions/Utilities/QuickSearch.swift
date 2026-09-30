@@ -19,6 +19,9 @@ struct QuickSearchResult: Identifiable {
         case startTimer(QuickTimerParser.Request)
         case cancelTimer(UUID)
         case command(QuickCommand)
+        case openURL(URL)
+        case stopProcess(pid_t)
+        case awake(CaffeineDuration?)   // nil turns keep-awake off
     }
 
     let id: String
@@ -26,11 +29,18 @@ struct QuickSearchResult: Identifiable {
     let subtitle: String
     let kind: Kind
 
+    /// Overrides the default symbol (tools set their own).
+    var customSymbol: String? = nil
+
     var symbol: String {
+        if let customSymbol { return customSymbol }
         switch kind {
         case .startTimer: return "timer"
         case .cancelTimer: return "xmark.circle.fill"
         case .command(let command): return command.symbol
+        case .openURL: return "book.fill"
+        case .stopProcess: return "stop.circle.fill"
+        case .awake: return "cup.and.saucer.fill"
         default: return "equal.circle.fill"
         }
     }
@@ -39,7 +49,7 @@ struct QuickSearchResult: Identifiable {
         switch kind {
         case .app(let url), .file(let url):
             return NSWorkspace.shared.icon(forFile: url.path)
-        case .answer, .startTimer, .cancelTimer, .command:
+        case .answer, .startTimer, .cancelTimer, .command, .openURL, .stopProcess, .awake:
             return nil
         }
     }
@@ -101,6 +111,16 @@ final class QuickSearchModel {
                 QuickSearchResult(id: "cancel-\(timer.id)", title: "\(timer.title) · \(QuickTimerParser.format(manager.remaining(timer))) left",
                                   subtitle: "Enter to cancel", kind: .cancelTimer(timer.id))
             }
+        }
+
+        list += QuickTools.answers(for: text).map {
+            QuickSearchResult(id: $0.id, title: $0.title, subtitle: $0.subtitle, kind: .answer($0.copy), customSymbol: $0.symbol)
+        }
+        list += QuickLookups.results(for: text) { [weak self] late in
+            // Slow answers (public IP) arrive after typing; add them if the query hasn't changed.
+            guard let self, self.query.trimmingCharacters(in: .whitespaces) == text else { return }
+            let insertAt = self.results.firstIndex { if case .app = $0.kind { return true } else { return false } } ?? self.results.count
+            self.results.insert(contentsOf: late, at: insertAt)
         }
 
         let lower = text.lowercased()
@@ -206,6 +226,12 @@ final class QuickSearchModel {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { ScreenTextGrabber.start() }
         case .command(let command):
             command.run()
+        case .openURL(let url):
+            NSWorkspace.shared.open(url)
+        case .stopProcess(let pid):
+            kill(pid, SIGTERM)
+        case .awake(let duration):
+            if let duration { CaffeineManager.shared.activate(duration: duration) } else { CaffeineManager.shared.deactivate() }
         }
         return true
     }
