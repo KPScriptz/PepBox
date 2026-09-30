@@ -27,8 +27,12 @@ final class FloatingPinController {
             // Fit within 420×420 keeping the aspect ratio.
             let scale = min(1, 420 / max(image.size.width, image.size.height, 1))
             size = NSSize(width: max(120, image.size.width * scale), height: max(80, image.size.height * scale))
-        case .text:
-            size = NSSize(width: 320, height: 200)
+        case .text(let text):
+            // Sticky-note sized to the text: 280 wide, as tall as needed up to 420.
+            let bounds = (text as NSString).boundingRect(with: NSSize(width: 256, height: CGFloat.greatestFiniteMagnitude),
+                                                         options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                         attributes: [.font: NSFont.systemFont(ofSize: 13)])
+            size = NSSize(width: 280, height: min(420, max(80, ceil(bounds.height) + 32)))
         }
 
         let panel = NSPanel(contentRect: NSRect(origin: .zero, size: size),
@@ -96,7 +100,8 @@ private struct FloatingPinView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(12)
                     }
-                    .background(Color(nsColor: .textBackgroundColor))
+                    .foregroundStyle(Color.black.opacity(0.85))
+                    .background(Color(red: 1.0, green: 0.95, blue: 0.62))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
