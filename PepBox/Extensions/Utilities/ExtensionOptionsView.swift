@@ -79,7 +79,7 @@ struct ExtensionOptionsView: View {
     }
 }
 
-private struct ShortcutOption: View {
+struct ShortcutOption: View {
     let title: String
     let key: String
     let defaultShortcut: SavedShortcut

@@ -2607,6 +2607,19 @@ struct SettingsView: View {
             Text("Requires Accessibility permissions to paste. Shortcuts may conflict with other apps.")
         }
         
+        if enableClipboard {
+            Section {
+                ShortcutOption(title: "Start / Stop Queue", key: PasteQueue.toggleKey,
+                               defaultShortcut: PasteQueue.toggleDefault) { PasteQueue.shared.registerHotKeys() }
+                ShortcutOption(title: "Paste Next", key: PasteQueue.pasteNextKey,
+                               defaultShortcut: PasteQueue.pasteNextDefault) { PasteQueue.shared.registerHotKeys() }
+            } header: {
+                Text("Paste Queue")
+            } footer: {
+                Text("Start the queue, copy several things, then press Paste Next to paste them one by one in the order you copied them. The notch shows how many are left.")
+            }
+        }
+        
         // Its own section (it used to be nested inside the one above)
         if enableClipboard {
             excludedAppsSection

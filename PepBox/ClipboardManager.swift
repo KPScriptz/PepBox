@@ -741,6 +741,7 @@ class ClipboardManager: ObservableObject {
                 }
                 
                 self.history.insert(item, at: 0)
+                PasteQueue.shared.captured(item)
             }
             self.enforceHistoryLimit()
         }
@@ -890,6 +891,11 @@ class ClipboardManager: ObservableObject {
         let itemsByID = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let chunks = ClipboardStack.plan(items.compactMap(Self.stackEntry), separator: .current)
         pasteChunks(chunks, at: 0, itemsByID: itemsByID, targetPID: targetPID)
+    }
+    
+    /// Treats what's on the pasteboard now as already seen (for PepBox's own writes).
+    func ignoreCurrentPasteboardChange() {
+        lastChangeCount = NSPasteboard.general.changeCount
     }
     
     static func stackEntry(_ item: ClipboardItem) -> ClipboardStack.Entry? {

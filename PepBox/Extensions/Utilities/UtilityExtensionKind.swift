@@ -83,6 +83,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     /// Called at launch: start what's installed and follow later Turn On / Turn Off changes.
     static func startAll() {
         allCases.forEach { $0.applyState() }
+        PasteQueue.shared.registerHotKeys()
         AgentsMonitor.shared.sync()
         guard stateObserver == nil else { return }
         stateObserver = NotificationCenter.default.addObserver(

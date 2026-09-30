@@ -250,6 +250,11 @@ enum QuickLookups {
             let streak = FocusHistory.streak(FocusHistory.sessionsByDay, now: Date())
             let summary = "Today \(today.sessions) sessions · \(today.minutes) min · \(streak)-day streak"
             results.append(QuickSearchResult(id: "focus-stats", title: summary, subtitle: "Pomodoro", kind: .answer(summary), customSymbol: "flame.fill"))
+        case "queue", "paste queue", "stack", "collect":
+            let queue = PasteQueue.shared
+            results.append(QuickSearchResult(id: "paste-queue", title: queue.isActive ? "Stop Paste Queue" : "Start Paste Queue",
+                                             subtitle: queue.isActive ? "\(queue.items.count) queued" : "Copy things, then ⌃⌥V pastes them in order",
+                                             kind: .action { queue.toggle() }, customSymbol: "square.stack.3d.up.fill"))
         case "clear clipboard", "empty clipboard":
             results.append(QuickSearchResult(id: "clear-clipboard", title: "Clear Clipboard", subtitle: "History is kept",
                                              kind: .action { NSPasteboard.general.clearContents() }, customSymbol: "clipboard"))

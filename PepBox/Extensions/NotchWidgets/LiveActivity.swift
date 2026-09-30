@@ -23,6 +23,7 @@ struct LiveActivity: Equatable {
         guard UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true else { return nil }
 
         if let flash = FlashActivity.shared.activity { return flash }
+        if let queue = PasteQueue.shared.liveActivity { return queue }
 
         if UtilityExtensionKind.eyeBreaks.isAvailable, let remaining = EyeBreakManager.shared.breakRemaining {
             return LiveActivity(

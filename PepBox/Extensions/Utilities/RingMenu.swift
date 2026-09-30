@@ -165,6 +165,9 @@ final class RingMenuController {
             RingAction(id: "qrClipboard", title: "Clipboard QR", icon: "qrcode", tint: .indigo) {
                 if let text = NSPasteboard.general.string(forType: .string) { QRCodePanelController.shared.show(text) } else { NSSound.beep() }
             },
+            RingAction(id: "pasteQueue", title: PasteQueue.shared.isActive ? "Stop Queue" : "Paste Queue", icon: "square.stack.3d.up.fill", tint: .purple) {
+                PasteQueue.shared.toggle()
+            },
             RingAction(id: "lock", title: "Lock Screen", icon: "lock.fill", tint: .gray) {
                 QuickCommand.lock.run()
             },
