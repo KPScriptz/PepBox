@@ -144,7 +144,7 @@ struct ExtensionsShopView: View {
                     iconURL: "pepbox-media://icons/quickshare.jpg",
                     screenshotURL: "pepbox-media://images/quickshare-screenshot.png",
                     accentColor: .cyan,
-                    isInstalled: true,
+                    isInstalled: !ExtensionType.quickshare.isRemoved,
                     features: ["Instant upload", "Auto-copy link", "Track expiry"]
                 ) {
                     QuickshareInfoView(

@@ -184,8 +184,9 @@ struct ExtensionInfoView: View {
             
             Spacer()
             
-            // Action button (optional)
-            if let action = onAction {
+            // Action button (optional). Panel and utility extensions have nothing to set up once installed.
+            if let action = onAction,
+               !(isInstalled && (NotchWidgetKind(extensionType: extensionType) != nil || UtilityExtensionKind(extensionType: extensionType) != nil)) {
                 Button {
                     AnalyticsService.shared.trackExtensionActivation(extensionId: extensionType.rawValue)
                     action()

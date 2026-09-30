@@ -1090,7 +1090,7 @@ struct SettingsView: View {
                     Toggle(isOn: $liveActivitiesEnabled) {
                         VStack(alignment: .leading) {
                             Text("Live Activities")
-                            Text("Show a running Pomodoro beside the closed notch")
+                            Text("Timers, meetings, downloads and agents beside the closed notch")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -2365,15 +2365,21 @@ struct SettingsView: View {
                             }
                         }
                     } else {
-                        // Extension is not installed - greyed out
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Notify me!")
-                                .foregroundStyle(.secondary)
-                            Text("Enable in Extension Store")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
+                        // Extension is not installed - opens it in Extensions
+                        Button {
+                            NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.notificationHUD)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Notify me!")
+                                    .foregroundStyle(.secondary)
+                                Text("Install from Extensions")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -2445,11 +2451,7 @@ struct SettingsView: View {
                     // Extension is not installed - clickable card to open Extension Store
                     Button {
                         // Navigate to Extension Store with Termi-Notch selected
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": TermiNotchExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.terminalNotch)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<TermiNotchExtension>(definition: TermiNotchExtension.self, size: 40)
@@ -2458,7 +2460,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Termi-Notch")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2517,11 +2519,7 @@ struct SettingsView: View {
                     // Extension is not installed - clickable card to open Extension Store
                     Button {
                         // Navigate to Extension Store with High Alert selected
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": CaffeineExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.caffeine)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<CaffeineExtension>(definition: CaffeineExtension.self, size: 40)
@@ -2530,7 +2528,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("High Alert")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2557,11 +2555,7 @@ struct SettingsView: View {
                     }
                 } else {
                     Button {
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": CameraExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.camera)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<CameraExtension>(definition: CameraExtension.self, size: 40)
@@ -2570,7 +2564,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Notchface")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2978,6 +2972,15 @@ struct SettingsView: View {
                 .sheet(isPresented: $showLicenses) { LicensesSheet() }
                 
                 HStack {
+                    Text("Source Code")
+                    Spacer()
+                    Button("GitHub") {
+                        if let url = URL(string: "https://github.com/KPScriptz/PepBox") { NSWorkspace.shared.open(url) }
+                    }
+                    .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
+                
+                HStack {
                     Text("Introduction")
                     Spacer()
                     Button {
@@ -2993,20 +2996,6 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("About")
-            }
-            
-            // MARK: Links
-            Section {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    LinkButton(
-                        title: "GitHub",
-                        icon: "chevron.left.forwardslash.chevron.right",
-                        url: "https://github.com/KPScriptz/PepBox"
-                    )
-                    
-                }
-            } header: {
-                Text("Links")
             }
             
             // MARK: Reset
