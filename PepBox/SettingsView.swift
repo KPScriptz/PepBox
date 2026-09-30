@@ -2604,7 +2604,7 @@ struct SettingsView: View {
         } header: {
             Text("Clipboard")
         } footer: {
-            Text("Requires Accessibility permissions to paste. Shortcuts may conflict with other apps.")
+            Text("Requires Accessibility to paste. In the clipboard window, ⌘1–⌘9 paste the first nine items.")
         }
         
         if enableClipboard {

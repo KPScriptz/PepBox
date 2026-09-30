@@ -316,6 +316,15 @@ struct ClipboardManagerView: View {
             Button("") { deleteSelectedItems() }.keyboardShortcut(KeyEquivalent("\u{08}"), modifiers: []) // Backspace
             Button("") { deleteSelectedItems() }.keyboardShortcut("d", modifiers: .command) // Cmd+D
             
+            // ⌘1–⌘9 paste the Nth item in the list straight away
+            ForEach(1...9, id: \.self) { number in
+                Button("") {
+                    guard sortedHistory.indices.contains(number - 1) else { return }
+                    onPaste(sortedHistory[number - 1])
+                }
+                .keyboardShortcut(KeyEquivalent(Character(String(number))), modifiers: .command)
+            }
+            
             // 5. Command+A -> Select All (always works)
             Button("") {
                 selectedItems = Set(sortedHistory.map { $0.id })
