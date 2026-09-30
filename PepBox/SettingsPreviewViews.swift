@@ -1483,6 +1483,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
     case disabled = "Disabled"
     case ai = "AI"
     case productivity = "Productivity"
+    case files = "Files"
+    case system = "System"
     case media = "Media"
     
     var id: String { rawValue }
@@ -1494,6 +1496,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
         case .disabled: return "xmark.circle"
         case .ai: return "sparkles"
         case .productivity: return "bolt.fill"
+        case .files: return "folder.fill"
+        case .system: return "gearshape.fill"
         case .media: return "music.note"
         }
     }
@@ -1505,6 +1509,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
         case .disabled: return .gray
         case .ai: return .purple
         case .productivity: return .orange
+        case .files: return .blue
+        case .system: return .gray
         case .media: return .green
         }
     }

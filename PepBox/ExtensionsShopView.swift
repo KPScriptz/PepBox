@@ -355,7 +355,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/targeted-video-size.jpg",
                 title: "Video Target Size",
                 subtitle: "Compress videos to size",
-                category: .media,
+                category: .files,
                 isInstalled: isFFmpegInstalled,
                 analyticsKey: "ffmpegVideoCompression",
                 extensionType: .ffmpegVideoCompression
@@ -371,7 +371,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/alfred.png",
                 title: "Alfred Workflow",
                 subtitle: "Push files via keyboard",
-                category: .productivity,
+                category: .files,
                 isInstalled: isAlfredInstalled,
                 analyticsKey: "alfred",
                 extensionType: .alfred
@@ -407,7 +407,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/finder.png",
                 title: "Finder Services",
                 subtitle: "Right-click integration",
-                category: .productivity,
+                category: .files,
                 isInstalled: isFinderInstalled,
                 analyticsKey: "finder",
                 extensionType: .finder
@@ -473,7 +473,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/window-snap.jpg",
                 title: "Window Snap",
                 subtitle: "Snap with shortcuts",
-                category: .productivity,
+                category: .system,
                 isInstalled: isWindowSnapInstalled,
                 analyticsKey: "windowSnap",
                 extensionType: .windowSnap
@@ -518,7 +518,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/quickshare.jpg",
                 title: "PepBox Quickshare",
                 subtitle: "Share files via 0x0.st",
-                category: .productivity,
+                category: .files,
                 isInstalled: !ExtensionType.quickshare.isRemoved,
                 analyticsKey: "quickshare",
                 extensionType: .quickshare
@@ -533,7 +533,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/notification-hud.png",
                 title: "Notify me!",
                 subtitle: "Show notifications in your notch",
-                category: .productivity,
+                category: .system,
                 isInstalled: isNotificationHUDInstalled,
                 analyticsKey: "notificationHUD",
                 extensionType: .notificationHUD,
@@ -546,7 +546,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/high-alert.jpg",
                 title: "High Alert",
                 subtitle: "Keep your Mac awake",
-                category: .productivity,
+                category: .system,
                 isInstalled: isCaffeineInstalled,
                 analyticsKey: "caffeine",
                 extensionType: .caffeine,
@@ -671,7 +671,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholderColor: .teal,
                 title: "System Stats",
                 subtitle: "CPU, GPU, memory, network and battery",
-                category: .productivity,
+                category: .system,
                 isInstalled: NotchWidgetKind.systemStats.isInstalled,
                 analyticsKey: "systemStats",
                 extensionType: .systemStats
@@ -833,7 +833,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholderColor: .indigo,
                 title: "Smooth Scroll",
                 subtitle: "Trackpad-smooth mouse wheels",
-                category: .productivity,
+                category: .system,
                 isInstalled: UtilityExtensionKind.smoothScroll.isInstalled,
                 analyticsKey: "smoothScroll",
                 extensionType: .smoothScroll
@@ -869,7 +869,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholderColor: .blue,
                 title: "Download Progress",
                 subtitle: "Browser downloads beside the notch",
-                category: .productivity,
+                category: .files,
                 isInstalled: UtilityExtensionKind.downloadsActivity.isInstalled,
                 analyticsKey: "downloadsActivity",
                 extensionType: .downloadsActivity
@@ -887,7 +887,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholderColor: .teal,
                 title: "LocalSend",
                 subtitle: "AirDrop for every device, no cloud",
-                category: .productivity,
+                category: .files,
                 isInstalled: UtilityExtensionKind.localSend.isInstalled,
                 analyticsKey: "localSend",
                 extensionType: .localSend
@@ -922,7 +922,7 @@ struct ExtensionsShopView: View {
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",
                 subtitle: "Organize your menu bar",
-                category: .productivity,
+                category: .system,
                 isInstalled: isMenuBarManagerInstalled,
                 analyticsKey: "menuBarManager",
                 extensionType: .menuBarManager
