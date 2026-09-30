@@ -23,6 +23,7 @@ struct QuickSearchResult: Identifiable {
         case stopProcess(pid_t)
         case awake(CaffeineDuration?)   // nil turns keep-awake off
         case action(() -> Void)          // runs, then Quick Search closes
+        case fillQuery(String)           // puts text in the search field; the panel stays open
     }
 
     let id: String
@@ -41,6 +42,7 @@ struct QuickSearchResult: Identifiable {
         case .command(let command): return command.symbol
         case .openURL: return "book.fill"
         case .action: return "bolt.fill"
+        case .fillQuery: return "questionmark.circle"
         case .stopProcess: return "stop.circle.fill"
         case .awake: return "cup.and.saucer.fill"
         default: return "equal.circle.fill"
@@ -51,7 +53,7 @@ struct QuickSearchResult: Identifiable {
         switch kind {
         case .app(let url), .file(let url):
             return NSWorkspace.shared.icon(forFile: url.path)
-        case .answer, .startTimer, .cancelTimer, .command, .openURL, .stopProcess, .awake, .action:
+        case .answer, .startTimer, .cancelTimer, .command, .openURL, .stopProcess, .awake, .action, .fillQuery:
             return nil
         }
     }
@@ -88,6 +90,34 @@ final class QuickSearchModel {
         var list: [QuickSearchResult] = []
         guard !text.isEmpty else {
             results = []
+            stopFileQuery()
+            return
+        }
+
+        if text == "?" || text.lowercased() == "help" {
+            // A cheat sheet: Enter puts the example in the search field.
+            let examples: [(String, String, String)] = [
+                ("12*4 or (3+2)^2", "Math", "plus.forwardslash.minus"),
+                ("5 km to mi · $20 to eur", "Units and currency", "arrow.left.arrow.right"),
+                ("time in tokyo · 3pm est in pst", "Time zones", "globe"),
+                ("days until dec 25 · today + 30 days", "Dates", "calendar"),
+                ("timer 10m pizza · remind stretch in 20m", "Timers and reminders", "timer"),
+                ("#ff8800 · 255 in hex · 15% of 80", "Colors, numbers, percentages", "number"),
+                ("note buy milk · todo call Sam", "Notes and tasks", "note.text"),
+                ("join · agenda · weather", "Your day", "sun.max"),
+                ("cb invoice · count · queue", "Clipboard", "doc.on.clipboard"),
+                ("define serendipity · yt lofi · github.com", "Look things up", "book"),
+                ("port 3000 · ip · battery · awake 1h", "Your Mac", "laptopcomputer"),
+                ("lock · sleep · quit Slack · wifi", "Commands and settings", "power"),
+                ("ocr · screenshot · pick color · qr hello", "Screen tools", "text.viewfinder"),
+                (":fire · uuid · password 24 · base64 hi", "Generators", "wand.and.stars")
+            ]
+            results = examples.map { example, title, symbol in
+                let first = example.components(separatedBy: " · ").first ?? example
+                return QuickSearchResult(id: "help-\(title)", title: example, subtitle: title,
+                                         kind: .fillQuery(first),
+                                         customSymbol: symbol)
+            }
             stopFileQuery()
             return
         }
@@ -232,6 +262,9 @@ final class QuickSearchModel {
             NSWorkspace.shared.open(url)
         case .action(let run):
             run()
+        case .fillQuery(let text):
+            query = text
+            return false
         case .stopProcess(let pid):
             kill(pid, SIGTERM)
         case .awake(let duration):
@@ -340,7 +373,7 @@ struct QuickSearchView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(.secondary)
-                TextField("Search apps and files, or type math like 12*4 or 5 km to mi", text: $model.query)
+                TextField("Search apps, files and commands. Type ? for everything it can do", text: $model.query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 22))
                     .focused($fieldFocused)
