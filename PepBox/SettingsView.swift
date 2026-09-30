@@ -93,7 +93,8 @@ struct SettingsView: View {
     @State private var showDNDAccessAlert = false  // Full Disk Access alert for Focus Mode HUD
     @State private var showMenuBarHiddenWarning = false  // Warning when hiding menu bar icon (Issue #57)
     @State private var showProtectOriginalsWarning = false  // Warning when disabling Protect Originals
-    @State private var showLicenses = false  // Warning when enabling Quick Actions
+    @State private var showLicenses = false
+    @AppStorage(ClipboardManager.maxAgeDaysKey) private var clipboardMaxAgeDays = 0  // Warning when enabling Quick Actions
     @State private var basketDragRevealShortcut: SavedShortcut?
     @State private var basketSwitcherShortcut: SavedShortcut?
     
@@ -2510,6 +2511,14 @@ struct SettingsView: View {
                     }
                     ClipboardManager.shared.enforceHistoryLimit()
                 }
+                
+                Picker("Delete After", selection: $clipboardMaxAgeDays) {
+                    Text("Never").tag(0)
+                    Text("1 Day").tag(1)
+                    Text("1 Week").tag(7)
+                    Text("1 Month").tag(30)
+                }
+                .onChange(of: clipboardMaxAgeDays) { _, _ in ClipboardManager.shared.enforceHistoryLimit() }
                 
                 // Skip passwords toggle
                 Toggle(isOn: $clipboardManager.skipConcealedContent) {

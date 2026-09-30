@@ -622,12 +622,29 @@ class ClipboardManager: ObservableObject {
         }
     }
     
+    static let maxAgeDaysKey = "clipboardMaxAgeDays"  // 0 = keep until the history limit
+
+    /// Adds one text item made of the given items' text, joined with the stack separator.
+    func merge(_ items: [ClipboardItem]) {
+        let parts = items.compactMap { item -> String? in
+            guard item.type == .text || item.type == .url || item.type == .color else { return nil }
+            return item.content
+        }
+        guard parts.count > 1 else { return }
+        history.insert(ClipboardItem(type: .text, content: parts.joined(separator: StackSeparator.current.string)), at: 0)
+        enforceHistoryLimit()
+        HapticFeedback.copy()
+    }
+    
     func enforceHistoryLimit() {
         // Protected items: flagged, favorites, AND tagged items - these never get auto-deleted
         let flagged = history.filter { $0.isFlagged }
         let favorites = history.filter { $0.isFavorite && !$0.isFlagged }
         let tagged = history.filter { $0.tagId != nil && !$0.isFavorite && !$0.isFlagged }
-        let regular = history.filter { !$0.isFavorite && !$0.isFlagged && $0.tagId == nil }
+        // Unprotected items older than the "Delete after" setting go first.
+        let maxAgeDays = UserDefaults.standard.integer(forKey: Self.maxAgeDaysKey)
+        let cutoff = maxAgeDays > 0 ? Date().addingTimeInterval(-Double(maxAgeDays) * 86_400) : .distantPast
+        let regular = history.filter { !$0.isFavorite && !$0.isFlagged && $0.tagId == nil && $0.date >= cutoff }
         
         // Calculate how many regular items we can keep
         let protectedCount = flagged.count + favorites.count + tagged.count

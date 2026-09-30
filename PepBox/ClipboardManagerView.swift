@@ -780,6 +780,12 @@ struct ClipboardManagerView: View {
                                             Label("Copy All (\(selectedItems.count))", systemImage: "doc.on.doc")
                                         }
                                         Button {
+                                            manager.merge(selectedItemsArray)
+                                        } label: {
+                                            Label("Merge Into One", systemImage: "arrow.triangle.merge")
+                                        }
+                                        .disabled(selectedItemsArray.filter { $0.type == .text || $0.type == .url || $0.type == .color }.count < 2)
+                                        Button {
                                             bulkSaveSelectedItems()
                                         } label: {
                                             Label("Save All (\(selectedItems.count))", systemImage: "square.and.arrow.down")
