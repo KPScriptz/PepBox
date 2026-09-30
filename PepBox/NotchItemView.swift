@@ -687,6 +687,14 @@ struct NotchItemView: View {
                 }
             }
             
+            if state.selectedItems.count <= 1 && item.isImage {
+                Button {
+                    if let image = NSImage(contentsOf: item.url) { FloatingPinController.shared.pin(.image(image)) }
+                } label: {
+                    Label("Float on Screen", systemImage: "pin.fill")
+                }
+            }
+            
             // Remove Location & Metadata - single image
             if state.selectedItems.count <= 1 && item.isImage {
                 Button {

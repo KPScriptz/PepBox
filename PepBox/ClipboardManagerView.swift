@@ -806,6 +806,19 @@ struct ClipboardManagerView: View {
                                                 Label("Paste as Plain Text", systemImage: "textformat")
                                             }
                                         }
+                                        if item.type == .image, let data = item.loadImageData(), let image = NSImage(data: data) {
+                                            Button {
+                                                FloatingPinController.shared.pin(.image(image))
+                                            } label: {
+                                                Label("Float on Screen", systemImage: "pin.fill")
+                                            }
+                                        } else if item.type == .text || item.type == .url, let text = item.content, !text.isEmpty {
+                                            Button {
+                                                FloatingPinController.shared.pin(.text(text))
+                                            } label: {
+                                                Label("Float on Screen", systemImage: "pin.fill")
+                                            }
+                                        }
                                         if item.type == .text, let text = item.content, !text.isEmpty {
                                             Button {
                                                 SnippetController.saveAsSnippet(text)

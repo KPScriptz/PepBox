@@ -266,6 +266,18 @@ enum QuickLookups {
             results.append(QuickSearchResult(id: "paste-queue", title: queue.isActive ? "Stop Paste Queue" : "Start Paste Queue",
                                              subtitle: queue.isActive ? "\(queue.items.count) queued" : "Copy things, then ⌃⌥V pastes them in order",
                                              kind: .action { queue.toggle() }, customSymbol: "square.stack.3d.up.fill"))
+        case "pin", "float", "pin clipboard":
+            let pasteboard = NSPasteboard.general
+            if let image = NSImage(pasteboard: pasteboard), pasteboard.string(forType: .string) == nil {
+                results.append(QuickSearchResult(id: "pin-image", title: "Float Clipboard Image on Screen", subtitle: "Stays above other windows",
+                                                 kind: .action { FloatingPinController.shared.pin(.image(image)) }, customSymbol: "pin.fill"))
+            } else if let text = pasteboard.string(forType: .string), !text.isEmpty {
+                results.append(QuickSearchResult(id: "pin-text", title: "Float Clipboard Text on Screen", subtitle: String(text.prefix(60)),
+                                                 kind: .action { FloatingPinController.shared.pin(.text(text)) }, customSymbol: "pin.fill"))
+            }
+        case "unpin", "close pins":
+            results.append(QuickSearchResult(id: "unpin", title: "Close All Floating Pins", subtitle: "Float on Screen",
+                                             kind: .action { FloatingPinController.shared.closeAll() }, customSymbol: "pin.slash"))
         case "clear clipboard", "empty clipboard":
             results.append(QuickSearchResult(id: "clear-clipboard", title: "Clear Clipboard", subtitle: "History is kept",
                                              kind: .action { NSPasteboard.general.clearContents() }, customSymbol: "clipboard"))
