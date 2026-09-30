@@ -15,7 +15,6 @@ struct MenuBarManagerInfoView: View {
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
     
-    @State private var showReviewsSheet = false
     
     /// Use ExtensionType.isRemoved as single source of truth
     private var isActive: Bool {
@@ -62,9 +61,6 @@ struct MenuBarManagerInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .menuBarManager)
-        }
     }
     
     private var headerSection: some View {

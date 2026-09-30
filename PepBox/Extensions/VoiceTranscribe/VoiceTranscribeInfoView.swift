@@ -14,11 +14,9 @@ struct VoiceTranscribeInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringCancel = false
-    @State private var isHoveringReviews = false
     @State private var isHoveringDownload = false
     @State private var isHoveringDelete = false
     @State private var isHoveringRecord: [VoiceRecordingMode: Bool] = [:]
-    @State private var showReviewsSheet = false
     @State private var isDownloading = false
     @State private var recordingMode: VoiceRecordingMode?
     @State private var recordMonitor: Any?
@@ -58,9 +56,6 @@ struct VoiceTranscribeInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .voiceTranscribe)
-        }
         .onDisappear {
             stopRecording()
         }

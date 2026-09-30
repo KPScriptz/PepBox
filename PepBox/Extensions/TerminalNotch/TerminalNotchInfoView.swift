@@ -14,10 +14,8 @@ struct TerminalNotchInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringCancel = false
-    @State private var isHoveringReviews = false
     @State private var isHoveringRecord = false
     @State private var isHoveringReset = false
-    @State private var showReviewsSheet = false
     @State private var isRecordingShortcut = false
     @State private var showShortcutInfo = false
     @State private var recordMonitor: Any?
@@ -59,9 +57,6 @@ struct TerminalNotchInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .terminalNotch)
-        }
         .onDisappear {
             stopRecording()
         }

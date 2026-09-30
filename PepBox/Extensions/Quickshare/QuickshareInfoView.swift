@@ -18,7 +18,6 @@ struct QuickshareInfoView: View {
     
     @State private var showDeleteConfirmation: QuickshareItem? = nil
     @State private var copiedItemId: UUID? = nil
-    @State private var showReviewsSheet = false
     
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
@@ -63,9 +62,6 @@ struct QuickshareInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .quickshare)
-        }
         .alert("Delete from Server?", isPresented: deleteAlertBinding) {
             Button("Cancel", role: .cancel) {
                 showDeleteConfirmation = nil

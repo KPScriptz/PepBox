@@ -12,7 +12,6 @@ struct CaffeineInfoView: View {
     
     @AppStorage(AppPreferenceKey.caffeineInstalled) private var isInstalled = PreferenceDefault.caffeineInstalled
     @AppStorage(AppPreferenceKey.caffeineMode) private var selectedModeRaw = PreferenceDefault.caffeineMode
-    @State private var showReviewsSheet = false
     
     // Derived mode from preference
     private var selectedMode: CaffeineMode {
@@ -58,9 +57,6 @@ struct CaffeineInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .caffeine)
-        }
     }
     
     // MARK: - Header

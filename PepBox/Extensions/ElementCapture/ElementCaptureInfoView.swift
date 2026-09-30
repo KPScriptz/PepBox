@@ -16,8 +16,6 @@ struct ElementCaptureInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringClose = false
-    @State private var showReviewsSheet = false
-    @State private var isHoveringReviews = false
     @State private var showOCRInfo = false
     
     // Recording state per capture mode
@@ -82,9 +80,6 @@ struct ElementCaptureInfoView: View {
         }
         .onDisappear {
             stopRecording()
-        }
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .elementCapture)
         }
     }
     

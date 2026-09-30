@@ -21,9 +21,7 @@ struct ExtensionInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringClose = false
-    @State private var showReviewsSheet = false
     
-    @State private var isHoveringReviews = false
     
     private var isInstalled: Bool {
         extensionType.isInstalledInSystem
@@ -66,9 +64,6 @@ struct ExtensionInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: extensionType)
-        }
     }
     
     // MARK: - Header
@@ -115,9 +110,6 @@ struct ExtensionInfoView: View {
         }
         .padding(.top, 24)
         .padding(.bottom, 20)
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: extensionType)
-        }
     }
     
     // MARK: - Screenshot Section (Left)

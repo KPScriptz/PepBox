@@ -69,7 +69,6 @@ struct WindowSnapInfoView: View {
     var rating: AnalyticsService.ExtensionRating?
 
     @Environment(\.dismiss) private var dismiss
-    @State private var showReviewsSheet = false
 
     private let manager = WindowSnapManager.shared
 
@@ -152,9 +151,6 @@ struct WindowSnapInfoView: View {
         .onChange(of: resizeModeRaw) { _, _ in manager.refreshConfiguration() }
         .onDisappear {
             stopRecording()
-        }
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .windowSnap)
         }
     }
 

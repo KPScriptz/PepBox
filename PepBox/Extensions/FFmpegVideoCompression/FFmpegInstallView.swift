@@ -39,11 +39,9 @@ struct FFmpegInstallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringCancel = false
-    @State private var isHoveringReviews = false
     @State private var isHoveringCopy = false
     @State private var pulseAnimation = false
     @State private var showSuccessGlow = false
-    @State private var showReviewsSheet = false
     @State private var currentStep: FFmpegInstallStep = .checkingHomebrew
     @State private var copiedCommand = false
     
@@ -85,9 +83,6 @@ struct FFmpegInstallView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .ffmpegVideoCompression)
-        }
         .onAppear {
             pulseAnimation = true
         }

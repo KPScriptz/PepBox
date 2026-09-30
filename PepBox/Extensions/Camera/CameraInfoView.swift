@@ -17,7 +17,6 @@ struct CameraInfoView: View {
     @AppStorage(AppPreferenceKey.cameraEnabled) private var isEnabled = PreferenceDefault.cameraEnabled
 
     @ObservedObject private var manager = CameraManager.shared
-    @State private var showReviewsSheet = false
 
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
@@ -48,9 +47,6 @@ struct CameraInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .camera)
-        }
     }
 
     private var headerSection: some View {

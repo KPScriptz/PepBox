@@ -12,7 +12,6 @@ struct NotificationHUDInfoView: View {
     private var manager = NotificationHUDManager.shared
     @Environment(\.dismiss) private var dismiss
 
-    @State private var showReviewsSheet = false
 
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
@@ -46,9 +45,6 @@ struct NotificationHUDInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .notificationHUD)
-        }
     }
 
     // MARK: - Header

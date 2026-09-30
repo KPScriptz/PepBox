@@ -16,7 +16,6 @@ struct ToDoInfoView: View {
     @AppStorage(AppPreferenceKey.todoSyncCalendarEnabled) private var syncCalendarEnabled = PreferenceDefault.todoSyncCalendarEnabled
     @AppStorage(AppPreferenceKey.todoSyncRemindersEnabled) private var syncRemindersEnabled = PreferenceDefault.todoSyncRemindersEnabled
     @State private var manager = ToDoManager.shared
-    @State private var showReviewsSheet = false
     @State private var focusedListIndex: Int? = nil
 
     // Stats passed from parent
@@ -55,9 +54,6 @@ struct ToDoInfoView: View {
         .fixedSize(horizontal: true, vertical: true)
         .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .todo)
-        }
         .onAppear {
             if syncCalendarEnabled {
                 manager.syncExternalSourcesNow()
