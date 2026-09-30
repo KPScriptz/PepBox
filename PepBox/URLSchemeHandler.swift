@@ -49,6 +49,17 @@ struct URLSchemeHandler {
         case "extension":
             // Open extension info sheet from website
             handleExtensionAction(url: url)
+        case "settings":
+            // pepbox://settings/clipboard (or ?tab=clipboard) opens Settings on that tab
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let name = (components?.queryItems?.first { $0.name == "tab" }?.value ?? url.lastPathComponent).lowercased()
+            DispatchQueue.main.async {
+                if let tab = SettingsTab.allCases.first(where: { $0.rawValue.lowercased() == name || $0.title.lowercased() == name }) {
+                    SettingsWindowController.shared.showSettings(tab: tab)
+                } else {
+                    SettingsWindowController.shared.showSettings()
+                }
+            }
         default:
             print("⚠️ URLSchemeHandler: Unknown action '\(host)'")
         }
