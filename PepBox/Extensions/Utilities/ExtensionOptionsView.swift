@@ -49,6 +49,7 @@ struct ExtensionOptionsView: View {
                     key: ExtensionShortcuts.ringKey,
                     defaultShortcut: ExtensionShortcuts.ringDefault
                 ) { RingMenuController.shared.reloadShortcut() }
+                RingActionsOption()
             case .quickSearch:
                 ShortcutOption(
                     title: "Open Quick Search",
@@ -141,4 +142,29 @@ private struct DownloadsOptions: View {
     var body: some View {
         Toggle("Put finished downloads on the shelf", isOn: $addToShelf)
     }
+}
+
+private struct RingActionsOption: View {
+    @State private var enabled = RingMenuController.enabledActionIDs
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Actions (up to \(RingMenuController.maxActions))")
+                .font(.subheadline.weight(.semibold))
+            ForEach(RingMenuController.catalog) { action in
+                Toggle(isOn: Binding(
+                    get: { enabled.contains(action.id) },
+                    set: { isOn in
+                        RingMenuController.setAction(action.id, enabled: isOn)
+                        enabled = RingMenuController.enabledActionIDs
+                    }
+                )) {
+                    Label(action.title, systemImage: action.icon)
+                }
+                .disabled(isOn(action) ? enabled.count <= 1 : enabled.count >= RingMenuController.maxActions)
+            }
+        }
+    }
+
+    private func isOn(_ action: RingAction) -> Bool { enabled.contains(action.id) }
 }

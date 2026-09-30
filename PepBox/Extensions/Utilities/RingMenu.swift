@@ -91,7 +91,37 @@ final class RingMenuController {
         keyMonitor = nil
     }
 
+    // MARK: Actions
+
+    static let actionsKey = "ring_actions"
+    static let maxActions = 10
+    static let defaultActionIDs = ["clipboard", "shelf", "basket", "screenshot", "grabText", "color", "pomodoro", "awake", "settings"]
+
+    /// The actions chosen in the Ring's Options, in catalog order.
+    static var enabledActionIDs: [String] {
+        let saved = UserDefaults.standard.stringArray(forKey: actionsKey) ?? defaultActionIDs
+        let known = Set(catalog.map(\.id))
+        let ids = saved.filter(known.contains)
+        return ids.isEmpty ? defaultActionIDs : ids
+    }
+
+    static func setAction(_ id: String, enabled: Bool) {
+        var ids = enabledActionIDs.filter { $0 != id }
+        if enabled { ids.append(id) }
+        let order = catalog.map(\.id)
+        ids.sort { (order.firstIndex(of: $0) ?? 0) < (order.firstIndex(of: $1) ?? 0) }
+        UserDefaults.standard.set(Array(ids.prefix(maxActions)), forKey: actionsKey)
+    }
+
+    /// Every action the Ring can show.
+    static var catalog: [RingAction] { shared.allActions() }
+
     private func actions() -> [RingAction] {
+        let enabled = Self.enabledActionIDs
+        return allActions().filter { enabled.contains($0.id) }
+    }
+
+    private func allActions() -> [RingAction] {
         [
             RingAction(id: "clipboard", title: "Clipboard", icon: "doc.on.clipboard", tint: .blue) {
                 ClipboardWindowController.shared.toggle()
@@ -130,6 +160,21 @@ final class RingMenuController {
             },
             RingAction(id: "settings", title: "Settings", icon: "gearshape", tint: .gray) {
                 SettingsWindowController.shared.showSettings()
+            },
+            RingAction(id: "quickSearch", title: "Search", icon: "magnifyingglass", tint: .cyan) {
+                QuickSearchController.shared.toggle()
+            },
+            RingAction(id: "timer5", title: "5-min Timer", icon: "timer", tint: .orange) {
+                QuickTimerManager.shared.start(.init(seconds: 300, label: nil))
+            },
+            RingAction(id: "qrClipboard", title: "Clipboard QR", icon: "qrcode", tint: .indigo) {
+                if let text = NSPasteboard.general.string(forType: .string) { QRCodePanelController.shared.show(text) } else { NSSound.beep() }
+            },
+            RingAction(id: "lock", title: "Lock Screen", icon: "lock.fill", tint: .gray) {
+                QuickCommand.lock.run()
+            },
+            RingAction(id: "sleep", title: "Sleep", icon: "moon.fill", tint: .indigo) {
+                QuickCommand.sleep.run()
             }
         ]
     }
