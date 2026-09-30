@@ -2104,7 +2104,7 @@ struct SettingsView: View {
                             break // No action needed - these have their own configuration UI
                         case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes:
                             NotchWidgetKind(extensionType: extensionType)?.install()
-                        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend:
+                        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets:
                             UtilityExtensionKind(extensionType: extensionType)?.install()
                         }
                     }

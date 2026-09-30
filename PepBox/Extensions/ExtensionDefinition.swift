@@ -154,6 +154,7 @@ final class ExtensionRegistry {
         register(EyeBreaksExtension.self)
         register(DownloadsActivityExtension.self)
         register(LocalSendExtension.self)
+        register(SnippetsExtension.self)
 
     }
     

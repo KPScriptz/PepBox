@@ -133,6 +133,8 @@ struct DisableExtensionButton: View {
             return "This will stop showing downloads beside the notch. You can enable it again later."
         case .localSend:
             return "This will stop PepBox from receiving LocalSend transfers. Sending still works. You can enable it again later."
+        case .snippets:
+            return "This will stop expanding snippet triggers. Your snippets are kept. You can enable it again later."
         }
     }
     

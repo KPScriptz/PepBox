@@ -878,6 +878,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "snippets",
+                iconPlaceholder: "text.insert",
+                iconPlaceholderColor: .orange,
+                title: "Snippets",
+                subtitle: "Type a shortcut, get the full text",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.snippets.isInstalled,
+                analyticsKey: "snippets",
+                extensionType: .snippets
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .snippets,
+                    onAction: { UtilityExtensionKind.snippets.install() },
+                    installCount: extensionCounts["snippets"],
+                    rating: extensionRatings["snippets"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

@@ -18,6 +18,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case eyeBreaks
     case downloadsActivity
     case localSend
+    case snippets
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -34,6 +35,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .eyeBreaks: return .eyeBreaks
         case .downloadsActivity: return .downloadsActivity
         case .localSend: return .localSend
+        case .snippets: return .snippets
         }
     }
 
@@ -62,6 +64,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .eyeBreaks: EyeBreakManager.shared.setEnabled(isAvailable)
         case .downloadsActivity: DownloadsWatcher.shared.setEnabled(isAvailable)
         case .localSend: LocalSendReceiver.shared.setEnabled(isAvailable)
+        case .snippets: SnippetController.shared.setEnabled(isAvailable)
         }
     }
 
@@ -75,6 +78,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .eyeBreaks: EyeBreakManager.shared.setEnabled(false)
         case .downloadsActivity: DownloadsWatcher.shared.setEnabled(false)
         case .localSend: LocalSendReceiver.shared.setEnabled(false)
+        case .snippets: SnippetController.shared.setEnabled(false)
         }
     }
 

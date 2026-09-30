@@ -3,6 +3,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${TMPDIR:-/tmp}/pepbox-logic-tests"
+# Snippets.swift's engine is pure; the rest needs the app.
+SNIPPET_ENGINE="${TMPDIR:-/tmp}/pepbox-snippet-engine.swift"
+{ echo "import Foundation"; sed -n '/^struct Snippet: Codable/,/^\/\/ MARK: - Controller/p' "$ROOT/PepBox/Extensions/Utilities/Snippets.swift"; } > "$SNIPPET_ENGINE"
 # Agents.swift depends on app UI types, so only its parser section is compiled.
 AGENTS_PARSER="${TMPDIR:-/tmp}/pepbox-agents-parser.swift"
 { echo "import Foundation"; sed -n '/^\/\/ MARK: - Parsing/,/^\/\/ MARK: - Monitor/p' "$ROOT/PepBox/Extensions/NotchWidgets/Agents.swift"; } > "$AGENTS_PARSER"
@@ -22,6 +25,7 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/QRCodePanel.swift" \
     "$ROOT/PepBox/Extensions/Utilities/QuickCommands.swift" \
     "$AGENTS_PARSER" \
+    "$SNIPPET_ENGINE" \
     "$ROOT/PepBox/Extensions/Utilities/LocalSend.swift" \
     "$ROOT/PepBox/Extensions/Utilities/LocalSendHTTP.swift" \
     "$ROOT/PepBox/Extensions/Utilities/QuickTools.swift" \

@@ -448,6 +448,25 @@ do {
     expect(ClipboardStack.reconcile(order: [], selected: [d, b, a, c], dates: dates), [a, b, c, d], "stack select all is copy order")
 }
 
+// MARK: - Snippets
+
+do {
+    let snippets = [Snippet(trigger: ";sig", text: "Kyle"), Snippet(trigger: ";sig2", text: "K."), Snippet(trigger: ";d", text: "{date}")]
+    var engine = SnippetEngine()
+    expect(engine.type("hello ;si", snippets: snippets)?.trigger, nil, "snippet partial")
+    expect(engine.type("g", snippets: snippets)?.trigger, ";sig", "snippet fires on last char")
+    expect(engine.buffer, "", "snippet clears buffer after firing")
+    expect(engine.type(";sig2", snippets: snippets)?.trigger, ";sig", "snippet fires at shortest complete trigger first")
+    var typo = SnippetEngine()
+    expect(typo.type(";sx\u{7F}ig", snippets: snippets)?.trigger, ";sig", "snippet handles backspace")
+    var reset = SnippetEngine()
+    _ = reset.type(";si", snippets: snippets); reset.reset()
+    expect(reset.type("g", snippets: snippets)?.trigger, nil, "snippet reset forgets typing")
+    let fixed = Date(timeIntervalSince1970: 1790776800)
+    expect(SnippetEngine.expand("On {date}", now: fixed, locale: Locale(identifier: "en_US")).hasPrefix("On Sep"), true, "snippet date placeholder")
+    expect(SnippetEngine.expand("[{clipboard}]", clipboard: "x"), "[x]", "snippet clipboard placeholder")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]
