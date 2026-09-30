@@ -544,3 +544,30 @@ extension QuickTools {
         return trimmed.hasPrefix("/") ? trimmed : nil
     }
 }
+
+// MARK: - Calendar events: "event lunch with Sam tomorrow 1pm"
+
+extension QuickTools {
+    struct EventRequest: Equatable {
+        let title: String
+        let start: Date
+        let isAllDay: Bool
+    }
+
+    /// Finds the date in "event <words and a date>"; the remaining words are the title.
+    static func eventRequest(_ text: String) -> EventRequest? {
+        guard let body = argument(text, after: ["event", "meeting", "cal"]),
+              let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue),
+              let match = detector.firstMatch(in: body, range: NSRange(body.startIndex..., in: body)),
+              let date = match.date, let range = Range(match.range, in: body) else { return nil }
+        var title = body
+        title.removeSubrange(range)
+        // Tidy leftover joiners like "lunch with Sam at" → "lunch with Sam".
+        title = title.replacingOccurrences(of: #"\s+(at|on|for|@)\s*$"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ",-")))
+        guard !title.isEmpty else { return nil }
+        // No time given ("friday") means an all-day event.
+        let hasTime = body[range].range(of: #"\d|noon|midnight|morning|evening|tonight|afternoon"#, options: [.regularExpression, .caseInsensitive]) != nil
+        return EventRequest(title: title.prefix(1).uppercased() + title.dropFirst(), start: date, isAllDay: !hasTime)
+    }
+}

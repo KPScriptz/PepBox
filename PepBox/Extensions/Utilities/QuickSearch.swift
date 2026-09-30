@@ -104,6 +104,7 @@ final class QuickSearchModel {
                 ("timer 10m pizza · remind stretch in 20m", "Timers and reminders", "timer"),
                 ("#ff8800 · 255 in hex · 15% of 80", "Colors, numbers, percentages", "number"),
                 ("note buy milk · todo call Sam", "Notes and tasks", "note.text"),
+                ("event lunch with Sam tomorrow 1pm", "Calendar events", "calendar.badge.plus"),
                 ("join · agenda · weather", "Your day", "sun.max"),
                 ("cb invoice · count · queue", "Clipboard", "doc.on.clipboard"),
                 ("define serendipity · yt lofi · github.com", "Look things up", "book"),

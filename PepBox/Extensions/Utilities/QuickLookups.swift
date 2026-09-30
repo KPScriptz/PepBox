@@ -164,6 +164,20 @@ enum QuickLookups {
                 FlashActivity.shared.show(LiveActivity(id: "todo-\(UUID())", icon: "checklist", tint: .blue, text: "Task added", progress: nil))
             }, customSymbol: "checklist"))
         }
+        if let event = QuickTools.eventRequest(text) {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = event.isAllDay ? .none : .short
+            results.append(QuickSearchResult(id: "event-add", title: "Add “\(event.title)”",
+                                             subtitle: "\(formatter.string(from: event.start))\(event.isAllDay ? " · all day" : " · 1 hour") · Enter to add to Calendar",
+                                             kind: .action {
+                UpNextCalendar.shared.addEvent(title: event.title, start: event.start, allDay: event.isAllDay) { added in
+                    FlashActivity.shared.show(LiveActivity(id: "event-\(UUID())", icon: added ? "calendar.badge.plus" : "calendar.badge.exclamationmark",
+                                                           tint: added ? .blue : .orange,
+                                                           text: added ? "Event added" : "Couldn't add event", progress: nil))
+                }
+            }, customSymbol: "calendar.badge.plus"))
+        }
         if let reminder = QuickTools.reminder(text) {
             results.append(QuickSearchResult(id: "remind", title: "Remind “\(reminder.label ?? "")” in \(QuickTimerParser.format(reminder.seconds))",
                                              subtitle: "Chimes and shows beside the notch", kind: .startTimer(reminder), customSymbol: "bell.fill"))

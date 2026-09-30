@@ -56,6 +56,32 @@ final class UpNextCalendar {
         }
     }
 
+    /// Adds a one-hour (or all-day) event to the default calendar. Asks for access the first time.
+    func addEvent(title: String, start: Date, allDay: Bool, completion: @escaping (Bool) -> Void) {
+        Task { @MainActor in
+            if EKEventStore.authorizationStatus(for: .event) != .fullAccess {
+                authorized = (try? await store.requestFullAccessToEvents()) ?? false
+            }
+            guard authorized, let calendar = store.defaultCalendarForNewEvents else {
+                completion(false)
+                return
+            }
+            let event = EKEvent(eventStore: store)
+            event.title = title
+            event.calendar = calendar
+            event.isAllDay = allDay
+            event.startDate = allDay ? Calendar.current.startOfDay(for: start) : start
+            event.endDate = allDay ? event.startDate.addingTimeInterval(86_400) : start.addingTimeInterval(3600)
+            do {
+                try store.save(event, span: .thisEvent)
+                reload()
+                completion(true)
+            } catch {
+                completion(false)
+            }
+        }
+    }
+
     func reload() {
         guard EKEventStore.authorizationStatus(for: .event) == .fullAccess else {
             authorized = false
