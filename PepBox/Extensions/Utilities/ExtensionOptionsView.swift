@@ -35,7 +35,7 @@ struct ExtensionOptionsView: View {
     let extensionType: ExtensionType
 
     static func hasOptions(_ type: ExtensionType) -> Bool {
-        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks, .downloadsActivity, .snippets].contains(type)
+        [.ring, .quickSearch, .keySounds, .textActions, .eyeBreaks, .downloadsActivity, .snippets, .agents].contains(type)
     }
 
     var body: some View {
@@ -73,6 +73,8 @@ struct ExtensionOptionsView: View {
                 DownloadsOptions()
             case .snippets:
                 SnippetsOptions()
+            case .agents:
+                AgentsOptions()
             default:
                 EmptyView()
             }
@@ -176,4 +178,12 @@ private struct RingActionsOption: View {
     }
 
     private func isOn(_ action: RingAction) -> Bool { enabled.contains(action.id) }
+}
+
+private struct AgentsOptions: View {
+    @AppStorage(AgentsMonitor.chimeKey) private var chime = true
+
+    var body: some View {
+        Toggle("Play a sound when an agent finishes or needs you", isOn: $chime)
+    }
 }

@@ -278,6 +278,18 @@ enum QuickLookups {
         case "unpin", "close pins":
             results.append(QuickSearchResult(id: "unpin", title: "Close All Floating Pins", subtitle: "Float on Screen",
                                              kind: .action { FloatingPinController.shared.closeAll() }, customSymbol: "pin.slash"))
+        case "agents", "agent":
+            let sessions = AgentsMonitor.shared.sessions
+            if sessions.isEmpty {
+                results.append(QuickSearchResult(id: "agents-none", title: NotchWidgetKind.agents.isAvailable ? "No agents running right now" : "Install Agents in Settings → Extensions",
+                                                 subtitle: "Agents", kind: .action {}, customSymbol: "sparkle"))
+            }
+            results += sessions.map { session in
+                QuickSearchResult(id: "agent-\(session.project)-\(session.agent.rawValue)",
+                                  title: "\(session.project.isEmpty ? session.agent.rawValue : session.project): \(AgentsMonitor.status(session))",
+                                  subtitle: "\(session.agent.rawValue) · \(session.toolCount) calls · \(session.editCount) edits",
+                                  kind: .action {}, customSymbol: session.state == .waiting ? "hand.raised.fill" : "sparkle")
+            }
         case "clear clipboard", "empty clipboard":
             results.append(QuickSearchResult(id: "clear-clipboard", title: "Clear Clipboard", subtitle: "History is kept",
                                              kind: .action { NSPasteboard.general.clearContents() }, customSymbol: "clipboard"))

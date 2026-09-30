@@ -241,6 +241,26 @@ final class AgentsMonitor {
     /// Treat a session as over after this long without log changes.
     private static let staleAfter: TimeInterval = 180
 
+    static let chimeKey = "agents_chime"
+    /// Last seen state per session log, to chime once when one finishes or starts waiting.
+    private var lastStates: [String: AgentSnapshot.State] = [:]
+
+    /// Runs on the monitor queue. The first poll only records states, so launching PepBox is silent.
+    private func chimeOnChanges(_ states: [String: AgentSnapshot.State]) {
+        defer { lastStates = states }
+        guard !lastStates.isEmpty || states.isEmpty,
+              UserDefaults.standard.object(forKey: Self.chimeKey) as? Bool ?? true else { return }
+        for (path, state) in states where lastStates[path] != nil && lastStates[path] != state {
+            let sound: String?
+            switch state {
+            case .done: sound = "Glass"
+            case .waiting: sound = "Ping"
+            default: sound = nil
+            }
+            if let sound { DispatchQueue.main.async { NSSound(named: sound)?.play() } }
+        }
+    }
+
     /// Tools that normally finish instantly. If one sits unanswered, Claude Code is almost
     /// certainly showing a permission prompt; long runners like Bash are just busy.
     private static let instantTools: Set<String> = ["Edit", "MultiEdit", "Write", "NotebookEdit", "Read", "Glob", "Grep", "WebFetch"]
@@ -254,6 +274,7 @@ final class AgentsMonitor {
                 .sorted { $0.modified > $1.modified }
                 .prefix(4)
             var sessions: [AgentSnapshot] = []
+            var states: [String: AgentSnapshot.State] = [:]
             for log in recent {
                 // The first line carries the working folder (Codex session_meta), which the tail may miss.
                 let lines = (Self.firstLine(of: log.url).map { [$0] } ?? []) + Self.tailLines(of: log.url, bytes: 400_000)
@@ -263,9 +284,11 @@ final class AgentsMonitor {
                    let pending = parsed.pendingTool, Self.instantTools.contains(pending) {
                     parsed.state = .waiting
                 }
+                states[log.url.path] = parsed.state
                 if parsed.state == .done, idle > Self.doneLinger { continue }
                 sessions.append(parsed)
             }
+            self.chimeOnChanges(states)
             let primary = sessions.first { $0.state == .waiting } ?? sessions.first
             DispatchQueue.main.async {
                 self.sessions = sessions
