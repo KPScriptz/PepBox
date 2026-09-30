@@ -4705,6 +4705,7 @@ struct QuickActionsPicker: View {
                         }
                     } icon: {
                         Image(systemName: action.icon)
+                            .frame(width: 20)  // same width for every icon, so the titles line up
                     }
                 }
                 .disabled(enabled.contains(action) && enabled.count == 1)
