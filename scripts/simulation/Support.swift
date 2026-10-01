@@ -22,7 +22,7 @@ struct RNG: RandomNumberGenerator {
     mutating func pick<T>(_ items: [T]) -> T { items[int(items.count)] }
     mutating func bytes(_ count: Int) -> Data {
         var data = Data(count: count)
-        data.withUnsafeMutableBytes { raw in
+        data.withUnsafeMutableBytes { (raw: UnsafeMutableRawBufferPointer) in
             var i = 0
             while i < count {
                 var v = next()
@@ -106,7 +106,7 @@ enum Crumb {
         var text = "\(scenarioName)\t\(caseIndex)\t" + short(description(), 2000)
         text = String(text.utf8.prefix(size - 1)) ?? ""
         let bytes = Array(text.utf8)
-        bytes.withUnsafeBytes { base.copyMemory(from: $0.baseAddress!, byteCount: bytes.count) }
+        bytes.withUnsafeBytes { (raw: UnsafeRawBufferPointer) in base.copyMemory(from: raw.baseAddress!, byteCount: bytes.count) }
         base.storeBytes(of: 0, toByteOffset: bytes.count, as: UInt8.self)
     }
 
