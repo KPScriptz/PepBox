@@ -49,6 +49,41 @@ struct URLSchemeHandler {
         case "extension":
             // Open extension info sheet from website
             handleExtensionAction(url: url)
+        case "qa-snapshot":
+            // Layout testing only: pepbox://qa-snapshot?tab=general&width=820&height=3000&out=/tmp/x.png
+            guard UserDefaults.standard.bool(forKey: "qaSnapshotsEnabled"),
+                  let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems else { return }
+            func value(_ name: String) -> String? { items.first { $0.name == name }?.value }
+            guard let name = value("tab")?.lowercased(),
+                  let tab = SettingsTab.allCases.first(where: { $0.rawValue.lowercased() == name || $0.title.lowercased() == name }),
+                  let out = value("out") else { return }
+            let width = CGFloat(Double(value("width") ?? "") ?? 920)
+            let height = CGFloat(Double(value("height") ?? "") ?? 3000)
+            DispatchQueue.main.async {
+                SettingsWindowController.shared.snapshot(tab: tab, width: width, height: height, to: URL(fileURLWithPath: out))
+            }
+        case "qa-widget":
+            // Layout testing only: pepbox://qa-widget?kind=calculator&out=/tmp/x.png
+            guard UserDefaults.standard.bool(forKey: "qaSnapshotsEnabled"),
+                  let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+                  let kind = items.first(where: { $0.name == "kind" })?.value.flatMap(NotchWidgetKind.init(rawValue:)),
+                  let out = items.first(where: { $0.name == "out" })?.value else { return }
+            DispatchQueue.main.async {
+                SettingsWindowController.shared.snapshotView(
+                    NotchWidgetPanel(kind: kind).frame(width: 560, height: 190).background(Color.black).environment(\.colorScheme, .dark),
+                    size: NSSize(width: 560, height: 190), to: URL(fileURLWithPath: out))
+            }
+        case "settings":
+            // pepbox://settings/clipboard (or ?tab=clipboard) opens Settings on that tab
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let name = (components?.queryItems?.first { $0.name == "tab" }?.value ?? url.lastPathComponent).lowercased()
+            DispatchQueue.main.async {
+                if let tab = SettingsTab.allCases.first(where: { $0.rawValue.lowercased() == name || $0.title.lowercased() == name }) {
+                    SettingsWindowController.shared.showSettings(tab: tab)
+                } else {
+                    SettingsWindowController.shared.showSettings()
+                }
+            }
         default:
             print("⚠️ URLSchemeHandler: Unknown action '\(host)'")
         }

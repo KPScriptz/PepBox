@@ -21,9 +21,7 @@ struct ExtensionInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringClose = false
-    @State private var showReviewsSheet = false
     
-    @State private var isHoveringReviews = false
     
     private var isInstalled: Bool {
         extensionType.isInstalledInSystem
@@ -43,6 +41,11 @@ struct ExtensionInfoView: View {
                     // Features section
                     featuresSection
                     
+                    // Options (shortcuts, volume) for installed extensions that have them
+                    if isInstalled && ExtensionOptionsView.hasOptions(extensionType) {
+                        ExtensionOptionsView(extensionType: extensionType)
+                    }
+                    
                     // Screenshot section
                     screenshotSection
                 }
@@ -59,11 +62,8 @@ struct ExtensionInfoView: View {
         }
         .frame(width: 450)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: extensionType)
-        }
     }
     
     // MARK: - Header
@@ -79,48 +79,8 @@ struct ExtensionInfoView: View {
                 .font(.title2.bold())
                 .foregroundStyle(.primary)
             
-            // Stats row: installs + rating + category badge
+            // Category and status badges
             HStack(spacing: 12) {
-                if !disableAnalytics {
-                    // Installs
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 12))
-                        Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                            .font(.caption.weight(.medium))
-                    }
-                    .foregroundStyle(.secondary)
-                    
-                    // Rating (clickable)
-                    Button {
-                        showReviewsSheet = true
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.yellow)
-                            if let r = rating, r.ratingCount > 0 {
-                                Text(String(format: "%.1f", r.averageRating))
-                                    .font(.caption.weight(.medium))
-                                Text("(\(r.ratingCount))")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            } else {
-                                Text("–")
-                                    .font(.caption.weight(.medium))
-                            }
-                        }
-                        .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(PepBoxSelectableButtonStyle(isSelected: false))
-                }
-                
-                if disableAnalytics {
-                    Text("Analytics off")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.tertiary)
-                }
-                
                 // Category badge
                 Text(extensionType.category)
                     .font(.caption.weight(.semibold))
@@ -143,12 +103,6 @@ struct ExtensionInfoView: View {
                     )
             }
             
-            if disableAnalytics {
-                Text("Install/download stats and reviews are hidden.")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            
             // Subtitle
             Text(extensionType.subtitle)
                 .font(.subheadline)
@@ -156,9 +110,6 @@ struct ExtensionInfoView: View {
         }
         .padding(.top, 24)
         .padding(.bottom, 20)
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: extensionType)
-        }
     }
     
     // MARK: - Screenshot Section (Left)
@@ -225,8 +176,9 @@ struct ExtensionInfoView: View {
             
             Spacer()
             
-            // Action button (optional)
-            if let action = onAction {
+            // Action button (optional). Panel and utility extensions have nothing to set up once installed.
+            if let action = onAction,
+               !(isInstalled && (NotchWidgetKind(extensionType: extensionType) != nil || UtilityExtensionKind(extensionType: extensionType) != nil)) {
                 Button {
                     AnalyticsService.shared.trackExtensionActivation(extensionId: extensionType.rawValue)
                     action()
@@ -249,6 +201,8 @@ struct ExtensionInfoView: View {
                 return "Set Up"
             case .finder, .finderServices, .windowSnap, .voiceTranscribe, .elementCapture, .terminalNotch, .camera, .notificationHUD, .caffeine, .menuBarManager, .todo:
                 return "Set Up"
+            case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar, .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets:
+                return "Install"
             case .quickshare:
                 return "Enable"
             case .aiBackgroundRemoval, .ffmpegVideoCompression, .alfred:
@@ -273,6 +227,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "Configure"
         case .menuBarManager: return "Configure"
         case .todo: return "Configure"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar, .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets: return "Installed"
         }
     }
 
@@ -294,6 +249,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "Configure"
         case .menuBarManager: return "Configure"
         case .todo: return "Configure"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar, .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets: return "Installed"
         }
     }
 
@@ -315,6 +271,7 @@ struct ExtensionInfoView: View {
         case .caffeine: return "cup.and.saucer.fill"
         case .menuBarManager: return "menubar.rectangle"
         case .todo: return "checklist"
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar, .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets: return "plus.circle.fill"
         }
     }
 }

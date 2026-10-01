@@ -46,8 +46,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>PepBox routes an app's sound through itself so App Volume can make it louder or quieter.</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>PepBox needs to communicate with this app to export items when you drag them to the shelf or basket.</string>
+	<string>PepBox needs to communicate with this app to export items when you drag them to the shelf or basket, and to find your Google Meet tab for Meeting controls.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice Transcribe needs access to your microphone to record audio for transcription.</string>
 	<key>NSCameraUsageDescription</key>
@@ -58,6 +60,8 @@
 	<string>PepBox needs Reminders access to sync reminder items into your Reminders tasks.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>PepBox needs full Reminders access to keep Reminders tasks synced with Apple Reminders changes.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>PepBox finds nearby phones and computers running LocalSend so you can send them files over your Wi-Fi.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>PepBox needs Calendar access to show upcoming events in your task overview.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>

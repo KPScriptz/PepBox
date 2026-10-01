@@ -8,10 +8,14 @@ struct SettingsView: View {
     @AppStorage(AppPreferenceKey.showQuickshareInMenuBar) private var showQuickshareInMenuBar = PreferenceDefault.showQuickshareInMenuBar
     @AppStorage(AppPreferenceKey.startAtLogin) private var startAtLogin = PreferenceDefault.startAtLogin
     @AppStorage(AppPreferenceKey.useTransparentBackground) private var useTransparentBackground = PreferenceDefault.useTransparentBackground
+    @AppStorage(PepBoxSurface.liquidGlassKey) private var liquidGlassSurfaces = false
     @AppStorage(AppPreferenceKey.enableNotchShelf) private var enableNotchShelf = PreferenceDefault.enableNotchShelf
     @AppStorage(AppPreferenceKey.enableFloatingBasket) private var enableFloatingBasket = PreferenceDefault.enableFloatingBasket
     @AppStorage(AppPreferenceKey.enableBasketAutoHide) private var enableBasketAutoHide = PreferenceDefault.enableBasketAutoHide
     @AppStorage(AppPreferenceKey.enableAutoClean) private var enableAutoClean = PreferenceDefault.enableAutoClean
+    @AppStorage(AppPreferenceKey.autoAddScreenshots) private var autoAddScreenshots = PreferenceDefault.autoAddScreenshots
+    @AppStorage(AppPreferenceKey.rememberShelfItems) private var rememberShelfItems = PreferenceDefault.rememberShelfItems
+    @AppStorage(LiveActivity.enabledKey) private var liveActivitiesEnabled = true
     @AppStorage(AppPreferenceKey.alwaysCopyOnDrag) private var alwaysCopyOnDrag = PreferenceDefault.alwaysCopyOnDrag
     @AppStorage(AppPreferenceKey.enablePowerFolders) private var enablePowerFolders = PreferenceDefault.enablePowerFolders
     @AppStorage(AppPreferenceKey.enableQuickActions) private var enableQuickActions = PreferenceDefault.enableQuickActions
@@ -61,6 +65,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferenceKey.enableMouseSwipeMediaSwitch) private var enableMouseSwipeMediaSwitch = PreferenceDefault.enableMouseSwipeMediaSwitch
     @AppStorage(AppPreferenceKey.mouseSwipeMediaSwitchModifier) private var mouseSwipeMediaSwitchModifier = PreferenceDefault.mouseSwipeMediaSwitchModifier
     @AppStorage(AppPreferenceKey.autoFadeMediaHUD) private var autoFadeMediaHUD = PreferenceDefault.autoFadeMediaHUD
+    @AppStorage(LyricsManager.enabledKey) private var syncedLyricsEnabled = false
     @AppStorage(AppPreferenceKey.debounceMediaChanges) private var debounceMediaChanges = PreferenceDefault.debounceMediaChanges
     @AppStorage(AppPreferenceKey.enableRealAudioVisualizer) private var enableRealAudioVisualizer = PreferenceDefault.enableRealAudioVisualizer
     @AppStorage(AppPreferenceKey.enableGradientVisualizer) private var enableGradientVisualizer = PreferenceDefault.enableGradientVisualizer
@@ -88,9 +93,8 @@ struct SettingsView: View {
     @State private var showDNDAccessAlert = false  // Full Disk Access alert for Focus Mode HUD
     @State private var showMenuBarHiddenWarning = false  // Warning when hiding menu bar icon (Issue #57)
     @State private var showProtectOriginalsWarning = false  // Warning when disabling Protect Originals
-    @State private var showStabilizeMediaWarning = false  // Warning when enabling Stabilize Media
-    @State private var showAutoFocusSearchWarning = false  // Warning when enabling Auto-Focus Search
-    @State private var showQuickActionsWarning = false  // Warning when enabling Quick Actions
+    @State private var showLicenses = false
+    @AppStorage(ClipboardManager.maxAgeDaysKey) private var clipboardMaxAgeDays = 0  // Warning when enabling Quick Actions
     @State private var basketDragRevealShortcut: SavedShortcut?
     @State private var basketSwitcherShortcut: SavedShortcut?
     
@@ -250,19 +254,25 @@ struct SettingsView: View {
         subtitle: String,
         @ViewBuilder picker: () -> PickerContent
     ) -> some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            HStack(alignment: .center, spacing: 8) {
-                picker()
-            }
+        let label = VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        let buttons = HStack(alignment: .center, spacing: 8) { picker() }
             .fixedSize(horizontal: true, vertical: false)
+        // Side by side when there's room for readable text; otherwise text above the buttons,
+        // instead of squeezing the description into a one-word-wide column.
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 16) {
+                label.frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                buttons
+            }
+            VStack(alignment: .leading, spacing: 10) {
+                label.frame(maxWidth: .infinity, alignment: .leading)
+                buttons
+            }
         }
     }
     
@@ -344,13 +354,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Per-Display")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Choose exactly which external displays show PepBox")
                             .font(.caption)
@@ -520,7 +523,7 @@ struct SettingsView: View {
         // Apply blue accent color for toggles
         .tint(.pepboxAccent)
         // Apply transparent material or solid black
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         // CRITICAL: Always use dark color scheme to ensure text is readable
         // In both solid black and transparent material modes, we need light text
         
@@ -579,8 +582,6 @@ struct SettingsView: View {
     // MARK: General Tab (Startup, Menu Bar, Core Settings)
     private var generalSettings: some View {
         Group {
-            LicenseSettingsSection()
-
             // MARK: Startup
             Section {
                 nativePickerRow(
@@ -638,6 +639,17 @@ struct SettingsView: View {
                         Text("Use glass effect for windows")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                if PepBoxSurface.isLiquidGlassAvailable {
+                    Toggle(isOn: $liquidGlassSurfaces) {
+                        VStack(alignment: .leading) {
+                            Text("Liquid Glass")
+                            Text("macOS 26 Liquid Glass for the basket, clipboard, settings and dialogs")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             } header: {
@@ -1047,8 +1059,49 @@ struct SettingsView: View {
                                 .sliderHaptics(value: autoExpandDelay, range: 0.1...2.0)
                         }
                     }
+
+                    Toggle(isOn: $autoAddScreenshots) {
+                        VStack(alignment: .leading) {
+                            Text("Add New Screenshots")
+                            Text("Screenshots and screen recordings land on the shelf as you take them")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: autoAddScreenshots) { _, _ in
+                        ScreenshotWatcher.shared.updateFromPreferences()
+                    }
+
+                    Toggle(isOn: $rememberShelfItems) {
+                        VStack(alignment: .leading) {
+                            Text("Remember Items")
+                            Text("Keep shelf items after PepBox restarts")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: rememberShelfItems) { _, _ in
+                        PepBoxState.shared.saveShelfItemsIfRemembering()
+                    }
+                    
+                    Toggle(isOn: $liveActivitiesEnabled) {
+                        VStack(alignment: .leading) {
+                            Text("Live Activities")
+                            Text("Timers, meetings, downloads and agents beside the closed notch")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 } header: {
                     Text("Behavior")
+                }
+                
+                Section {
+                    NotchWidgetOrderView()
+                } header: {
+                    Text("Widget Buttons")
+                } footer: {
+                    Text("Drag to change the order of widget buttons under the expanded shelf.")
                 }
             }
         }
@@ -1064,8 +1117,8 @@ struct SettingsView: View {
                         VStack(alignment: .leading) {
                             Text("Floating Basket")
                             Text(instantBasketOnDrag 
-                                ? "Appears instantly when dragging files anywhere. Drag right into Quick Actions to quickly share your files." 
-                                : "Appears when you jiggle files anywhere on screen. Drag right into Quick Actions to quickly share your files.")
+                                ? "Appears instantly when you drag files anywhere" 
+                                : "Appears when you shake files while dragging")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -1144,9 +1197,6 @@ struct SettingsView: View {
                                     .monospacedDigit()
                             }
                             Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                            Text("Time before basket auto-hides when cursor leaves")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 } header: {
@@ -1216,74 +1266,62 @@ struct SettingsView: View {
                 } header: {
                     Text("Multi-Basket")
                 }
+            }
 
-                Section {
-                    HStack(spacing: 8) {
-                        QuickActionsInfoButton()
-                        Toggle(isOn: $enableQuickActions) {
-                            VStack(alignment: .leading) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    Text("Quick Actions")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
-                                }
-                                Text("Show quick action drop buttons under Shelf and Basket (AirDrop, Messages, Mail)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+            // Quick Actions (the send buttons under the island) work without the basket too.
+            Section {
+                HStack(spacing: 8) {
+                    QuickActionsInfoButton()
+                    Toggle(isOn: $enableQuickActions) {
+                        VStack(alignment: .leading) {
+                            HStack(alignment: .center, spacing: 6) {
+                                Text("Quick Actions")
                             }
-                        }
-                        .onChange(of: enableQuickActions) { _, newValue in
-                            if newValue {
-                                showQuickActionsWarning = true
-                            }
-                        }
-                        .sheet(isPresented: $showQuickActionsWarning) {
-                            QuickActionsInfoSheet(enableQuickActions: $enableQuickActions)
-                        }
-                    }
-
-                    if enableQuickActions {
-                        nativePickerRow(
-                            title: "Mail App",
-                            subtitle: "Choose which app opens for the Mail quick action"
-                        ) {
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.systemDefault.icon,
-                                label: QuickActionsMailApp.systemDefault.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.systemDefault.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.systemDefault.rawValue }
-                            )
-
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.appleMail.icon,
-                                label: QuickActionsMailApp.appleMail.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.appleMail.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.appleMail.rawValue }
-                            )
-
-                            SettingsSegmentButton(
-                                icon: QuickActionsMailApp.outlook.icon,
-                                label: QuickActionsMailApp.outlook.title,
-                                isSelected: quickActionsMailApp == QuickActionsMailApp.outlook.rawValue,
-                                action: { quickActionsMailApp = QuickActionsMailApp.outlook.rawValue }
-                            )
-                        }
-
-                        if quickActionsMailApp == QuickActionsMailApp.outlook.rawValue &&
-                            !MailHelper.isMailClientInstalled(.outlook) {
-                            Text("Outlook is not installed. PepBox will fall back to the system Mail action.")
+                            Text("Drop buttons under Shelf and Basket: AirDrop, Messages, Mail, ZIP and more")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                } header: {
-                    Text("Quick Actions")
                 }
+
+                if enableQuickActions {
+                    QuickActionsPicker()
+
+                    nativePickerRow(
+                        title: "Mail App",
+                        subtitle: "Choose which app opens for the Mail quick action"
+                    ) {
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.systemDefault.icon,
+                            label: QuickActionsMailApp.systemDefault.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.systemDefault.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.systemDefault.rawValue }
+                        )
+
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.appleMail.icon,
+                            label: QuickActionsMailApp.appleMail.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.appleMail.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.appleMail.rawValue }
+                        )
+
+                        SettingsSegmentButton(
+                            icon: QuickActionsMailApp.outlook.icon,
+                            label: QuickActionsMailApp.outlook.title,
+                            isSelected: quickActionsMailApp == QuickActionsMailApp.outlook.rawValue,
+                            action: { quickActionsMailApp = QuickActionsMailApp.outlook.rawValue }
+                        )
+                    }
+
+                    if quickActionsMailApp == QuickActionsMailApp.outlook.rawValue &&
+                        !MailHelper.isMailClientInstalled(.outlook) {
+                        Text("Outlook is not installed. PepBox will fall back to the system Mail action.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text("Quick Actions")
             }
         }
     }
@@ -1328,12 +1366,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         HStack(spacing: 6) {
                             Text("Hide Physical Notch")
-                            Text("new")
-                                .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(Color.pepboxAccent))
                         }
                         Text("Draw a black bar to hide the notch, allowing menu bar icons to use that space. Only applies in Notch mode.")
                             .font(.caption)
@@ -1372,575 +1404,13 @@ struct SettingsView: View {
                     }
                 }
 
-                Toggle(isOn: $disableAnalytics) {
-                    VStack(alignment: .leading) {
-                        Text("Skip All Analytics")
-                        Text("Disable usage analytics and hide extension install/download stats")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .onChange(of: disableAnalytics) { _, isDisabled in
-                    if isDisabled {
-                        downloadCount = nil
-                    } else {
-                        Task {
-                            if let count = try? await AnalyticsService.shared.fetchDownloadCount() {
-                                downloadCount = count
-                            }
-                        }
-                    }
-                }
-                
             } header: {
-                Text("Accessibility")
+                Text("Advanced")
             }
         }
     }
-    // MARK: Features Tab (Shelf + Basket + Shared) - LEGACY, kept for reference
-    private var featuresSettings: some View {
-        Group {
-            // MARK: Notch Shelf Section
-            Section {
-                HStack(spacing: 8) {
-                    NotchShelfInfoButton()
-                    Toggle(isOn: $enableNotchShelf) {
-                        VStack(alignment: .leading) {
-                            Text("Notch Shelf")
-                            Text("Drop zone at the top of your screen")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .onChange(of: enableNotchShelf) { oldValue, newValue in
-                    if newValue {
-                        NotchWindowController.shared.setupNotchWindow()
-                    } else {
-                        // Only close if HUD replacement and Media Player are ALSO disabled
-                        // The notch window is still needed for HUD/Media features
-                        if !enableHUDReplacement && !showMediaPlayer {
-                            NotchWindowController.shared.closeWindow()
-                        }
-                    }
-                }
-                
-                if enableNotchShelf {
-                    NotchShelfPreview()
-                }
-            } header: {
-                Text("Notch Shelf")
-            }
-            
-            // MARK: Display Style
-            // Visual Style settings (from Appearance)
-            Section {
-                Toggle(isOn: $useTransparentBackground) {
-                    VStack(alignment: .leading) {
-                        Text("Transparent Background")
-                        Text("Use glass effect for windows")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                HStack(spacing: 8) {
-                    ExternalDisplayInfoButton()
-                    Toggle(isOn: $hideNotchOnExternalDisplays) {
-                        VStack(alignment: .leading) {
-                            Text("Hide on External Displays")
-                            Text("Disable notch shelf on external monitors")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Show external display mode picker when not hidden
-                if !hideNotchOnExternalDisplays {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("External Display Style")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 8) {
-                            SettingsSegmentButtonWithContent(
-                                label: "Notch",
-                                isSelected: !externalDisplayUseDynamicIsland,
-                                action: { externalDisplayUseDynamicIsland = false }
-                            ) {
-                                UShape()
-                                    .fill(!externalDisplayUseDynamicIsland ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 44, height: 14)
-                            }
-                            
-                            SettingsSegmentButtonWithContent(
-                                label: "Island",
-                                isSelected: externalDisplayUseDynamicIsland,
-                                action: { externalDisplayUseDynamicIsland = true }
-                            ) {
-                                Capsule()
-                                    .fill(externalDisplayUseDynamicIsland ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 44, height: 14)
-                            }
-                        }
-
-                        externalDisplayAdvancedOptions
-                    }
-                }
-            } header: {
-                Text("Display")
-            }
-            
-            // MARK: Display Mode (Non-notch displays only)
-            if !hasPhysicalNotch {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Display Mode")
-                            .font(.headline)
-                        
-                        Text("Choose how PepBox appears at the top of your screen")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 8) {
-                            SettingsSegmentButtonWithContent(
-                                label: "Notch",
-                                isSelected: !useDynamicIslandStyle,
-                                action: { useDynamicIslandStyle = false }
-                            ) {
-                                UShape()
-                                    .fill(!useDynamicIslandStyle ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 50, height: 16)
-                            }
-                            
-                            SettingsSegmentButtonWithContent(
-                                label: "Island",
-                                isSelected: useDynamicIslandStyle,
-                                action: { useDynamicIslandStyle = true }
-                            ) {
-                                Capsule()
-                                    .fill(useDynamicIslandStyle ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 40, height: 14)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text("Display Mode")
-                }
-            }
-            
-            // MARK: Shelf Behavior
-            Section {
-                // Auto-Collapse toggle with delay slider
-                Toggle(isOn: $autoCollapseShelf) {
-                    VStack(alignment: .leading) {
-                        Text("Auto-Collapse")
-                        Text("Shrink shelf when mouse leaves")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                if autoCollapseShelf {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Collapse Delay")
-                            Spacer()
-                            Text(String(format: "%.2fs", autoCollapseDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $autoCollapseDelay, in: 0.1...2.0, step: 0.05)
-                            .sliderHaptics(value: autoCollapseDelay, range: 0.1...2.0)
-                    }
-                }
-                
-                // Auto-Expand can be toggled, with delay slider
-                Toggle(isOn: $autoExpandShelf) {
-                    VStack(alignment: .leading) {
-                        Text("Auto-Expand")
-                        Text("Expand shelf when hovering over notch")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                if autoExpandShelf {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Expand Delay")
-                            Spacer()
-                            Text(String(format: "%.2fs", autoExpandDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $autoExpandDelay, in: 0.1...2.0, step: 0.05)
-                            .sliderHaptics(value: autoExpandDelay, range: 0.1...2.0)
-                    }
-                }
-            } header: {
-                Text("Shelf Behavior")
-            }
-            
-            // MARK: Shared Features
-            Section {
-                // Auto-Clean (affects PepBox UI only)
-                HStack(spacing: 8) {
-                    AutoCleanInfoButton()
-                    Toggle(isOn: $enableAutoClean) {
-                        VStack(alignment: .leading) {
-                            Text("Auto-Remove")
-                            Text("Clear items when dragged out of PepBox")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Power Folders (affects both shelf and basket)
-                HStack(spacing: 8) {
-                    PowerFoldersInfoButton()
-                    Toggle(isOn: $enablePowerFolders) {
-                        VStack(alignment: .leading) {
-                            Text("Power Folders")
-                            Text("Pin folders and drop files directly into them")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Smart Export (auto-save processed files)
-                SmartExportSettingsRow()
-                
-                // Tracked Folders (watch folders for new files) - Advanced setting
-                TrackedFoldersSettingsRow()
-                
-                // Always Copy (affects actual files on disk) - Advanced setting (at bottom)
-                HStack(spacing: 8) {
-                    AlwaysCopyInfoButton()
-                    Toggle(isOn: $alwaysCopyOnDrag) {
-                        VStack(alignment: .leading) {
-                            HStack(alignment: .center, spacing: 6) {
-                                Text("Protect Originals")
-                                Text("advanced")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                    .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
-                            }
-                            Text("Always copy, never move files")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .onChange(of: alwaysCopyOnDrag) { _, newValue in
-                        if !newValue {
-                            // User is turning OFF protection - show warning
-                            showProtectOriginalsWarning = true
-                        }
-                    }
-                }
-                .sheet(isPresented: $showProtectOriginalsWarning) {
-                    ProtectOriginalsWarningSheet(alwaysCopyOnDrag: $alwaysCopyOnDrag)
-                }
-            } header: {
-                Text("Shared Features")
-            } footer: {
-                Text("These features apply to both Notch Shelf and Floating Basket.")
-            }
-            
-            // MARK: Floating Basket Section
-            basketSections
-            
-            // MARK: Accessibility
-            indicatorsSettings
-        }
-    }
-    
     // Helper view for Basket sections (included in Features tab)
     @ViewBuilder
-    private var basketSections: some View {
-        Section {
-            HStack(spacing: 8) {
-                BasketGestureInfoButton()
-                Toggle(isOn: $enableFloatingBasket) {
-                    VStack(alignment: .leading) {
-                        Text("Floating Basket")
-                        Text(instantBasketOnDrag 
-                            ? "Appears instantly when dragging files anywhere. Drag right into Quick Actions to quickly share your files." 
-                            : "Appears when you jiggle files anywhere on screen. Drag right into Quick Actions to quickly share your files.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .onChange(of: enableFloatingBasket) { oldValue, newValue in
-                if !newValue {
-                    FloatingBasketWindowController.closeAllBaskets()
-                }
-                BasketSwitcherWindowController.shared.reloadShortcutConfiguration()
-            }
-            
-            if enableFloatingBasket {
-                FloatingBasketPreview()
-            }
-        } header: {
-            Text("Floating Basket")
-        }
-        
-        if enableFloatingBasket {
-            // MARK: Appearance Settings
-            Section {
-                // Instant appear toggle
-                HStack(spacing: 8) {
-                    InstantAppearInfoButton()
-                    Toggle(isOn: $instantBasketOnDrag) {
-                        VStack(alignment: .leading) {
-                            Text("Instant Appear")
-                            Text("Show basket immediately when dragging files")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Delay slider (only when instant appear is enabled)
-                if instantBasketOnDrag {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Delay")
-                            Spacer()
-                            Text(instantBasketDelay < 0.2 ? "Instant" : String(format: "%.1fs", instantBasketDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $instantBasketDelay, in: 0.15...3.0, step: 0.1)
-                            .sliderHaptics(value: instantBasketDelay, range: 0.15...3.0)
-                    }
-                    .padding(.leading, 28)
-                }
-                
-                basketSummonOptions
-            } header: {
-                Text("Basket Appearance")
-            }
-            
-            // MARK: Auto-Hide Settings
-            Section {
-                HStack(spacing: 8) {
-                    PeekModeInfoButton()
-                    Toggle(isOn: $enableBasketAutoHide) {
-                        VStack(alignment: .leading) {
-                            Text("Auto-Hide")
-                            Text("Basket hides after delay when cursor leaves")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                if enableBasketAutoHide {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Hide Delay")
-                            Spacer()
-                            Text(String(format: "%.1fs", basketAutoHideDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                        Text("Time before basket auto-hides when cursor leaves")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } header: {
-                Text("Auto-Hide")
-            }
-            
-            // MARK: Basket Advanced
-            Section {
-                HStack(spacing: 8) {
-                    QuickActionsInfoButton()
-                    Toggle(isOn: $enableQuickActions) {
-                        VStack(alignment: .leading) {
-                            HStack(alignment: .center, spacing: 6) {
-                                Text("Quick Actions")
-                                Text("advanced")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                    .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
-                            }
-                            Text("Show quick action drop buttons under Shelf and Basket")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .onChange(of: enableQuickActions) { _, newValue in
-                        if newValue {
-                            showQuickActionsWarning = true
-                        }
-                    }
-                    .sheet(isPresented: $showQuickActionsWarning) {
-                        QuickActionsInfoSheet(enableQuickActions: $enableQuickActions)
-                    }
-                }
-            } header: {
-                Text("Basket Advanced")
-            }
-        }
-    }
-    
-    // MARK: Basket Tab (kept for reference but not used in sidebar)
-    private var basketSettings: some View {
-        Group {
-            // MARK: Floating Basket Section
-            Section {
-                HStack(spacing: 8) {
-                    BasketGestureInfoButton()
-                    Toggle(isOn: $enableFloatingBasket) {
-                        VStack(alignment: .leading) {
-                            Text("Floating Basket")
-                            Text(instantBasketOnDrag 
-                                ? "Appears instantly when dragging files anywhere" 
-                                : "Appears when you jiggle files anywhere on screen")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .onChange(of: enableFloatingBasket) { oldValue, newValue in
-                    if !newValue {
-                        FloatingBasketWindowController.closeAllBaskets()
-                    }
-                    BasketSwitcherWindowController.shared.reloadShortcutConfiguration()
-                }
-                
-                if enableFloatingBasket {
-                    FloatingBasketPreview()
-                }
-            } header: {
-                Text("Floating Basket")
-            }
-            
-            if enableFloatingBasket {
-                // MARK: Appearance Settings
-                Section {
-                    // Instant appear toggle
-                    HStack(spacing: 8) {
-                        InstantAppearInfoButton()
-                        Toggle(isOn: $instantBasketOnDrag) {
-                            VStack(alignment: .leading) {
-                                Text("Instant Appear")
-                                Text("Show basket immediately when dragging files")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    
-                    // Delay slider (only when instant appear is enabled)
-                    if instantBasketOnDrag {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("Delay")
-                                Spacer()
-                                Text(instantBasketDelay < 0.2 ? "Instant" : String(format: "%.1fs", instantBasketDelay))
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                            Slider(value: $instantBasketDelay, in: 0.15...3.0, step: 0.1)
-                                .sliderHaptics(value: instantBasketDelay, range: 0.15...3.0)
-                        }
-                        .padding(.leading, 28)  // Align with toggle content
-                    }
-                    
-                    basketSummonOptions
-                } header: {
-                    Text("Appearance")
-                }
-                
-                // MARK: Auto-Hide Settings
-                Section {
-                    // Auto-hide with peek toggle
-                    HStack(spacing: 8) {
-                        PeekModeInfoButton()
-                        Toggle(isOn: $enableBasketAutoHide) {
-                            VStack(alignment: .leading) {
-                                Text("Auto-Hide")
-                                Text("Basket hides after delay when cursor leaves")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    
-                    if enableBasketAutoHide {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("Hide Delay")
-                                Spacer()
-                                Text(String(format: "%.1fs", basketAutoHideDelay))
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                            Slider(value: $basketAutoHideDelay, in: 0.5...5.0, step: 0.5)
-                            Text("Time before basket auto-hides when cursor leaves")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("Auto-Hide")
-                }
-                
-                // MARK: Advanced
-                Section {
-                    // Quick Actions (advanced feature - at bottom)
-                    HStack(spacing: 8) {
-                        QuickActionsInfoButton()
-                        Toggle(isOn: $enableQuickActions) {
-                            VStack(alignment: .leading) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    Text("Quick Actions")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
-                                }
-                                Text("Show quick action drop buttons under Shelf and Basket")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .onChange(of: enableQuickActions) { _, newValue in
-                            if newValue {
-                                // User is enabling - show explanation sheet
-                                showQuickActionsWarning = true
-                            }
-                        }
-                        .sheet(isPresented: $showQuickActionsWarning) {
-                            QuickActionsInfoSheet(enableQuickActions: $enableQuickActions)
-                        }
-                    }
-                } header: {
-                    Text("Advanced")
-                }
-            }
-        }
-    }
-    
     // MARK: HUDs Tab
     private var hudSettings: some View {
         Group {
@@ -2079,26 +1549,11 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
                                     Text("Stabilize Media")
-                                    Text("advanced")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                        .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                                 }
-                                Text("Prevent flickering from rapid song changes")
+                                Text("Waits a moment before showing a new song, so rapid skips don't flicker")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                        }
-                        .onChange(of: debounceMediaChanges) { _, newValue in
-                            if newValue {
-                                showStabilizeMediaWarning = true
-                            }
-                        }
-                        .sheet(isPresented: $showStabilizeMediaWarning) {
-                            StabilizeMediaInfoSheet(debounceMediaChanges: $debounceMediaChanges)
                         }
 
                         // Media Source Filter (inline list like Tracked Folders)
@@ -2109,6 +1564,16 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Hide Incognito Media")
                                 Text("Hide media from private browsing windows")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        // Synced lyrics (sends title + artist to lrclib.net, so off by default)
+                        Toggle(isOn: $syncedLyricsEnabled) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Synced Lyrics")
+                                Text("Show the current line under the title. Looks songs up on lrclib.net")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -2165,13 +1630,6 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(alignment: .center, spacing: 6) {
                                 Text("Media Key Target")
-                                Text("beta")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(Color.orange.opacity(0.95))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(Color.orange.opacity(0.18)))
-                                    .overlay(Capsule().stroke(Color.orange.opacity(0.45), lineWidth: 1))
                             }
                             Text("Choose whether volume and brightness follow your active display")
                                 .font(.caption)
@@ -2317,15 +1775,21 @@ struct SettingsView: View {
                             }
                         }
                     } else {
-                        // Extension is not installed - greyed out
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Notify me!")
-                                .foregroundStyle(.secondary)
-                            Text("Enable in Extension Store")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
+                        // Extension is not installed - opens it in Extensions
+                        Button {
+                            NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.notificationHUD)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Notify me!")
+                                    .foregroundStyle(.secondary)
+                                Text("Install from Extensions")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -2397,11 +1861,7 @@ struct SettingsView: View {
                     // Extension is not installed - clickable card to open Extension Store
                     Button {
                         // Navigate to Extension Store with Termi-Notch selected
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": TermiNotchExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.terminalNotch)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<TermiNotchExtension>(definition: TermiNotchExtension.self, size: 40)
@@ -2410,7 +1870,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Termi-Notch")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2469,11 +1929,7 @@ struct SettingsView: View {
                     // Extension is not installed - clickable card to open Extension Store
                     Button {
                         // Navigate to Extension Store with High Alert selected
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": CaffeineExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.caffeine)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<CaffeineExtension>(definition: CaffeineExtension.self, size: 40)
@@ -2482,7 +1938,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("High Alert")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2509,11 +1965,7 @@ struct SettingsView: View {
                     }
                 } else {
                     Button {
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("OpenExtensionStore"),
-                            object: nil,
-                            userInfo: ["extension": CameraExtension.id]
-                        )
+                        NotificationCenter.default.post(name: .openExtensionFromDeepLink, object: ExtensionType.camera)
                     } label: {
                         HStack(spacing: 12) {
                             ExtensionIconView<CameraExtension>(definition: CameraExtension.self, size: 40)
@@ -2522,7 +1974,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Notchface")
                                     .foregroundStyle(.secondary)
-                                Text("Enable in Extension Store")
+                                Text("Install from Extensions")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -2561,12 +2013,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-            } header: {
-                Text("Audio")
-            }
-            
-            // MARK: Screen State (Focus Mode only - Lock Screen moved to dedicated tab)
-            Section {
+
                 // Focus Mode
                 HStack(spacing: 12) {
                     FocusModeHUDIcon()
@@ -2617,7 +2064,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } header: {
-                Text("Focus")
+                Text("Devices & Focus")
             }
         }
     }
@@ -2662,6 +2109,10 @@ struct SettingsView: View {
                             AppleMusicController.shared.refreshState()
                         case .elementCapture, .aiBackgroundRemoval, .windowSnap, .voiceTranscribe, .ffmpegVideoCompression, .terminalNotch, .camera, .quickshare, .notificationHUD, .caffeine, .menuBarManager, .todo:
                             break // No action needed - these have their own configuration UI
+                        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar:
+                            NotchWidgetKind(extensionType: extensionType)?.install()
+                        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets:
+                            UtilityExtensionKind(extensionType: extensionType)?.install()
                         }
                     }
                 }
@@ -2673,216 +2124,6 @@ struct SettingsView: View {
         Group {
             if !ExtensionType.quickshare.isRemoved {
                 QuickshareSettingsContent()
-            }
-        }
-    }
-    
-    private var appearanceSettings: some View {
-        Group {
-            // MARK: Visual Style
-            Section {
-                Toggle(isOn: $useTransparentBackground) {
-                    VStack(alignment: .leading) {
-                        Text("Transparent Background")
-                        Text("Use glass effect for windows (not shelf)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                HStack(spacing: 8) {
-                    ExternalDisplayInfoButton()
-                    Toggle(isOn: $hideNotchOnExternalDisplays) {
-                        VStack(alignment: .leading) {
-                            Text("Hide on External Displays")
-                            Text("Disable notch shelf on external monitors")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Show external display mode picker when not hidden
-                if !hideNotchOnExternalDisplays {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("External Display Style")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 8) {
-                            SettingsSegmentButtonWithContent(
-                                label: "Notch",
-                                isSelected: !externalDisplayUseDynamicIsland,
-                                action: { externalDisplayUseDynamicIsland = false }
-                            ) {
-                                UShape()
-                                    .fill(!externalDisplayUseDynamicIsland ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 44, height: 14)
-                            }
-                            
-                            SettingsSegmentButtonWithContent(
-                                label: "Island",
-                                isSelected: externalDisplayUseDynamicIsland,
-                                action: { externalDisplayUseDynamicIsland = true }
-                            ) {
-                                Capsule()
-                                    .fill(externalDisplayUseDynamicIsland ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 44, height: 14)
-                            }
-                        }
-
-                        externalDisplayAdvancedOptions
-                    }
-                }
-            } header: {
-                Text("Visual Style")
-            }
-            
-            // MARK: Display Mode (Non-notch displays only)
-            // MacBooks WITH a physical notch MUST use notch mode - no choice
-            // Only non-notch Macs (iMacs, Mac minis, older MacBooks) can choose
-            if !hasPhysicalNotch {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Display Mode")
-                            .font(.headline)
-                        
-                        Text("Choose how PepBox appears at the top of your screen")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 8) {
-                            SettingsSegmentButtonWithContent(
-                                label: "Notch",
-                                isSelected: !useDynamicIslandStyle,
-                                action: { useDynamicIslandStyle = false }
-                            ) {
-                                UShape()
-                                    .fill(!useDynamicIslandStyle ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 50, height: 16)
-                            }
-                            
-                            SettingsSegmentButtonWithContent(
-                                label: "Island",
-                                isSelected: useDynamicIslandStyle,
-                                action: { useDynamicIslandStyle = true }
-                            ) {
-                                Capsule()
-                                    .fill(useDynamicIslandStyle ? Color.blue : AdaptiveColors.overlayAuto(0.5))
-                                    .frame(width: 40, height: 14)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text("Display Mode")
-                }
-            }
-            
-            // MARK: Shelf Behavior
-            Section {
-                // Auto-Collapse toggle with delay slider
-                Toggle(isOn: $autoCollapseShelf) {
-                    VStack(alignment: .leading) {
-                        Text("Auto-Collapse")
-                        Text("Shrink shelf when mouse leaves")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                if autoCollapseShelf {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Collapse Delay")
-                            Spacer()
-                            Text(String(format: "%.2fs", autoCollapseDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $autoCollapseDelay, in: 0.1...2.0, step: 0.05)
-                            .sliderHaptics(value: autoCollapseDelay, range: 0.1...2.0)
-                    }
-                }
-                
-                // Auto-Expand can be toggled, with delay slider
-                Toggle(isOn: $autoExpandShelf) {
-                    VStack(alignment: .leading) {
-                        Text("Auto-Expand")
-                        Text("Expand shelf when hovering over notch")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                if autoExpandShelf {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Expand Delay")
-                            Spacer()
-                            Text(String(format: "%.2fs", autoExpandDelay))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $autoExpandDelay, in: 0.1...2.0, step: 0.05)
-                            .sliderHaptics(value: autoExpandDelay, range: 0.1...2.0)
-                    }
-                }
-            } header: {
-                Text("Shelf Behavior")
-            }
-            
-            // MARK: Indicators (merged from Accessibility tab)
-            indicatorsSettings
-        }
-    }
-    
-    private var indicatorsSettings: some View {
-        Group {
-            Section {
-                Toggle(isOn: $showClipboardButton) {
-                    VStack(alignment: .leading) {
-                        Text("Clipboard in Menu")
-                        Text("Adds \"Open Clipboard\" to right-click menu on notch/island")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Toggle(isOn: $hideNotchFromScreenshots) {
-                    VStack(alignment: .leading) {
-                        Text("Hide from Screenshots")
-                        Text("Exclude the notch area from screenshots and screen recordings")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .onChange(of: hideNotchFromScreenshots) { _, newValue in
-                    // Apply the setting to the notch window
-                    NotchWindowController.shared.updateScreenshotVisibility()
-                }
-                
-                Toggle(isOn: $enableRightClickHide) {
-                    VStack(alignment: .leading) {
-                        Text("Right-Click to Hide")
-                        Text("Show 'Hide Notch/Island' option in right-click menu")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Toggle(isOn: $enableHapticFeedback) {
-                    VStack(alignment: .leading) {
-                        Text("Haptic Feedback")
-                        Text("Play haptic patterns when dropping files or performing actions")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } header: {
-                Text("Accessibility")
-            } footer: {
-                Text("Visual hints, quick-access buttons, and screenshot visibility.")
             }
         }
     }
@@ -2909,11 +2150,6 @@ struct SettingsView: View {
                         Text("Version \(UpdateChecker.shared.currentVersion)")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
-                        if let downloads = downloadCount {
-                            Text("\(downloads) users")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.tertiary)
-                        }
                     }
                     
                     Spacer()
@@ -2922,7 +2158,29 @@ struct SettingsView: View {
                 
                 LabeledContent("Developer", value: "PivotXP")
                 
-                LabeledContent("Based on", value: "Droppy by Jordy Spruit (GPL-3.0)")
+                HStack {
+                    Text("What's New")
+                    Spacer()
+                    Button("Show") { WhatsNewWindowController.shared.show() }
+                        .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
+                
+                HStack {
+                    Text("Open-Source Licenses")
+                    Spacer()
+                    Button("View") { showLicenses = true }
+                        .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
+                .sheet(isPresented: $showLicenses) { LicensesSheet() }
+                
+                HStack {
+                    Text("Source Code")
+                    Spacer()
+                    Button("GitHub") {
+                        if let url = URL(string: "https://github.com/KPScriptz/PepBox") { NSWorkspace.shared.open(url) }
+                    }
+                    .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                }
                 
                 HStack {
                     Text("Introduction")
@@ -2940,25 +2198,6 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("About")
-            }
-            
-            // MARK: Links
-            Section {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    LinkButton(
-                        title: "GitHub",
-                        icon: "chevron.left.forwardslash.chevron.right",
-                        url: "https://github.com/KPScriptz/PepBox"
-                    )
-                    
-                    LinkButton(
-                        title: "Original Project",
-                        icon: "arrow.triangle.branch",
-                        url: "https://github.com/iordv/Droppy"
-                    )
-                }
-            } header: {
-                Text("Links")
             }
             
             // MARK: Reset
@@ -3003,17 +2242,6 @@ struct SettingsView: View {
                 Text(hardResetIncludeClipboard
                     ? "This will reset ALL settings and clear clipboard history. PepBox will restart."
                     : "This will reset ALL settings (clipboard history will be preserved). PepBox will restart.")
-            }
-        }
-        .onAppear {
-            Task {
-                guard !disableAnalytics else {
-                    downloadCount = nil
-                    return
-                }
-                if let count = try? await AnalyticsService.shared.fetchDownloadCount() {
-                    downloadCount = count
-                }
             }
         }
     }
@@ -3202,13 +2430,14 @@ struct SettingsView: View {
     }
     
     private var clipboardSettings: some View {
+        Group {
         Section {
             HStack(spacing: 8) {
                 ClipboardShortcutInfoButton(shortcut: currentShortcut)
                 Toggle(isOn: $enableClipboard) {
                     VStack(alignment: .leading) {
                         Text("Clipboard Manager")
-                        Text("History with Preview")
+                        Text("Searchable history with previews")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -3297,6 +2526,14 @@ struct SettingsView: View {
                     ClipboardManager.shared.enforceHistoryLimit()
                 }
                 
+                Picker("Delete After", selection: $clipboardMaxAgeDays) {
+                    Text("Never").tag(0)
+                    Text("1 Day").tag(1)
+                    Text("1 Week").tag(7)
+                    Text("1 Month").tag(30)
+                }
+                .onChange(of: clipboardMaxAgeDays) { _, _ in ClipboardManager.shared.enforceHistoryLimit() }
+                
                 // Skip passwords toggle
                 Toggle(isOn: $clipboardManager.skipConcealedContent) {
                     VStack(alignment: .leading) {
@@ -3346,9 +2583,6 @@ struct SettingsView: View {
                         label: "Auto-Focus",
                         isSelected: autoFocusSearch,
                         action: {
-                            if !autoFocusSearch {
-                                showAutoFocusSearchWarning = true
-                            }
                             autoFocusSearch.toggle()
                         }
                     ) {
@@ -3356,9 +2590,6 @@ struct SettingsView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(autoFocusSearch ? Color.blue : AdaptiveColors.overlayAuto(0.5))
                     }
-                }
-                .sheet(isPresented: $showAutoFocusSearchWarning) {
-                    AutoFocusSearchInfoSheet(autoFocusSearch: $autoFocusSearch)
                 }
                 
                 // Shortcut row appears when Copy+Favorite is enabled
@@ -3392,14 +2623,30 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
-                // MARK: - Excluded Apps Section
-                excludedAppsSection
             }
         } header: {
             Text("Clipboard")
         } footer: {
-            Text("Requires Accessibility permissions to paste. Shortcuts may conflict with other apps.")
+            Text("Requires Accessibility to paste. In the clipboard window, ⌘1–⌘9 paste the first nine items.")
+        }
+        
+        if enableClipboard {
+            Section {
+                ShortcutOption(title: "Start / Stop Queue", key: PasteQueue.toggleKey,
+                               defaultShortcut: PasteQueue.toggleDefault) { PasteQueue.shared.registerHotKeys() }
+                ShortcutOption(title: "Paste Next", key: PasteQueue.pasteNextKey,
+                               defaultShortcut: PasteQueue.pasteNextDefault) { PasteQueue.shared.registerHotKeys() }
+            } header: {
+                Text("Paste Queue")
+            } footer: {
+                Text("Start the queue, copy several things, then press Paste Next to paste them one by one in the order you copied them. The notch shows how many are left.")
+            }
+        }
+        
+        // Its own section (it used to be nested inside the one above)
+        if enableClipboard {
+            excludedAppsSection
+        }
         }
         .onAppear {
             loadShortcut()
@@ -3458,7 +2705,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle.fill")
-                    Text("Add App...")
+                    Text("Add App…")
                 }
             }
             .buttonStyle(PepBoxPillButtonStyle(size: .small))
@@ -3883,7 +3130,7 @@ struct JiggleToShowInfoButton: View {
                     
                     VStack(alignment: .leading, spacing: 6) {
                         Label("Hides after configurable delay", systemImage: "timer")
-                        Label("Jiggle while dragging files still works", systemImage: "arrow.left.arrow.right")
+                        Label("Shaking files while dragging still works", systemImage: "arrow.left.arrow.right")
                         Label("Use Basket Switcher shortcut to reveal hidden baskets", systemImage: "keyboard")
                         Label("Baskets with items are preserved", systemImage: "tray.full.fill")
                     }
@@ -4259,264 +3506,14 @@ struct ProtectOriginalsWarningSheet: View {
         }
         .frame(width: 380)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
     }
 }
 
 // MARK: - Stabilize Media Info Sheet
 
-/// Info sheet shown when user enables Stabilize Media (advanced feature)
-struct StabilizeMediaInfoSheet: View {
-    @Binding var debounceMediaChanges: Bool
-    @AppStorage(AppPreferenceKey.useTransparentBackground) private var useTransparentBackground = PreferenceDefault.useTransparentBackground
-    @Environment(\.dismiss) private var dismiss
-    @State private var isHoveringDisable = false
-    @State private var isHoveringKeep = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header with NotchFace
-            VStack(spacing: 16) {
-                NotchFace(size: 60, isExcited: true)
-                
-                Text("Stabilize Media Enabled")
-                    .font(.title2.bold())
-                    .foregroundStyle(.primary)
-            }
-            .padding(.top, 28)
-            .padding(.bottom, 20)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Content
-            VStack(alignment: .center, spacing: 16) {
-                Text("What this does:")
-                    .font(.callout.weight(.medium))
-                
-                // Card with explanation items
-                VStack(spacing: 0) {
-                    // Info item 1
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "clock")
-                            .foregroundStyle(.blue)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Adds a short delay before showing media changes")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 2
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(.green)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Prevents UI flickering when apps rapidly update metadata")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 3
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundStyle(.orange)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("May slightly delay initial song/album art display")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                }
-                .background(AdaptiveColors.overlayAuto(0.03))
-                .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous)
-                        .stroke(AdaptiveColors.overlayAuto(0.05), lineWidth: 1)
-                )
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Buttons (secondary left, Spacer, primary right)
-            HStack(spacing: 8) {
-                // Disable (secondary - left)
-                Button {
-                    debounceMediaChanges = false
-                    dismiss()
-                } label: {
-                    Text("Disable")
-                }
-                .buttonStyle(PepBoxPillButtonStyle(size: .small))
-                
-                Spacer()
-                
-                // Keep Enabled (primary - right)
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Got It")
-                }
-                .buttonStyle(PepBoxAccentButtonStyle(color: .blue, size: .small))
-            }
-            .padding(PepBoxSpacing.lg)
-        }
-        .frame(width: 380)
-        .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
-        .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-    }
-}
-
 // MARK: - Auto-Focus Search Info Sheet
-
-/// Info sheet shown when user enables Auto-Focus Search (advanced feature)
-struct AutoFocusSearchInfoSheet: View {
-    @Binding var autoFocusSearch: Bool
-    @AppStorage(AppPreferenceKey.useTransparentBackground) private var useTransparentBackground = PreferenceDefault.useTransparentBackground
-    @Environment(\.dismiss) private var dismiss
-    @State private var isHoveringDisable = false
-    @State private var isHoveringKeep = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header with NotchFace
-            VStack(spacing: 16) {
-                NotchFace(size: 60, isExcited: true)
-                
-                Text("Auto-Focus Search Enabled")
-                    .font(.title2.bold())
-                    .foregroundStyle(.primary)
-            }
-            .padding(.top, 28)
-            .padding(.bottom, 20)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Content
-            VStack(alignment: .center, spacing: 16) {
-                Text("What this does:")
-                    .font(.callout.weight(.medium))
-                
-                // Card with explanation items
-                VStack(spacing: 0) {
-                    // Info item 1
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.blue)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Automatically focuses the search bar when clipboard opens")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 2
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "keyboard")
-                            .foregroundStyle(.green)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Start typing immediately to filter clipboard history")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 3
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundStyle(.orange)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Arrow keys won't navigate list until you press Escape")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                }
-                .background(AdaptiveColors.overlayAuto(0.03))
-                .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous)
-                        .stroke(AdaptiveColors.overlayAuto(0.05), lineWidth: 1)
-                )
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Buttons (secondary left, Spacer, primary right)
-            HStack(spacing: 8) {
-                // Disable (secondary - left)
-                Button {
-                    autoFocusSearch = false
-                    dismiss()
-                } label: {
-                    Text("Disable")
-                }
-                .buttonStyle(PepBoxPillButtonStyle(size: .small))
-                
-                Spacer()
-                
-                // Keep Enabled (primary - right)
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Got It")
-                }
-                .buttonStyle(PepBoxAccentButtonStyle(color: .blue, size: .small))
-            }
-            .padding(PepBoxSpacing.lg)
-        }
-        .frame(width: 380)
-        .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
-        .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-    }
-}
 
 // MARK: - Full Disk Access Sheet
 
@@ -4604,7 +3601,7 @@ struct FullDiskAccessSheet: View {
         }
         .frame(width: 380)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
     }
     
@@ -4717,7 +3714,7 @@ struct MenuBarHiddenSheet: View {
         }
         .frame(width: 380)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
     }
 }
@@ -4927,129 +3924,6 @@ struct QuickActionsInfoButton: View {
 
 // MARK: - Quick Actions Info Sheet
 
-/// Info sheet shown when user enables Quick Actions (advanced feature)
-struct QuickActionsInfoSheet: View {
-    @Binding var enableQuickActions: Bool
-    @AppStorage(AppPreferenceKey.useTransparentBackground) private var useTransparentBackground = PreferenceDefault.useTransparentBackground
-    @Environment(\.dismiss) private var dismiss
-    @State private var isHoveringDisable = false
-    @State private var isHoveringKeep = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header with NotchFace
-            VStack(spacing: 16) {
-                NotchFace(size: 60, isExcited: true)
-                
-                Text("Quick Actions Enabled")
-                    .font(.title2.bold())
-                    .foregroundStyle(.primary)
-            }
-            .padding(.top, 28)
-            .padding(.bottom, 20)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Content
-            VStack(alignment: .center, spacing: 16) {
-                Text("What this does:")
-                    .font(.callout.weight(.medium))
-                
-                // Card with explanation items
-                VStack(spacing: 0) {
-                    // Info item 1 - Quick action drop targets
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "bolt.fill")
-                            .foregroundStyle(.blue)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Shows quick action drop targets under Shelf and Basket (AirDrop, Messages, Mail, Quickshare)")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 2 - Mail app routing
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "envelope.badge")
-                            .foregroundStyle(.green)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("The Mail quick action uses the app selected in \"Mail App\" settings")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(AdaptiveColors.overlayAuto(0.04)).frame(height: 0.5)
-                    }
-                    
-                    // Info item 3 - Basket tools
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.orange)
-                            .font(.system(size: 14))
-                            .frame(width: 22)
-                        Text("Also enables Select All and Add All tools in Basket for faster batch operations")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(AdaptiveColors.overlayAuto(0.02))
-                }
-                .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: PepBoxRadius.medium, style: .continuous)
-                        .stroke(AdaptiveColors.overlayAuto(0.08), lineWidth: 1)
-                )
-            }
-            .padding(PepBoxSpacing.xxl)
-            
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // Footer with buttons
-            HStack {
-                // Disable (secondary - left)
-                Button {
-                    enableQuickActions = false
-                    dismiss()
-                } label: {
-                    Text("Disable")
-                }
-                .buttonStyle(PepBoxPillButtonStyle(size: .small))
-                
-                Spacer()
-                
-                // Keep Enabled (primary - right)
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Got It")
-                }
-                .buttonStyle(PepBoxAccentButtonStyle(color: .blue, size: .small))
-            }
-            .padding(PepBoxSpacing.lg)
-        }
-        .frame(width: 380)
-        .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
-        .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-    }
-}
-
 // MARK: - Tracked Folders Settings
 
 /// Info button for Tracked Folders feature
@@ -5108,13 +3982,6 @@ struct TrackedFoldersSettingsRow: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Tracked Folders")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Watch folders and auto-add new files")
                             .font(.caption)
@@ -5261,13 +4128,6 @@ struct MediaSourceFilterSettingsRow: View {
                 VStack(alignment: .leading) {
                     HStack(alignment: .center, spacing: 6) {
                         Text("Filter Media Sources")
-                        Text("advanced")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                            .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                     }
                     Text("Only show selected apps in media player")
                         .font(.caption)
@@ -5458,13 +4318,6 @@ struct AdvancedAutofadeSettingsRow: View {
                     VStack(alignment: .leading) {
                         HStack(alignment: .center, spacing: 6) {
                             Text("Auto-Hide Preview")
-                            Text("advanced")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundStyle(AdaptiveColors.secondaryTextAuto)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(AdaptiveColors.overlayAuto(0.08)))
-                                .overlay(Capsule().stroke(AdaptiveColors.overlayAuto(0.12), lineWidth: 1))
                         }
                         Text("Fade out mini player after delay")
                             .font(.caption)
@@ -5822,5 +4675,73 @@ struct AppPickerRow: View {
         .background(isHovering ? AdaptiveColors.overlayAuto(0.05) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.small, style: .continuous))
         .onHover { isHovering = $0 }
+    }
+}
+
+/// Choose which drop buttons appear in the Shelf and Basket quick actions bar.
+struct QuickActionsPicker: View {
+    @State private var enabled = QuickActionType.isEnabledList
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Buttons")
+            Text("Drag files onto a button, or click it to use everything on the shelf")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            ForEach(QuickActionType.allCases) { action in
+                Toggle(isOn: Binding(
+                    get: { enabled.contains(action) },
+                    set: { isOn in
+                        QuickActionType.setEnabled(action, isOn)
+                        enabled = QuickActionType.isEnabledList
+                    }
+                )) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(action.title)
+                            Text(action.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: action.icon)
+                            .frame(width: 20)  // same width for every icon, so the titles line up
+                    }
+                }
+                .disabled(enabled.contains(action) && enabled.count == 1)
+            }
+        }
+    }
+}
+
+/// The copyright and license notices PepBox is required to show (GPL-3.0 §5):
+/// NOTICE and LICENSE, bundled from the repository root.
+struct LicensesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private static func bundled(_ name: String) -> String {
+        Bundle.main.url(forResource: name, withExtension: "txt")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Open-Source Licenses").font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+            ScrollView {
+                Text(Self.bundled("NOTICE") + "\n\n" + Self.bundled("LICENSE"))
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Text("Text Actions has its own notices under Text Actions → Settings → About.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .frame(width: 560, height: 480)
     }
 }

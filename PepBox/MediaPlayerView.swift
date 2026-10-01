@@ -224,6 +224,8 @@ struct MediaPlayerView: View {
     var airPodsManager = AirPodsManager.shared  // @Observable - no wrapper needed
     @ObservedObject private var lockScreenManager = LockScreenManager.shared
     @ObservedObject private var updateChecker = UpdateChecker.shared
+    @ObservedObject private var lyricsManager = LyricsManager.shared
+    @AppStorage(LyricsManager.enabledKey) private var syncedLyricsEnabled = false
     
     // MARK: - Preferences
     @AppStorage(AppPreferenceKey.enableRightClickHide) private var enableRightClickHide = PreferenceDefault.enableRightClickHide
@@ -341,7 +343,7 @@ struct MediaPlayerView: View {
                     // GROUP 1: Title + Artist (TOP)
                     VStack(alignment: .leading, spacing: 2) {
                         titleRowView
-                        artistRowView
+                        artistRowView(at: currentDate)
                     }
                     
                     Spacer(minLength: 4)
@@ -461,8 +463,12 @@ struct MediaPlayerView: View {
             guard enableUpdateHUD, isAvailable else { return }
             triggerInlineHUD(.update, value: 1.0)
         }
+        .onAppear { loadLyrics() }
+        .onChange(of: syncedLyricsEnabled) { _, _ in loadLyrics() }
+        .onChange(of: musicManager.artistName) { _, _ in loadLyrics() }
         // MARK: - Album Art Flip on Track Change (directional)
         .onChange(of: musicManager.songTitle) { _, _ in
+            loadLyrics()
             // PREMIUM: Directional flip - right for forward, left for backward
             let flipAngle: Double = switch musicManager.lastSkipDirection {
             case .forward: 25
@@ -676,12 +682,25 @@ struct MediaPlayerView: View {
     
     // MARK: - Artist Row (extracted to reduce type-checker complexity)
     
-    private var artistRowView: some View {
+    /// The artist, or, with Synced Lyrics on, the line being sung right now.
+    private func artistRowView(at date: Date) -> some View {
+        let lyric = syncedLyricsEnabled ? lyricsManager.lyrics?.line(at: estimatedPosition(at: date)) : nil
         let artistName = musicManager.artistName.isEmpty ? "—" : musicManager.artistName
-        return MarqueeText(text: artistName, speed: 25)
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(secondaryText(0.72))
+        return MarqueeText(text: lyric ?? artistName, speed: 25)
+            .font(.system(size: 13, weight: lyric == nil ? .medium : .semibold))
+            .foregroundStyle(lyric == nil ? secondaryText(0.72) : visualizerColor)
             .frame(height: 18)
+            .id(lyric ?? artistName)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.2), value: lyric)
+    }
+
+    private func loadLyrics() {
+        LyricsManager.shared.load(
+            title: musicManager.songTitle,
+            artist: musicManager.artistName,
+            duration: musicManager.songDuration
+        )
     }
     
     // MARK: - Large Album Art (for horizontal layout)

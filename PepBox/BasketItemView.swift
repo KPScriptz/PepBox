@@ -415,7 +415,7 @@ struct BasketItemView: View {
                         if isShakeAnimating {
                             ZStack {
                                 RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous)
-                                    .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                                    .pepboxSurfaceFill(transparent: useTransparentBackground)
                                     .frame(width: 44, height: 44)
                                     .shadow(radius: 4)
                                 Image(systemName: "checkmark.shield.fill")
@@ -740,7 +740,7 @@ struct BasketItemView: View {
                 if isShakeAnimating {
                     ZStack {
                         RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous)
-                            .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                            .pepboxSurfaceFill(transparent: useTransparentBackground)
                             .frame(width: 44, height: 44)
                             .shadow(radius: 4)
                         Image(systemName: "checkmark.shield.fill")
@@ -764,9 +764,23 @@ struct BasketItemView: View {
         }
         
         Button {
+            let selected = state.basketItems.filter { state.selectedBasketItems.contains($0.id) }
+            DroppedItem.copyPaths(of: selected.contains(item) ? selected : [item])
+        } label: {
+            Label("Copy Path", systemImage: "link")
+        }
+        
+        Button {
             item.openFile()
         } label: {
             Label("Open", systemImage: "arrow.up.forward.square")
+        }
+        
+        Button {
+            let selected = state.basketItems.filter { state.selectedBasketItems.contains($0.id) }
+            DroppedItem.showInFinder(selected.contains(item) ? selected : [item])
+        } label: {
+            Label("Show in Finder", systemImage: "folder")
         }
         
         // Move To...
@@ -894,6 +908,16 @@ struct BasketItemView: View {
                     Label("Extract Text", systemImage: "text.viewfinder")
                 }
             }
+        }
+        
+        // Remove Location & Metadata - single image
+        if state.selectedBasketItems.count <= 1 && item.isImage {
+            Button {
+                stripMetadata()
+            } label: {
+                Label("Remove Location & Metadata", systemImage: "location.slash")
+            }
+            .disabled(isConverting)
         }
         
         // Remove Background - show when single image OR all selected are images
@@ -1244,7 +1268,36 @@ struct BasketItemView: View {
                 let requiredApp = FileConverter.requiredAppForPDFConversion(fileType: item.fileType) ?? "Keynote, Pages, Numbers, or LibreOffice"
                 await PepBoxAlertController.shared.showError(
                     title: "Conversion Failed",
-                    message: "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                    message: format == .pdf
+                        ? "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                        : "Could not convert \(item.name) to \(format.displayName). The file may be protected or have no audio."
+                )
+            }
+        }
+    }
+    
+    /// Replaces the item with a copy that has no GPS, camera or date metadata.
+    private func stripMetadata() {
+        guard !isConverting else { return }
+        isConverting = true
+        state.beginFileOperation()
+        let source = item.url
+        Task.detached {
+            let cleaned = ImageMetadataStripper.strip(source)
+            await MainActor.run {
+                isConverting = false
+                state.endFileOperation()
+                if let cleaned {
+                    pendingConvertedItem = DroppedItem(url: cleaned, isTemporary: true)
+                    withAnimation(PepBoxAnimation.state) {
+                        isPoofing = true
+                    }
+                }
+            }
+            if cleaned == nil {
+                await PepBoxAlertController.shared.showError(
+                    title: "Couldn't Remove Metadata",
+                    message: "\(source.lastPathComponent) couldn't be read as an image."
                 )
             }
         }

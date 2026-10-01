@@ -18,7 +18,6 @@ struct QuickshareInfoView: View {
     
     @State private var showDeleteConfirmation: QuickshareItem? = nil
     @State private var copiedItemId: UUID? = nil
-    @State private var showReviewsSheet = false
     
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
@@ -61,11 +60,8 @@ struct QuickshareInfoView: View {
         }
         .frame(width: 540)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .quickshare)
-        }
         .alert("Delete from Server?", isPresented: deleteAlertBinding) {
             Button("Cancel", role: .cancel) {
                 showDeleteConfirmation = nil
@@ -128,37 +124,6 @@ struct QuickshareInfoView: View {
             
             // Stats row
             HStack(spacing: 12) {
-                // Installs
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 12))
-                    Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                        .font(.caption.weight(.medium))
-                }
-                .foregroundStyle(.secondary)
-                
-                // Rating
-                Button {
-                    showReviewsSheet = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.yellow)
-                        if let r = rating, r.ratingCount > 0 {
-                            Text(String(format: "%.1f", r.averageRating))
-                                .font(.caption.weight(.medium))
-                            Text("(\(r.ratingCount))")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        } else {
-                            Text("–")
-                                .font(.caption.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .buttonStyle(PepBoxSelectableButtonStyle(isSelected: false))
                 
                 // Category badge
                 Text("Productivity")

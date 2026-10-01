@@ -8,6 +8,7 @@
 import SwiftUI
 import Observation
 import AppKit
+import UniformTypeIdentifiers
 
 /// Status of a Quick Share upload operation
 enum QuickShareStatus: Equatable {
@@ -18,19 +19,33 @@ enum QuickShareStatus: Equatable {
 }
 
 /// Types of quick actions available in the basket
-enum QuickActionType: String, CaseIterable {
+enum QuickActionType: String, CaseIterable, Identifiable {
     case airdrop
+    case privateAirdrop
+    case localSend
     case messages
     case mail
     case quickshare
-    
+    case toPhone
+    case zip
+    case copy
+    case notes
+
+    var id: String { rawValue }
+
     /// SF Symbol icon for the action
     var icon: String {
         switch self {
         case .airdrop: return "dot.radiowaves.left.and.right"
+        case .privateAirdrop: return "location.slash.fill"
+        case .localSend: return "paperplane.fill"
         case .messages: return "message.fill"
         case .mail: return "envelope.fill"
         case .quickshare: return "drop.fill"
+        case .toPhone: return "qrcode"
+        case .zip: return "doc.zipper"
+        case .copy: return "doc.on.doc.fill"
+        case .notes: return "note.text"
         }
     }
     
@@ -38,9 +53,15 @@ enum QuickActionType: String, CaseIterable {
     var title: String {
         switch self {
         case .airdrop: return "AirDrop"
+        case .privateAirdrop: return "Private AirDrop"
+        case .localSend: return "LocalSend"
         case .messages: return "Messages"
         case .mail: return "Mail"
         case .quickshare: return "Quickshare"
+        case .toPhone: return "To Phone"
+        case .zip: return "ZIP"
+        case .copy: return "Copy"
+        case .notes: return "Notes"
         }
     }
     
@@ -48,11 +69,111 @@ enum QuickActionType: String, CaseIterable {
     var description: String {
         switch self {
         case .airdrop: return "Send files wirelessly to nearby Apple devices"
+        case .privateAirdrop: return "Remove location and camera data from photos, then AirDrop"
+        case .localSend: return "Send to Android, Windows and Linux devices running LocalSend"
         case .messages: return "Share files via iMessage or SMS"
         case .mail: return "Attach files to a new email"
         case .quickshare: return "Upload to cloud and copy shareable link"
+        case .toPhone: return "Upload, then show a QR code any phone can scan to download"
+        case .zip: return "Compress into one ZIP and put it on the shelf"
+        case .copy: return "Copy the files, ready to paste in Finder or any app"
+        case .notes: return "Add the files to a new note in Apple Notes"
         }
     }
+
+    private static let enabledKey = "quickActionsEnabled"
+    static let defaultEnabled: [QuickActionType] = [.airdrop, .privateAirdrop, .localSend, .messages, .mail, .quickshare, .zip, .copy]
+
+    /// The actions shown in the Shelf and Basket bars, in order.
+    static var enabled: [QuickActionType] {
+        let saved = UserDefaults.standard.stringArray(forKey: enabledKey)?.compactMap(QuickActionType.init(rawValue:)) ?? defaultEnabled
+        return saved.filter { ($0 != .quickshare && $0 != .toPhone) || !ExtensionType.quickshare.isRemoved }
+    }
+
+    static func setEnabled(_ action: QuickActionType, _ isOn: Bool) {
+        var saved = UserDefaults.standard.stringArray(forKey: enabledKey)?.compactMap(QuickActionType.init(rawValue:)) ?? defaultEnabled
+        saved.removeAll { $0 == action }
+        if isOn {
+            // Keep the menu's natural order.
+            saved.append(action)
+            saved.sort { allCases.firstIndex(of: $0)! < allCases.firstIndex(of: $1)! }
+        }
+        UserDefaults.standard.set(saved.map(\.rawValue), forKey: enabledKey)
+        NotificationCenter.default.post(name: .quickActionsChanged, object: nil)
+    }
+
+    static var isEnabledList: Set<QuickActionType> {
+        Set(UserDefaults.standard.stringArray(forKey: enabledKey)?.compactMap(QuickActionType.init(rawValue:)) ?? defaultEnabled)
+    }
+
+    /// Runs the action on dropped or tapped files. `completion` runs once the files are handed off.
+    func perform(_ urls: [URL], completion: (() -> Void)? = nil) {
+        guard !urls.isEmpty else { return }
+        switch self {
+        case .airdrop:
+            NSSharingService(named: .sendViaAirDrop)?.perform(withItems: urls)
+            completion?()
+        case .privateAirdrop:
+            Task.detached {
+                // Photos get a clean copy; everything else is sent as is.
+                let cleaned = urls.map { url in
+                    UTType(filenameExtension: url.pathExtension)?.conforms(to: .image) == true
+                        ? (ImageMetadataStripper.strip(url) ?? url) : url
+                }
+                await MainActor.run {
+                    NSSharingService(named: .sendViaAirDrop)?.perform(withItems: cleaned)
+                    completion?()
+                }
+            }
+        case .localSend:
+            LocalSendPanelController.shared.show(urls)
+            completion?()
+        case .messages:
+            NSSharingService(named: .composeMessage)?.perform(withItems: urls)
+            completion?()
+        case .mail:
+            _ = MailHelper.composeEmail(with: urls)
+            completion?()
+        case .quickshare:
+            PepBoxQuickshare.share(urls: urls) { completion?() }
+        case .toPhone:
+            // Quickshare copies the link on success; show it as a QR code.
+            PepBoxQuickshare.share(urls: urls) {
+                if let link = NSPasteboard.general.string(forType: .string) {
+                    QRCodePanelController.shared.show(link)
+                }
+                completion?()
+            }
+        case .zip:
+            Task { @MainActor in
+                let name = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
+                if let zip = await FileConverter.createZIP(from: urls.map { DroppedItem(url: $0) }, archiveName: name) {
+                    PepBoxState.shared.addItems(from: [zip])
+                    HapticFeedback.copy()
+                }
+                completion?()
+            }
+        case .copy:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.writeObjects(urls as [NSURL])
+            HapticFeedback.copy()
+            completion?()
+        case .notes:
+            let notes = NSSharingService.sharingServices(forItems: urls).first {
+                $0.title.localizedCaseInsensitiveContains("Notes")
+            }
+            if let notes {
+                notes.perform(withItems: urls)
+            } else {
+                NSSound.beep()
+            }
+            completion?()
+        }
+    }
+}
+
+extension Notification.Name {
+    static let quickActionsChanged = Notification.Name("PepBoxQuickActionsChanged")
 }
 
 /// Main application state for the PepBox shelf
@@ -61,7 +182,9 @@ final class PepBoxState {
     // MARK: - Simple Item Arrays (post-v9.3.0 - stacks removed)
     
     /// Items currently on the shelf (regular files)
-    var shelfItems: [DroppedItem] = []
+    var shelfItems: [DroppedItem] = [] {
+        didSet { saveShelfItemsIfRemembering() }
+    }
     
     /// Power Folders on shelf (pinned directories)
     var shelfPowerFolders: [DroppedItem] = []
@@ -410,7 +533,8 @@ final class PepBoxState {
         let cameraEnabled = UserDefaults.standard.preference(AppPreferenceKey.cameraEnabled, default: PreferenceDefault.cameraEnabled)
         let cameraButtonVisible = cameraInstalled && cameraEnabled && !ExtensionType.camera.isRemoved
         let isDragging = DragMonitor.shared.isDragging
-        let hasFloatingButtons = terminalButtonVisible || !autoCollapseEnabled || isDragging || caffeineButtonVisible || cameraButtonVisible
+        let hasFloatingButtons = terminalButtonVisible || !autoCollapseEnabled || isDragging || caffeineButtonVisible || cameraButtonVisible ||
+            !NotchWidgetKind.available.isEmpty
         
         if hasFloatingButtons {
             // Reserve space for offset + button/bar size + hover/animation headroom.
@@ -632,6 +756,37 @@ final class PepBoxState {
         }
     }
     
+    // MARK: - Remember Shelf Items
+
+    private static let rememberedShelfItemsKey = "rememberedShelfItemPaths"
+
+    private var isRememberingShelfItems: Bool {
+        UserDefaults.standard.preference(
+            AppPreferenceKey.rememberShelfItems,
+            default: PreferenceDefault.rememberShelfItems
+        )
+    }
+
+    /// Saves shelf item paths when "Remember Items" is on, and clears them when it's off.
+    /// (Pinned folders are persisted separately by savePinnedFolders.)
+    func saveShelfItemsIfRemembering() {
+        if isRememberingShelfItems {
+            UserDefaults.standard.set(shelfItems.map(\.url.path), forKey: Self.rememberedShelfItemsKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.rememberedShelfItemsKey)
+        }
+    }
+
+    /// Puts back the shelf items from the previous session, skipping files that are gone.
+    func restoreShelfItems() {
+        guard isRememberingShelfItems,
+              let paths = UserDefaults.standard.stringArray(forKey: Self.rememberedShelfItemsKey) else { return }
+        let urls = paths
+            .map { URL(fileURLWithPath: $0) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        addItems(from: urls)
+    }
+
     /// Validates that all items still exist on disk and removes ghost items
     /// Call this when shelf becomes visible or after drag operations
     func validateItems() {

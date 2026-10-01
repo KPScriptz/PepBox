@@ -1,0 +1,180 @@
+// Constants.swift
+// DropClip
+//
+// Defines system-wide configuration constants, timing thresholds, key codes, and default settings keys.
+import Foundation
+import CoreGraphics
+
+public enum Constants {
+    public static let maxTextLength: Int = 10_485_760
+    public static let pasteboardRestoreDelay: TimeInterval = 0.8
+    public static let deleteVirtualKey: CGKeyCode = 0x33
+    public static let vVirtualKey: CGKeyCode = 0x09
+    public static let copyVirtualKey: CGKeyCode = 0x08
+    public static let maxURLScanLength: Int = 2000
+    public static let actionErrorDomain: String = "DropClip.ActionError"
+    public static let actionErrorCode: Int = 1
+
+    /// Query-value encoding charset that escapes `&`, `=`, `+`, `?`, `#`, etc.
+    /// (stricter than `.urlQueryAllowed`, which leaves those characters unescaped
+    /// and corrupts URLs built from user-selected text).
+    ///
+    /// `%` is also excluded: `.urlQueryAllowed` permits it, so an already-escaped
+    /// sequence such as `%2F` in the selection would otherwise pass through as an
+    /// escape sequence and be reinterpreted by the destination URL instead of being
+    /// treated as the literal characters `%2F`.
+    public static var queryValueAllowed: CharacterSet {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "%:#[]@!$&'()*+,;=?")
+        return allowed
+    }
+    
+    public static let symbolPrefix: String = "symbol("
+    public static let symbolSuffix: String = ")"
+    public static let imageExtensions: [String] = [".png", ".jpg", ".jpeg", ".icns", ".gif", ".svg"]
+    
+    public static let rulesFileURL: URL = URL(fileURLWithPath: ("~/.dropclip/rules.json" as NSString).expandingTildeInPath)
+    public static let secretsFileURL: URL = URL(fileURLWithPath: ("~/.dropclip/secrets.json" as NSString).expandingTildeInPath)
+    
+    // Extension System Constants
+    public static let extensionsDirectory: URL = URL(fileURLWithPath: ("~/.dropclip/extensions" as NSString).expandingTildeInPath)
+    public static let customIconsDirectory: URL = URL(fileURLWithPath: ("~/.dropclip/custom_icons" as NSString).expandingTildeInPath)
+    public static let customIconPrefix: String = "custom:"
+    public static let manifestFileName: String = "dropclip.json"
+    public static let legacyManifestFileName: String = "manifest.json"
+    /// The manifest name of a package made for OpenClip, which DropClip reads as its own.
+    public static let openClipManifestFileName: String = "openclip.json"
+    public static let storePageLimit: Int = 12
+    public static let extKeyIdentifier: String = "Identifier"
+    public static let extKeyName: String = "Name"
+    public static let extKeyActions: String = "Actions"
+    public static let extKeyTitle: String = "Title"
+    public static let extKeyIcon: String = "Icon"
+    public static let extKeyScript: String = "Script"
+    
+    public static let defaultScriptName: String = "script.sh"
+    public static let defaultIconSymbol: String = "plus"
+    public static let defaultAIIconSymbol: String = "sparkle"
+    public static let customIdentifierPrefix: String = "com.custom."
+    public static let titlePrefixHash: String = "# Title:"
+    public static let titlePrefixSlash: String = "// Title:"
+    public static let iconPrefixHash: String = "# Icon:"
+    public static let iconPrefixSlash: String = "// Icon:"
+    public static let identifierPrefixHash: String = "# Identifier:"
+    public static let identifierPrefixSlash: String = "// Identifier:"
+    
+    public static let actionTypePaste: String = "paste"
+    public static let actionTypeCopy: String = "copy"
+    public static let actionTypePasteContent: String = "pasteContent"
+    public static let actionTypeCopyContent: String = "copyContent"
+    public static let actionTypeOpenURL: String = "openURL"
+    public static let actionTypeFile: String = "file"
+    public static let actionTypeCopyFile: String = "copyFile"
+    public static let actionTypeSaveFile: String = "saveFile"
+    public static let outputsDirectory: URL = URL(fileURLWithPath: ("~/.dropclip/cache/outputs" as NSString).expandingTildeInPath)
+    
+    public static let envVarText: String = "DROPCLIP_TEXT"
+    public static let envVarHTML: String = "DROPCLIP_HTML"
+    public static let envVarRTF: String = "DROPCLIP_RTF"
+    public static let envVarMatched: String = "DROPCLIP_MATCHED"
+    public static let envVarCapturePrefix: String = "DROPCLIP_CAPTURE_"
+    public static let envVarBundleID: String = "DROPCLIP_BUNDLE_ID"
+    public static let envVarActionID: String = "DROPCLIP_ACTION_ID"
+    public static let envVarLocale: String = "DROPCLIP_LOCALE"
+    public static let envVarLanguage: String = "DROPCLIP_LANGUAGE"
+    /// The prefix scripts written before the rename read (`OPENCLIP_TEXT` and the rest).
+    public static let legacyEnvVarPrefix: String = "OPENCLIP_"
+
+    /// The script environment with every `DROPCLIP_` variable also under its old `OPENCLIP_`
+    /// name, so a script written for OpenClip keeps working unchanged.
+    public static func withLegacyEnvironment(_ env: [String: String]) -> [String: String] {
+        var result = env
+        for (key, value) in env where key.hasPrefix("DROPCLIP_") {
+            result[legacyEnvVarPrefix + key.dropFirst("DROPCLIP_".count)] = value
+        }
+        return result
+    }
+    public static let shortcutsBinaryPath: String = "/usr/bin/shortcuts"
+    public static let maxHeaderLinesToScan: Int = 50
+
+    /// Maximum wall-clock runtime for shell/AppleScript/JS subprocess actions before they are killed,
+    /// preventing a hanging script from leaving background tasks abandoned.
+    public static let scriptTimeout: TimeInterval = 60
+
+    /// Filename prefix for the temporary iCalendar (.ics) files generated by the builtin calendar
+    /// action to hand an event off to the macOS Calendar app. Shared by the producer
+    /// (`CalendarAction.makeNativeCalendarICSURL`) and the cleaner (`DefaultActionResultHandler`).
+    public static let icsFilenamePrefix: String = "DropClipEvent-"
+
+    /// Delay (seconds) before a temporary `.ics` file handed to the Calendar app is deleted. Long
+    /// enough for Calendar to finish importing the event, short enough that orphaned files do not
+    /// accumulate in the temp directory between launches.
+    public static let icsCleanupDelay: TimeInterval = 20
+
+    /// Maximum time in seconds for one AX inspect or one Edit ▸ Copy press.
+    /// A blocked AX call must not hold an inspect-gate permit after this time.
+    public static let axReadTimeout: TimeInterval = 0.5
+    /// Maximum number of AX inspects and Edit ▸ Copy presses that can run at the same time.
+    /// A permit is released at the deadline, not when a blocked AX call returns.
+    public static let axMaxConcurrentInspects: Int = 4
+
+    /// Hard deadline (seconds) for the Paste-availability probe's AX menu-bar walk. Mirrors
+    /// `axReadTimeout`: the probe races its Edit ▸ Paste lookup against this deadline so a slow or
+    /// unresponsive target app can never hang delivery. On timeout the probe returns "unknown",
+    /// which the delivery decision treats as cannot-paste (copy).
+    public static let pasteProbeTimeout: TimeInterval = 0.4
+    /// Maximum number of paste-availability probes that can run at the same time.
+    /// The probe has its own limit because a hotkey can start a probe and a selection inspect together.
+    /// A permit is released at `pasteProbeTimeout`. A blocked AX worker does not keep the permit (issue #37).
+    public static let pasteProbeMaxConcurrent: Int = 4
+
+    /// Hard deadline (seconds) for the browser-script retrieval bridge to return a selection.
+    public static let browserScriptTimeout: TimeInterval = 1.0
+
+    /// Hard deadline (seconds) for reading the clipboard after issuing a Cmd+C copy.
+    public static let pasteboardCopyTimeout: TimeInterval = 0.25
+
+    /// Longer copy-poll deadline for Safari, whose selected-text copy path is observably slower to
+    /// stabilize than other apps.
+    public static let safariPasteboardCopyTimeout: TimeInterval = 0.4
+
+    /// Poll interval (seconds) while waiting for the AX web-area text to settle after focus.
+    public static let webAreaSettleInterval: TimeInterval = 0.05
+
+    /// Max polls before giving up on the AX web-area text settling.
+    public static let webAreaSettleMaxRetries: Int = 6
+
+    /// Throttle interval (seconds) for keyboard selection gestures (Cmd+A, Shift+arrow) to prevent rapid repeated retrievals while holding keys.
+    public static let keyboardSelectionDebounceInterval: TimeInterval = 0.15
+
+    /// Maximum age (seconds) for a monitored selection before it is treated as stale.
+    public static let selectionMaxAge: TimeInterval = 30.0
+
+    /// Default duration (seconds) of holding the mouse button down to trigger the popup.
+    public static let defaultMouseHoldDuration: TimeInterval = 0.3
+
+    /// Cap on in-flight synchronous JS evaluations. A CPU-bound synchronous script cannot be
+    /// interrupted in modern JavaScriptCore (JSVirtualMachine.invalidate is gone), so each stuck
+    /// script permanently parks a cooperative-pool thread; refusing new synchronous evaluations
+    /// once this many are in flight keeps thread accumulation bounded.
+    public static let maxConcurrentSyncScriptEvaluations: Int = 4
+
+    /// Guards against zip-slip path traversal: true only when `destinationURL`
+    /// resolves to a path equal to or strictly inside `baseDirectory`.
+    ///
+    /// Symlinks are resolved on both paths before comparing: `standardizingPath`
+    /// only normalizes the path text, so a symlink inside `baseDirectory` that
+    /// points outside it would otherwise defeat the lexical containment check.
+    public static func isPathSafe(destinationURL: URL, baseDirectory: URL) -> Bool {
+        let destPath = (destinationURL.resolvingSymlinksInPath().path as NSString).standardizingPath
+        let basePath = (baseDirectory.resolvingSymlinksInPath().path as NSString).standardizingPath
+        guard destPath.hasPrefix(basePath) else { return false }
+        // Ensure the next character is a separator so /foo/bar doesn't accept /foo/bar2
+        let remainder = destPath.dropFirst(basePath.count)
+        if remainder.isEmpty { return true }
+        return remainder.hasPrefix("/")
+    }
+    
+    // Preferences Keys
+    public static let disabledActionIDsKey: String = "disabledActionIDs"
+}

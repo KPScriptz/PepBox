@@ -20,6 +20,50 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     
     /// Shows the settings window and navigates to a specific tab
     /// - Parameter tab: The settings tab to open
+    /// Layout check: draws a Settings page off-screen at `width` and full length, and saves it as PNG.
+    /// Only reachable when the hidden `qaSnapshotsEnabled` default is on (pepbox://qa-snapshot?tab=…).
+    private var snapshotWindows: [NSWindow] = []
+
+    func snapshot(tab: SettingsTab, width: CGFloat, height: CGFloat, to url: URL) {
+        pendingTabToOpen = tab
+        let hosting = NSHostingView(rootView: SettingsView())
+        let window = NSWindow(contentRect: NSRect(x: -20_000, y: -20_000, width: width, height: height),
+                              styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        snapshotWindows.append(window)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            hosting.layoutSubtreeIfNeeded()
+            if let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) {
+                hosting.cacheDisplay(in: hosting.bounds, to: rep)
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try? rep.representation(using: .png, properties: [:])?.write(to: url)
+            }
+            window.orderOut(nil)
+            self?.snapshotWindows.removeAll { $0 === window }
+        }
+    }
+
+    /// Layout check for any view (used for shelf widgets).
+    func snapshotView<V: View>(_ view: V, size: NSSize, to url: URL) {
+        let hosting = NSHostingView(rootView: view)
+        let window = NSWindow(contentRect: NSRect(x: -20_000, y: -20_000, width: size.width, height: size.height),
+                              styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        snapshotWindows.append(window)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            hosting.layoutSubtreeIfNeeded()
+            if let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) {
+                hosting.cacheDisplay(in: hosting.bounds, to: rep)
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try? rep.representation(using: .png, properties: [:])?.write(to: url)
+            }
+            window.orderOut(nil)
+            self?.snapshotWindows.removeAll { $0 === window }
+        }
+    }
+
     func showSettings(tab: SettingsTab) {
         pendingTabToOpen = tab
         showSettings(openingExtension: nil)
@@ -75,6 +119,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             defer: false
         )
         
+        // Below this the sidebar and the content column start overlapping.
+        newWindow.contentMinSize = NSSize(width: 820, height: 560)
         newWindow.center()
         newWindow.title = "Settings"
         newWindow.titlebarAppearsTransparent = true

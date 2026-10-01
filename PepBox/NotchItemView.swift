@@ -463,9 +463,23 @@ struct NotchItemView: View {
             }
             
             Button {
+                let selected = state.items.filter { state.selectedItems.contains($0.id) }
+                DroppedItem.copyPaths(of: selected.contains(item) ? selected : [item])
+            } label: {
+                Label("Copy Path", systemImage: "link")
+            }
+            
+            Button {
                 item.openFile()
             } label: {
                 Label("Open", systemImage: "arrow.up.forward.square")
+            }
+            
+            Button {
+                let selected = state.items.filter { state.selectedItems.contains($0.id) }
+                DroppedItem.showInFinder(selected.contains(item) ? selected : [item])
+            } label: {
+                Label("Show in Finder", systemImage: "folder")
             }
             
             // Move To...
@@ -527,6 +541,15 @@ struct NotchItemView: View {
                 }
             } label: {
                 Label("Share", systemImage: "square.and.arrow.up")
+            }
+            
+            Button {
+                let urls = state.selectedItems.isEmpty
+                    ? [item.url]
+                    : state.items.filter { state.selectedItems.contains($0.id) }.map { $0.url }
+                LocalSendPanelController.shared.show(urls)
+            } label: {
+                Label("Send with LocalSend…", systemImage: "paperplane")
             }
             
             // PepBox Quickshare - upload and get shareable link
@@ -593,6 +616,99 @@ struct NotchItemView: View {
                         Label("Extract Text", systemImage: "text.viewfinder")
                     }
                 }
+            }
+            
+            // File tools: resize, PDFs, checksum
+            let toolTargets = (state.selectedItems.count > 1 && state.selectedItems.contains(item.id))
+                ? state.items.filter { state.selectedItems.contains($0.id) } : [item]
+            let allImages = toolTargets.allSatisfy(\.isImage)
+            let allPDFs = toolTargets.allSatisfy { $0.fileType?.conforms(to: .pdf) == true }
+            if allImages || (allPDFs && toolTargets.count > 1) || toolTargets.count >= 1 {
+                Menu {
+                    if allImages {
+                        ForEach([("Half Size", 0), ("1080 px", 1080), ("2048 px", 2048), ("3840 px (4K)", 3840)], id: \.1) { title, size in
+                            Button(title) { runFileTool(toolTargets) { url in
+                                if size == 0 {
+                                    let pixels = CGImageSourceCreateWithURL(url as CFURL, nil)
+                                        .flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) as? [CFString: Any] }
+                                    let longest = max(pixels?[kCGImagePropertyPixelWidth] as? Int ?? 0, pixels?[kCGImagePropertyPixelHeight] as? Int ?? 0)
+                                    return longest > 1 ? FileTools.resizeImage(url, maxDimension: longest / 2) : nil
+                                }
+                                return FileTools.resizeImage(url, maxDimension: size)
+                            } }
+                        }
+                        Divider()
+                        Button("Rotate Left") { runFileTool(toolTargets) { FileTools.editImage($0, .rotateLeft) } }
+                        Button("Rotate Right") { runFileTool(toolTargets) { FileTools.editImage($0, .rotateRight) } }
+                        Button("Flip Horizontally") { runFileTool(toolTargets) { FileTools.editImage($0, .flipHorizontal) } }
+                        Button("Black & White") { runFileTool(toolTargets) { FileTools.editImage($0, .grayscale) } }
+                        Divider()
+                        Button(toolTargets.count > 1 ? "Combine into PDF" : "Make PDF") {
+                            runFileToolOnAll(toolTargets) { FileTools.imagesToPDF($0) }
+                        }
+                    }
+                    if allPDFs && toolTargets.count > 1 {
+                        Button("Merge \(toolTargets.count) PDFs") { runFileToolOnAll(toolTargets) { FileTools.mergePDFs($0) } }
+                    }
+                    if toolTargets.count == 1, item.fileType?.conforms(to: .movie) == true {
+                        Button("Make GIF (first 15 s)") {
+                            let url = item.url
+                            Task.detached {
+                                let gif = await FileTools.videoToGIF(url)
+                                await MainActor.run { finishFileTool(gif.map { [$0] } ?? []) }
+                            }
+                        }
+                    }
+                    if toolTargets.count == 1, item.isImage {
+                        Button("Copy as Data URI") { copyString(FileTools.dataURI(item.url)) }
+                    }
+                    if toolTargets.count == 1, item.fileType?.conforms(to: .text) == true || item.fileType?.conforms(to: .sourceCode) == true {
+                        Button("Copy Text Contents") { copyString(FileTools.textContents(item.url)) }
+                    }
+                    if toolTargets.count > 1 {
+                        Button("Rename Sequentially…") { renameSequentially(toolTargets) }
+                    }
+                    if toolTargets.count == 1, item.isDirectory {
+                        Button("Open in Terminal") {
+                            if let terminal = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") {
+                                NSWorkspace.shared.open([item.url], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
+                            }
+                        }
+                    }
+                    if toolTargets.count == 1 && !item.isDirectory {
+                        Button("Copy SHA-256 Checksum") {
+                            let url = item.url
+                            Task.detached {
+                                guard let hash = FileTools.sha256(url) else { return }
+                                await MainActor.run {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(hash, forType: .string)
+                                    HapticFeedback.copy()
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Tools", systemImage: "wrench.and.screwdriver")
+                }
+            }
+            
+            if state.selectedItems.count <= 1 && item.isImage {
+                Button {
+                    if let image = NSImage(contentsOf: item.url) { FloatingPinController.shared.pin(.image(image)) }
+                } label: {
+                    Label("Float on Screen", systemImage: "pin.fill")
+                }
+            }
+            
+            // Remove Location & Metadata - single image
+            if state.selectedItems.count <= 1 && item.isImage {
+                Button {
+                    stripMetadata()
+                } label: {
+                    Label("Remove Location & Metadata", systemImage: "location.slash")
+                }
+                .disabled(isConverting)
             }
             
             // Remove Background - show when single image OR all selected are images
@@ -862,7 +978,97 @@ struct NotchItemView: View {
                 let requiredApp = FileConverter.requiredAppForPDFConversion(fileType: item.fileType) ?? "Keynote, Pages, Numbers, or LibreOffice"
                 await PepBoxAlertController.shared.showError(
                     title: "Conversion Failed",
-                    message: "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                    message: format == .pdf
+                        ? "Could not convert \(item.name) to PDF. Please install \(requiredApp) (free from App Store) or LibreOffice."
+                        : "Could not convert \(item.name) to \(format.displayName). The file may be protected or have no audio."
+                )
+            }
+        }
+    }
+    
+    /// Runs a file tool on each item in the background and puts the results on the shelf.
+    private func runFileTool(_ items: [DroppedItem], _ tool: @escaping (URL) -> URL?) {
+        let urls = items.map(\.url)
+        Task.detached {
+            let outputs = urls.compactMap(tool)
+            await MainActor.run { finishFileTool(outputs) }
+        }
+    }
+    
+    /// Runs a tool that combines all items into one file (merge, images → PDF).
+    private func runFileToolOnAll(_ items: [DroppedItem], _ tool: @escaping ([URL]) -> URL?) {
+        let urls = items.map(\.url)
+        Task.detached {
+            let output = tool(urls)
+            await MainActor.run { finishFileTool(output.map { [$0] } ?? []) }
+        }
+    }
+    
+    private func copyString(_ text: String?) {
+        guard let text else {
+            NSSound.beep()
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        HapticFeedback.copy()
+    }
+    
+    /// Asks for a base name, then renames the files on disk to "Name 1", "Name 2"… in shelf order.
+    private func renameSequentially(_ items: [DroppedItem]) {
+        let alert = NSAlert()
+        alert.messageText = "Rename \(items.count) Files"
+        alert.informativeText = "They'll be numbered in shelf order, like “Trip 1”, “Trip 2”. Extensions stay the same."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = items.first.map { $0.url.deletingPathExtension().lastPathComponent } ?? "File"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let base = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !base.isEmpty else { return }
+        let ordered = state.items.filter { candidate in items.contains { $0.id == candidate.id } }
+        for (old, name) in zip(ordered, FileTools.sequentialNames(base: base, count: ordered.count)) {
+            if let renamed = old.renamed(to: name) {
+                state.replaceItem(old, with: renamed)
+            }
+        }
+        HapticFeedback.copy()
+    }
+    
+    private func finishFileTool(_ outputs: [URL]) {
+        guard !outputs.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        state.addItems(from: outputs)
+        HapticFeedback.copy()
+    }
+    
+    /// Replaces the item with a copy that has no GPS, camera or date metadata.
+    private func stripMetadata() {
+        guard !isConverting else { return }
+        isConverting = true
+        state.beginFileOperation()
+        let source = item.url
+        Task.detached {
+            let cleaned = ImageMetadataStripper.strip(source)
+            await MainActor.run {
+                isConverting = false
+                state.endFileOperation()
+                if let cleaned {
+                    pendingConvertedItem = DroppedItem(url: cleaned, isTemporary: true)
+                    withAnimation(PepBoxAnimation.state) {
+                        isPoofing = true
+                    }
+                }
+            }
+            if cleaned == nil {
+                await PepBoxAlertController.shared.showError(
+                    title: "Couldn't Remove Metadata",
+                    message: "\(source.lastPathComponent) couldn't be read as an image."
                 )
             }
         }

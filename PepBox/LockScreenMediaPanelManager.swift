@@ -41,7 +41,8 @@ final class LockScreenMediaPanelManager {
     
     // MARK: - Panel Dimensions (must match LockScreenMediaPanelView)
     private let panelWidth: CGFloat = 380
-    private let panelHeight: CGFloat = 160
+    /// Must match LockScreenMediaPanelView.panelHeight (160 + the widgets row).
+    private let panelHeight: CGFloat = 188
     private let panelCornerRadius: CGFloat = 24
     
     // MARK: - Dependencies

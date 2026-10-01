@@ -48,15 +48,28 @@ struct ClipboardManagerView: View {
     
     // Tag Filter State
     @State private var selectedTagFilter: UUID? = nil  // nil = show all
+    @State private var typeFilter: ClipboardType? = nil  // nil = all kinds
     @State private var isTagPopoverVisible = false
     @State private var showTagManagement = false
     
     // Cached sorted/filtered history (updated only when needed)
     @State private var cachedSortedHistory: [ClipboardItem] = []
     
-    /// Helper to get selected items as array, respecting visual order
+    /// Order items were picked in, for stacked paste (see ClipboardStack.reconcile).
+    @State private var selectionOrder: [UUID] = []
+    
+    /// Selected items in stack order: the order you picked them, ranges oldest first.
     private var selectedItemsArray: [ClipboardItem] {
-        cachedSortedHistory.filter { selectedItems.contains($0.id) }
+        let byID = Dictionary(manager.history.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let order = ClipboardStack.reconcile(order: selectionOrder, selected: selectedItems,
+                                             dates: byID.mapValues(\.date))
+        return order.compactMap { byID[$0] }
+    }
+    
+    /// 1-based position in the stack, shown on rows when more than one item is selected.
+    private func stackNumber(for id: UUID) -> Int? {
+        guard selectedItems.count > 1, selectedItems.contains(id) else { return nil }
+        return selectedItemsArray.firstIndex { $0.id == id }.map { $0 + 1 }
     }
     
     /// Alias for cached history (compatibility)
@@ -98,6 +111,9 @@ struct ClipboardManagerView: View {
         } else {
             filtered = historySnapshot
         }
+        if let typeFilter {
+            filtered = filtered.filter { $0.type == typeFilter }
+        }
         
         // Then apply search filter
         if !searchSnapshot.isEmpty {
@@ -138,6 +154,9 @@ struct ClipboardManagerView: View {
                 updateSortedHistory()
             }
             .onChange(of: selectedTagFilter) { _, _ in
+                updateSortedHistory()
+            }
+            .onChange(of: typeFilter) { _, _ in
                 updateSortedHistory()
             }
             .onChange(of: tagsEnabled) { _, enabled in
@@ -202,6 +221,24 @@ struct ClipboardManagerView: View {
                             .help("Filter by Tag")
                         }
                         
+                        // Kind filter: text, links, images, files, colors
+                        ToolbarItem(placement: .automatic) {
+                            Menu {
+                                Picker("Show", selection: $typeFilter) {
+                                    Label("All", systemImage: "square.grid.2x2").tag(ClipboardType?.none)
+                                    Label("Text", systemImage: "text.alignleft").tag(ClipboardType?.some(.text))
+                                    Label("Links", systemImage: "link").tag(ClipboardType?.some(.url))
+                                    Label("Images", systemImage: "photo").tag(ClipboardType?.some(.image))
+                                    Label("Files", systemImage: "doc").tag(ClipboardType?.some(.file))
+                                    Label("Colors", systemImage: "paintpalette").tag(ClipboardType?.some(.color))
+                                }
+                                .pickerStyle(.inline)
+                            } label: {
+                                Image(systemName: typeFilter == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                            }
+                            .help("Show only one kind")
+                        }
+                        
                         // Search button in sidebar
                         ToolbarItem(placement: .automatic) {
                             Button {
@@ -242,10 +279,14 @@ struct ClipboardManagerView: View {
                     }
             }
         }
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .frame(minWidth: 1040, maxWidth: .infinity, minHeight: 640, maxHeight: .infinity)
         .background(pasteShortcutButton)
         .background(navigationShortcutButtons)
+        .onChange(of: selectedItems) { _, selected in
+            let dates = Dictionary(manager.history.map { ($0.id, $0.date) }, uniquingKeysWith: { first, _ in first })
+            selectionOrder = ClipboardStack.reconcile(order: selectionOrder, selected: selected, dates: dates)
+        }
     }
     
     private var pasteShortcutButton: some View {
@@ -256,6 +297,14 @@ struct ClipboardManagerView: View {
             .keyboardShortcut(.return, modifiers: []) // 1. Return -> Paste
             .keyboardShortcut(.return, modifiers: .command) // 2. Cmd+Return -> Paste (Bonus)
             .opacity(0)
+            .background(
+                // 3. Option+Return -> Paste as plain text (formatting stripped)
+                Button("") {
+                    onPasteItems(selectedItemsArray.map(\.withoutFormatting))
+                }
+                .keyboardShortcut(.return, modifiers: .option)
+                .opacity(0)
+            )
     }
     
     @ViewBuilder
@@ -266,6 +315,15 @@ struct ClipboardManagerView: View {
             Button("") { deleteSelectedItems() }.keyboardShortcut(.delete, modifiers: [])
             Button("") { deleteSelectedItems() }.keyboardShortcut(KeyEquivalent("\u{08}"), modifiers: []) // Backspace
             Button("") { deleteSelectedItems() }.keyboardShortcut("d", modifiers: .command) // Cmd+D
+            
+            // ⌘1–⌘9 paste the Nth item in the list straight away
+            ForEach(1...9, id: \.self) { number in
+                Button("") {
+                    guard sortedHistory.indices.contains(number - 1) else { return }
+                    onPaste(sortedHistory[number - 1])
+                }
+                .keyboardShortcut(KeyEquivalent(Character(String(number))), modifiers: .command)
+            }
             
             // 5. Command+A -> Select All (always works)
             Button("") {
@@ -362,7 +420,7 @@ struct ClipboardManagerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+            .pepboxSurface(transparent: useTransparentBackground)
             .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous)
@@ -687,11 +745,12 @@ struct ClipboardManagerView: View {
                                         }
                                     },
                                     // Force DraggableArea to update when selection changes
-                                    selectionSignature: selectedItems.contains(item.id) ? 1 : 0
+                                    selectionSignature: (stackNumber(for: item.id) ?? 0) * 2 + (selectedItems.contains(item.id) ? 1 : 0)
                                 ) {
                                     ClipboardItemRow(
                                         item: item, 
                                         isSelected: selectedItems.contains(item.id),
+                                        stackNumber: stackNumber(for: item.id),
                                         renamingItemId: $renamingItemId,
                                         renamingText: $renamingText,
                                         onRename: { newName in
@@ -704,7 +763,7 @@ struct ClipboardManagerView: View {
                                 // CRITICAL: Make view identity depend on selection state
                                 // This forces SwiftUI to recreate the entire DraggableArea (including NSHostingView)
                                 // when selection changes, ensuring the row visual always matches the state
-                                .id("\(item.id.uuidString)-\(selectedItems.contains(item.id) ? "sel" : "unsel")")
+                                .id("\(item.id.uuidString)-\(selectedItems.contains(item.id) ? "sel\(stackNumber(for: item.id) ?? 0)" : "unsel")")
                                 .contextMenu {
                                     if selectedItems.count > 1 {
                                         // Multi-select context menu
@@ -721,6 +780,12 @@ struct ClipboardManagerView: View {
                                             Label("Copy All (\(selectedItems.count))", systemImage: "doc.on.doc")
                                         }
                                         Button {
+                                            manager.merge(selectedItemsArray)
+                                        } label: {
+                                            Label("Merge Into One", systemImage: "arrow.triangle.merge")
+                                        }
+                                        .disabled(selectedItemsArray.filter { $0.type == .text || $0.type == .url || $0.type == .color }.count < 2)
+                                        Button {
                                             bulkSaveSelectedItems()
                                         } label: {
                                             Label("Save All (\(selectedItems.count))", systemImage: "square.and.arrow.down")
@@ -735,6 +800,65 @@ struct ClipboardManagerView: View {
                                         // Single item context menu
                                         Button { onPaste(item) } label: {
                                             Label("Paste", systemImage: "doc.on.clipboard")
+                                        }
+                                        if item.type == .text {
+                                            Button { onPaste(item.withoutFormatting) } label: {
+                                                Label("Paste as Plain Text", systemImage: "textformat")
+                                            }
+                                        }
+                                        if let content = item.content?.trimmingCharacters(in: .whitespacesAndNewlines),
+                                           item.type == .url || item.type == .text {
+                                            if let link = URL(string: content), let scheme = link.scheme, ["http", "https"].contains(scheme) {
+                                                Button {
+                                                    NSWorkspace.shared.open(link)
+                                                } label: {
+                                                    Label("Open Link", systemImage: "safari")
+                                                }
+                                            } else if !content.isEmpty, content.count <= 200 {
+                                                Button {
+                                                    QuickCommand.webSearch(content).run()
+                                                } label: {
+                                                    Label("Search the Web", systemImage: "magnifyingglass")
+                                                }
+                                            }
+                                        }
+                                        if item.type == .image, let data = item.loadImageData(), let image = NSImage(data: data) {
+                                            Button {
+                                                FloatingPinController.shared.pin(.image(image))
+                                            } label: {
+                                                Label("Float on Screen", systemImage: "pin.fill")
+                                            }
+                                        } else if item.type == .text || item.type == .url, let text = item.content, !text.isEmpty {
+                                            Button {
+                                                FloatingPinController.shared.pin(.text(text))
+                                            } label: {
+                                                Label("Float on Screen", systemImage: "pin.fill")
+                                            }
+                                        }
+                                        if item.type == .text, let text = item.content, !text.isEmpty {
+                                            Button {
+                                                SnippetController.saveAsSnippet(text)
+                                            } label: {
+                                                Label("Save as Snippet…", systemImage: "text.insert")
+                                            }
+                                        }
+                                        if item.type == .text, let text = item.content {
+                                            Menu {
+                                                ForEach(TextTransform.allCases) { transform in
+                                                    if let result = item.transformed(transform) {
+                                                        Button(transform.rawValue) { onPaste(result) }
+                                                    }
+                                                }
+                                            } label: {
+                                                Label("Paste Transformed", systemImage: "wand.and.stars")
+                                            }
+                                            .disabled(text.isEmpty)
+                                        }
+                                        if item.type == .text || item.type == .url, let text = item.content,
+                                           text.utf8.count <= QRCodeGenerator.maxLength {
+                                            Button { QRCodePanelController.shared.show(text) } label: {
+                                                Label("Show QR Code", systemImage: "qrcode")
+                                            }
                                         }
                                         Button {
                                             let willBeFavorite = !item.isFavorite
@@ -1034,7 +1158,7 @@ struct ClipboardManagerView: View {
         
         // Write all content types in batches
         if !strings.isEmpty {
-            pasteboard.setString(strings.joined(separator: "\n"), forType: .string)
+            pasteboard.setString(strings.joined(separator: StackSeparator.current.string), forType: .string)
         }
         if !urls.isEmpty {
             pasteboard.writeObjects(urls as [NSURL])
@@ -1121,9 +1245,8 @@ struct ClipboardManagerView: View {
                 MultiSelectPreviewView(
                     items: selectedItemsArray,
                     onPasteAll: {
-                        for item in selectedItemsArray {
-                            onPaste(item)
-                        }
+                        // One stacked paste (the old per-item loop raced and lost items).
+                        onPasteItems(selectedItemsArray)
                     },
                     onCopyAll: copySelectedToClipboard,
                     onSaveAll: bulkSaveSelectedItems,
@@ -1280,6 +1403,8 @@ struct FlaggedGridItemView: View {
 struct ClipboardItemRow: View {
     let item: ClipboardItem
     let isSelected: Bool
+    /// Position in a multi-item stack (1, 2, 3…), shown as a badge.
+    var stackNumber: Int? = nil
     @Binding var renamingItemId: UUID?
     @Binding var renamingText: String
     let onRename: (String) -> Void
@@ -1309,6 +1434,18 @@ struct ClipboardItemRow: View {
                     Image(systemName: iconName(for: item.type))
                         .foregroundStyle(isSelected ? .white : AdaptiveColors.primaryTextAuto)
                         .font(.system(size: 12))
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if let stackNumber {
+                    Text("\(stackNumber)")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 15, minHeight: 15)
+                        .background(Circle().fill(Color.blue))
+                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
+                        .offset(x: -5, y: -5)
+                        .help("Pasted \(stackNumber)\(stackNumber == 1 ? "st" : stackNumber == 2 ? "nd" : stackNumber == 3 ? "rd" : "th") in the stack")
                 }
             }
             .task(id: item.id) {
@@ -2784,7 +2921,7 @@ struct ZoomedDocumentPreviewSheet: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "eye")
-                        Text("QuickLook")
+                        Text("Quick Look")
                     }
                 }
                 .buttonStyle(PepBoxPillButtonStyle(size: .medium))
@@ -2931,6 +3068,7 @@ struct ZoomedDocumentPreviewSheet: View {
 
 struct MultiSelectPreviewView: View {
     let items: [ClipboardItem]
+    @AppStorage(StackSeparator.key) private var separator = StackSeparator.newline.rawValue
     let onPasteAll: () -> Void
     let onCopyAll: () -> Void
     let onSaveAll: () -> Void
@@ -2962,7 +3100,7 @@ struct MultiSelectPreviewView: View {
             HStack(spacing: 6) {
                 Image(systemName: "rectangle.stack.fill")
                     .foregroundStyle(.blue)
-                Text("\(items.count) items selected")
+                Text("\(items.count) items · pasted in the numbered order")
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(.primary)
@@ -2970,6 +3108,14 @@ struct MultiSelectPreviewView: View {
             .padding(.vertical, 8)
             .background(Capsule().fill(AdaptiveColors.overlayAuto(0.12)))
 
+            if items.filter({ $0.type == .text || $0.type == .url || $0.type == .color }).count > 1 {
+                Picker("Join text with", selection: $separator) {
+                    ForEach(StackSeparator.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                .font(.system(size: 12))
+            }
             
             Spacer()
             

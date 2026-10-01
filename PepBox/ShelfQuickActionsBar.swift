@@ -18,13 +18,12 @@ struct ShelfQuickActionsBar: View {
     
     private let buttonSize: CGFloat = 32
     private let spacing: CGFloat = 12
-    private var isQuickshareEnabled: Bool { !ExtensionType.quickshare.isRemoved }
-    
+    @State private var actions = QuickActionType.enabled
     @State private var isBarAreaTargeted = false  // Track when drag is over the bar area (between buttons)
     
-    /// Computed width of bar area: 4 buttons + 3 gaps
+    /// Computed width of bar area: one button per enabled action plus gaps
     private var barWidth: CGFloat {
-        let actionCount = isQuickshareEnabled ? 4 : 3
+        let actionCount = max(1, actions.count)
         return (buttonSize * CGFloat(actionCount)) + (spacing * CGFloat(actionCount - 1)) + 16
     }
     
@@ -48,56 +47,23 @@ struct ShelfQuickActionsBar: View {
                 }
             
             HStack(spacing: spacing) {
-                ShelfQuickActionButton(actionType: .airdrop, useTransparent: useTransparent, shareAction: shareViaAirDrop)
+                ForEach(Array(actions.enumerated()), id: \.element) { index, action in
+                    ShelfQuickActionButton(actionType: action, useTransparent: useTransparent) { urls in
+                        action.perform(urls)
+                    }
                     .transition(.asymmetric(
-                        insertion: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.itemInsertion),
+                        insertion: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.itemInsertion.delay(Double(index) * 0.03)),
                         removal: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.hover)
                     ))
-                ShelfQuickActionButton(actionType: .messages, useTransparent: useTransparent, shareAction: shareViaMessages)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.itemInsertion.delay(0.03)),
-                        removal: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.hover)
-                    ))
-                ShelfQuickActionButton(actionType: .mail, useTransparent: useTransparent, shareAction: shareViaMail)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.itemInsertion.delay(0.06)),
-                        removal: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.hover)
-                    ))
-                if isQuickshareEnabled {
-                    ShelfQuickActionButton(actionType: .quickshare, useTransparent: useTransparent, shareAction: quickShareTo0x0)
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.itemInsertion.delay(0.09)),
-                            removal: .scale(scale: 0.5).combined(with: .opacity).animation(PepBoxAnimation.hover)
-                        ))
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .quickActionsChanged)) { _ in
+            actions = QuickActionType.enabled
         }
         .animation(PepBoxAnimation.state, value: items.count)
     }
     
-    // MARK: - Share Actions
-    
-    private func shareViaAirDrop(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        NSSharingService(named: .sendViaAirDrop)?.perform(withItems: urls)
-    }
-    
-    private func shareViaMessages(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        NSSharingService(named: .composeMessage)?.perform(withItems: urls)
-    }
-    
-    private func shareViaMail(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        _ = MailHelper.composeEmail(with: urls)
-    }
-    
-    /// PepBox Quickshare - uploads files to 0x0.st and copies shareable link to clipboard
-    private func quickShareTo0x0(_ urls: [URL]) {
-        PepBoxQuickshare.share(urls: urls) {
-            // No need to hide shelf after share - user may want to continue working
-        }
-    }
 }
 
 // MARK: - Shelf Quick Action Button

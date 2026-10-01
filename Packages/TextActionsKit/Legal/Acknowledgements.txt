@@ -1,0 +1,28 @@
+DropClip: licences and acknowledgements
+=======================================
+
+DropClip is Droppy's fork of OpenClip, taken while OpenClip was licensed under
+the MIT License, and is itself licensed under the MIT License. It contains:
+
+1. DropClip (MIT License)
+   Copyright (c) 2026 Ganesh M and OpenClip Contributors
+   Copyright (c) 2026 Jordy Spruit (DropClip)
+   Full text: DropClip-LICENSE.txt
+
+2. OpenSelection (Apache License, Version 2.0)
+   Copyright 2026 Ganesh M.
+   Full text: OpenSelection-LICENSE.txt; its notice: OpenSelection-NOTICE.txt
+   Modified by Droppy: CursorClassifier.swift (keeps the cursor image's pixel
+   data alive for the whole scan and checks its length) and
+   OpenSelectionMonitor.swift (main-thread callouts go through DroppyMainThread
+   instead of MainActor.assumeIsolated). Each modified file says so.
+
+3. KeyboardShortcuts by Sindre Sorhus (MIT License)
+   Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+   Full text: KeyboardShortcuts-LICENSE.txt
+   DropClip re-implements the part of this package's API that OpenClip uses.
+
+DropClip is not affiliated with or endorsed by the OpenClip project. "OpenClip"
+is named only to say where DropClip's source comes from.
+
+Source code: https://gitlab.com/droppyformac1/droplets/-/tree/main/droplets/dropclip

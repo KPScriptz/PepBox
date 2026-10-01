@@ -14,11 +14,9 @@ struct VoiceTranscribeInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringCancel = false
-    @State private var isHoveringReviews = false
     @State private var isHoveringDownload = false
     @State private var isHoveringDelete = false
     @State private var isHoveringRecord: [VoiceRecordingMode: Bool] = [:]
-    @State private var showReviewsSheet = false
     @State private var isDownloading = false
     @State private var recordingMode: VoiceRecordingMode?
     @State private var recordMonitor: Any?
@@ -56,11 +54,8 @@ struct VoiceTranscribeInfoView: View {
         }
         .frame(width: 450)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .voiceTranscribe)
-        }
         .onDisappear {
             stopRecording()
         }
@@ -86,35 +81,6 @@ struct VoiceTranscribeInfoView: View {
             
             // Stats row
             HStack(spacing: 12) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 12))
-                    Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                        .font(.caption.weight(.medium))
-                }
-                .foregroundStyle(.secondary)
-                
-                Button {
-                    showReviewsSheet = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.yellow)
-                        if let r = rating, r.ratingCount > 0 {
-                            Text(String(format: "%.1f", r.averageRating))
-                                .font(.caption.weight(.medium))
-                            Text("(\(r.ratingCount))")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        } else {
-                            Text("–")
-                                .font(.caption.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .buttonStyle(PepBoxSelectableButtonStyle(isSelected: false))
                 
                 Text("AI")
                     .font(.caption.weight(.semibold))

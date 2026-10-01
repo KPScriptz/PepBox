@@ -15,7 +15,6 @@ struct MenuBarManagerInfoView: View {
     var installCount: Int?
     var rating: AnalyticsService.ExtensionRating?
     
-    @State private var showReviewsSheet = false
     
     /// Use ExtensionType.isRemoved as single source of truth
     private var isActive: Bool {
@@ -60,11 +59,8 @@ struct MenuBarManagerInfoView: View {
         }
         .frame(width: 450)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .menuBarManager)
-        }
     }
     
     private var headerSection: some View {
@@ -89,37 +85,6 @@ struct MenuBarManagerInfoView: View {
             
             // Stats row
             HStack(spacing: 12) {
-                // Installs
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 12))
-                    Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                        .font(.caption.weight(.medium))
-                }
-                .foregroundStyle(.secondary)
-                
-                // Rating (clickable)
-                Button {
-                    showReviewsSheet = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.yellow)
-                        if let r = rating, r.ratingCount > 0 {
-                            Text(String(format: "%.1f", r.averageRating))
-                                .font(.caption.weight(.medium))
-                            Text("(\(r.ratingCount))")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        } else {
-                            Text("–")
-                                .font(.caption.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
                 
                 // Category badge
                 Text("Productivity")

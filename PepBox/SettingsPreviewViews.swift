@@ -493,7 +493,7 @@ struct ClipboardPreview: View {
             ClipboardMockRow(icon: "photo", title: "Screenshot.png", subtitle: "Finder • 10:35", isSelected: false, showStar: true, useTransparentBackground: useTransparentBackground)
         }
         .padding(PepBoxSpacing.sm)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PepBoxRadius.large, style: .continuous)
@@ -1011,7 +1011,7 @@ struct FloatingBasketPreview: View {
         ZStack {
             // Background follows current style mode
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                .pepboxSurfaceFill(transparent: useTransparentBackground)
             
             VStack(spacing: 0) {
                 // Drag handle - matches BasketDragHandle (44x5 capsule)
@@ -1350,7 +1350,7 @@ struct NotchShelfPreview: View {
     var body: some View {
         ZStack {
             NotchShape(bottomRadius: 40)
-                .fill(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+                .pepboxSurfaceFill(transparent: useTransparentBackground)
                 .overlay(
                     NotchShape(bottomRadius: 40)
                         .stroke(AdaptiveColors.overlayAuto(useTransparentBackground ? 0.22 : 0.15), lineWidth: 1)
@@ -1483,6 +1483,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
     case disabled = "Disabled"
     case ai = "AI"
     case productivity = "Productivity"
+    case files = "Files"
+    case system = "System"
     case media = "Media"
     
     var id: String { rawValue }
@@ -1494,6 +1496,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
         case .disabled: return "xmark.circle"
         case .ai: return "sparkles"
         case .productivity: return "bolt.fill"
+        case .files: return "folder.fill"
+        case .system: return "gearshape.fill"
         case .media: return "music.note"
         }
     }
@@ -1505,6 +1509,8 @@ enum ExtensionCategory: String, CaseIterable, Identifiable {
         case .disabled: return .gray
         case .ai: return .purple
         case .productivity: return .orange
+        case .files: return .blue
+        case .system: return .gray
         case .media: return .green
         }
     }

@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Extensions — PepBox</title>
+    <meta name="description"
+        content="Explore powerful extensions for PepBox. Spotify, Alfred, AI Background Removal, Voice Transcribe, Reminders, and more.">
+    <link rel="icon" type="image/png" href="assets/app-icon.png">
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --bg: #0a0a0a;
+            --bg-card: rgba(38, 38, 38, 0.92);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #fafafa;
+            --secondary: #a1a1aa;
+            --muted: #71717a;
+            --gray-100: #f4f4f5;
+            --gray-200: #e4e4e7;
+            --gray-800: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--primary);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            padding-bottom: 100px;
+            transition: opacity 0.3s ease;
+        }
+
+        body.fade-in {
+            opacity: 0;
+        }
+
+        body.fade-out {
+            opacity: 0;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        * {
+            scrollbar-width: none;
+        }
+
+        /* Floating Feature Cards - Exact match to homepage */
+        .card {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 22px;
+            min-width: 175px;
+            width: fit-content;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+            touch-action: none;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .card.visible {
+            opacity: var(--op, 0.7);
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.dragging {
+            z-index: 200 !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            opacity: 1 !important;
+            transition: none;
+        }
+
+        .card:hover:not(.dragging) {
+            z-index: 100;
+        }
+
+        .card.main {
+            min-width: 200px;
+            padding: 18px 26px;
+            border-radius: 18px;
+        }
+
+        .card.main .card-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .card.main .card-sub {
+            font-size: 13px;
+        }
+
+        .card.main .checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checkbox.checked {
+            background: var(--muted);
+            border-color: var(--muted);
+        }
+
+        .checkbox svg {
+            width: 11px;
+            height: 11px;
+            stroke: var(--bg);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: none;
+        }
+
+        .checkbox.checked svg {
+            display: block;
+        }
+
+        .card.main .checkbox svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        /* Card Positions - Left Edge (matches homepage) */
+        .l1 {
+            top: 10%;
+            left: -25px;
+        }
+
+        .l2 {
+            top: 20%;
+            left: -20px;
+        }
+
+        .l3 {
+            top: 30%;
+            left: -25px;
+        }
+
+        .l4 {
+            top: 40%;
+            left: -20px;
+        }
+
+        .l5 {
+            top: 52%;
+            left: -25px;
+        }
+
+        .l6 {
+            top: 62%;
+            left: -20px;
+        }
+
+        .l7 {
+            top: 72%;
+            left: -25px;
+        }
+
+        .l8 {
+            top: 82%;
+            left: -20px;
+        }
+
+        /* Card Positions - Right Edge (matches homepage) */
+        .r1 {
+            top: 10%;
+            right: -25px;
+        }
+
+        .r2 {
+            top: 20%;
+            right: -20px;
+        }
+
+        .r3 {
+            top: 30%;
+            right: -25px;
+        }
+
+        .r4 {
+            top: 40%;
+            right: -20px;
+        }
+
+        .r5 {
+            top: 52%;
+            right: -25px;
+        }
+
+        .r6 {
+            top: 62%;
+            right: -20px;
+        }
+
+        .r7 {
+            top: 72%;
+            right: -25px;
+        }
+
+        .r8 {
+            top: 82%;
+            right: -20px;
+        }
+
+        @media (max-width: 1200px) {
+            .card {
+                display: none;
+            }
+        }
+
+        .page-hero {
+            padding: 4px 24px 60px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 40vh;
+            justify-content: center;
+        }
+
+        .page-hero img {
+            width: 130px;
+            height: 130px;
+            border-radius: 28px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 80px rgba(147, 51, 234, 0.3));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .page-hero p {
+            font-size: 16px;
+            color: var(--secondary);
+            white-space: nowrap;
+            transition: transform 0.3s ease;
+        }
+
+        .search-morph-container:hover~p,
+        .search-morph-container.searching~p {
+            transform: translateY(12px);
+        }
+
+        /* Search bar morphing container */
+        .search-morph-container {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .search-morph-container h1 {
+            font-size: 36px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: var(--secondary);
+            margin-bottom: 12px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .search-morph-container:hover h1,
+        .search-morph-container.searching h1 {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        .search-bar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 320px;
+            padding: 14px 24px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--primary);
+            font-family: var(--font-sans);
+            font-size: 16px;
+            font-weight: 500;
+            outline: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.2s;
+        }
+
+        .search-bar::placeholder {
+            color: var(--muted);
+        }
+
+        .search-morph-container:hover .search-bar,
+        .search-morph-container.searching .search-bar {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .search-bar:focus {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Typing animation for placeholder */
+        @keyframes blink {
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+        }
+
+        .category-filter {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 25px 24px;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--secondary);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .category-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .category-btn.active {
+            background: var(--gray-100);
+            border-color: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .extensions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            padding: 20px 48px 100px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .extension-card {
+            position: relative;
+            z-index: 20;
+            pointer-events: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            cursor: pointer;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+
+        .extension-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .extension-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .extension-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            object-fit: cover;
+        }
+
+        .extension-meta h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 2px;
+        }
+
+        .extension-meta span {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .extension-description {
+            font-size: 14px;
+            color: var(--secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .extension-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .stat-item svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+
+        .stat-item .stat-value {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .extension-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .extension-tag {
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 999px;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            max-width: 550px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            border-radius: 50%;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--primary);
+        }
+
+        .modal-header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+        }
+
+        .modal-header-info {
+            flex: 1;
+        }
+
+        .modal h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .modal-category {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .modal-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .modal-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--secondary);
+        }
+
+        .modal-stat svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+
+        .modal-description {
+            font-size: 15px;
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .modal-screenshot {
+            width: 100%;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .modal-features {
+            margin-bottom: 28px;
+        }
+
+        .modal-features h4 {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 14px;
+        }
+
+        .modal-features ul {
+            list-style: none;
+        }
+
+        .modal-features li {
+            font-size: 14px;
+            color: var(--secondary);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-features li:last-child {
+            border-bottom: none;
+        }
+
+        .modal-features li::before {
+            content: "✓";
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-button {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 999px;
+            color: var(--gray-800);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .modal-button svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .modal-button:hover {
+            background: var(--gray-200);
+        }
+
+        .modal-button.secondary {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .modal-button.secondary:hover {
+            background: #2563eb;
+        }
+
+        /* CTA Bar */
+        .cta-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(23, 23, 23, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .cta-bar .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 999px;
+            color: var(--secondary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .cta-bar .btn:hover {
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .cta-bar .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .cta-bar .btn-main {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .cta-bar .btn-main:hover {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        /* Download Modal */
+        .download-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .download-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .download-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 420px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .download-modal-overlay.active .download-modal {
+            transform: scale(1);
+        }
+
+        .download-modal h2 {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .download-modal .modal-price {
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .download-modal .modal-desc {
+            font-size: 14px;
+            color: var(--secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .download-modal .modal-perks {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .download-modal .modal-perks li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 13px;
+            color: var(--secondary);
+        }
+
+        .download-modal .modal-perks li svg {
+            width: 15px;
+            height: 15px;
+            stroke: #22c55e;
+            flex-shrink: 0;
+        }
+
+        .download-modal .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .download-modal .modal-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px 20px;
+            border-radius: 999px;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .download-modal .modal-btn:active {
+            transform: scale(0.98);
+        }
+
+        .download-modal .modal-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .download-modal .modal-btn-primary {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .download-modal .modal-btn-primary:hover {
+            background: var(--gray-200);
+        }
+
+        .download-modal .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--secondary);
+            border: 1px solid var(--border);
+        }
+
+        .download-modal .modal-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .extensions-grid {
+                grid-template-columns: 1fr;
+                padding: 20px 20px 100px;
+            }
+
+            .page-hero h1 {
+                font-size: 28px;
+            }
+
+            .page-hero p {
+                white-space: normal;
+            }
+
+            .cta-bar .btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-hero h1 {
+                font-size: 22px;
+            }
+
+            .extensions-grid {
+                padding: 16px 16px 100px;
+            }
+
+            .cta-bar {
+                padding: 4px;
+                gap: 4px;
+                left: 12px;
+                right: 12px;
+                transform: none;
+            }
+
+            .cta-bar .btn {
+                padding: 8px 10px;
+                font-size: 11px;
+                flex: 1;
+            }
+
+            .cta-bar .btn svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body oncontextmenu="return false;">
+
+    <!-- LEFT EDGE CARDS -->
+    <div class="card main l1" data-rot="-8" style="--op:0.75">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Spotify Integration</div>
+            <div class="card-sub">Play/Pause/Skip</div>
+        </div>
+    </div>
+    <div class="card l2" data-rot="5" style="--op:0.65">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Apple Music</div>
+            <div class="card-sub">Shuffle • Repeat • Love</div>
+        </div>
+    </div>
+    <div class="card l3" data-rot="-4" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">Window Snap</div>
+            <div class="card-sub">Rectangle-style</div>
+        </div>
+    </div>
+    <div class="card main l4" data-rot="7" style="--op:0.75">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Termi-Notch</div>
+            <div class="card-sub">Terminal in notch</div>
+        </div>
+    </div>
+    <div class="card l5" data-rot="-3" style="--op:0.65">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Background Removal</div>
+            <div class="card-sub">AI-powered</div>
+        </div>
+    </div>
+    <div class="card l6" data-rot="6" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">Element Capture</div>
+            <div class="card-sub">Grab UI elements</div>
+        </div>
+    </div>
+
+    <div class="card l8" data-rot="4" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">Finder Services</div>
+            <div class="card-sub">Right-click menu</div>
+        </div>
+    </div>
+
+    <!-- RIGHT EDGE CARDS -->
+    <div class="card main r1" data-rot="6" style="--op:0.75">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Quick Actions</div>
+            <div class="card-sub">AirDrop • Delete • More</div>
+        </div>
+    </div>
+    <div class="card r2" data-rot="-7" style="--op:0.65">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">ZIP / UNZIP</div>
+            <div class="card-sub">Quick compress</div>
+        </div>
+    </div>
+    <div class="card r3" data-rot="4" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">Alfred Integration</div>
+            <div class="card-sub">Quick workflows</div>
+        </div>
+    </div>
+    <div class="card main r4" data-rot="-5" style="--op:0.75">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Voice Transcription</div>
+            <div class="card-sub">Whisper AI</div>
+        </div>
+    </div>
+    <div class="card r5" data-rot="8" style="--op:0.65">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">Screenshot OCR</div>
+            <div class="card-sub">Extract text</div>
+        </div>
+    </div>
+    <div class="card r6" data-rot="-4" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">Smart Export</div>
+            <div class="card-sub">Convert formats</div>
+        </div>
+    </div>
+    <div class="card r7" data-rot="5" style="--op:0.65">
+        <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 13l4 4 8-9" />
+            </svg></div>
+        <div class="card-body">
+            <div class="card-title">File Conversion</div>
+            <div class="card-sub">Video • Image • Audio</div>
+        </div>
+    </div>
+    <div class="card r8" data-rot="-6" style="--op:0.55">
+        <div class="checkbox"></div>
+        <div class="card-body">
+            <div class="card-title">OCR Services</div>
+            <div class="card-sub">Vision API</div>
+        </div>
+    </div>
+
+    <section class="page-hero">
+        <img src="assets/icons/extensions.png" alt="Extensions">
+        <div class="search-morph-container" id="search-morph">
+            <h1>Extensions</h1>
+            <input type="text" class="search-bar" id="extension-search" placeholder="">
+        </div>
+        <p>Extend PepBox with powerful integrations. All included, all open-source.</p>
+    </section>
+
+    <div class="category-filter">
+        <button class="category-btn active" data-category="all">All</button>
+        <button class="category-btn" data-category="productivity">Productivity</button>
+        <button class="category-btn" data-category="media">Media</button>
+        <button class="category-btn" data-category="ai">AI</button>
+        <button class="category-btn" data-category="utilities">Utilities</button>
+    </div>
+
+    <div class="extensions-grid">
+        <div class="extension-card" data-extension="ai-bg" data-category="ai">
+            <div class="extension-header">
+                <img src="assets/icons/ai-bg.jpg" alt="AI BG Removal" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>AI Background Removal</h3><span>AI</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="ai-bg">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="ai-bg">—</span><span
+                        data-rating-count="ai-bg">(0)</span></div>
+            </div>
+            <p class="extension-description">Remove backgrounds from images instantly using local AI processing. No
+                internet connection required.</p>
+            <div class="extension-tags"><span class="extension-tag">AI</span><span class="extension-tag">Images</span>
+            </div>
+        </div>
+
+        <div class="extension-card" data-extension="alfred" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/alfred.png" alt="Alfred" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Alfred Workflows</h3><span>Productivity</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="alfred">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="alfred">—</span><span
+                        data-rating-count="alfred">(0)</span></div>
+            </div>
+            <p class="extension-description">Seamlessly add files to PepBox's Shelf or Basket directly from Alfred using
+                keyboard shortcuts.</p>
+            <div class="extension-tags"><span class="extension-tag">Productivity</span><span
+                    class="extension-tag">Automation</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="apple-music" data-category="media">
+            <div class="extension-header">
+                <img src="assets/icons/apple-music.png" alt="Apple Music" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Apple Music</h3><span>Media</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="apple-music">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="apple-music">—</span><span
+                        data-rating-count="apple-music">(0)</span></div>
+            </div>
+            <p class="extension-description">Control Apple Music playback from your notch. Shuffle, repeat, and love
+                songs with native integration—no account linking required.</p>
+            <div class="extension-tags"><span class="extension-tag">Media</span><span class="extension-tag">Music</span>
+            </div>
+        </div>
+
+        <div class="extension-card" data-extension="quickshare" data-category="utilities">
+            <div class="extension-header">
+                <img src="assets/icons/quickshare.jpg" alt="Quickshare" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>PepBox Quickshare</h3><span>Utilities</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="quickshare">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="quickshare">—</span><span
+                        data-rating-count="quickshare">(0)</span></div>
+            </div>
+            <p class="extension-description">Upload files to the cloud and get instant shareable links. Files
+                auto-expire based on size. No account required.</p>
+            <div class="extension-tags"><span class="extension-tag">Sharing</span><span
+                    class="extension-tag">Cloud</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="element-capture" data-category="utilities">
+            <div class="extension-header">
+                <img src="assets/icons/element-capture.jpg" alt="Element Capture" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Element Capture</h3><span>Utilities</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="element-capture">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="element-capture">—</span><span
+                        data-rating-count="element-capture">(0)</span></div>
+            </div>
+            <p class="extension-description">Capture screen elements, annotate with arrows, shapes, text, and blur, then
+                copy to clipboard or add to PepBox. Perfect for marking up UI components or any visual element.</p>
+            <div class="extension-tags"><span class="extension-tag">Screenshot</span><span
+                    class="extension-tag">Annotation</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="finder" data-category="utilities">
+            <div class="extension-header">
+                <img src="assets/icons/finder.png" alt="Finder Services" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Finder Services</h3><span>Utilities</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="finder">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="finder">—</span><span
+                        data-rating-count="finder">(0)</span></div>
+            </div>
+            <p class="extension-description">Access PepBox directly from Finder's right-click menu. Add selected files
+                to the Shelf or Basket without switching apps.</p>
+            <div class="extension-tags"><span class="extension-tag">Finder</span><span
+                    class="extension-tag">Integration</span></div>
+        </div>
+
+
+        <div class="extension-card" data-extension="spotify" data-category="media">
+            <div class="extension-header">
+                <img src="assets/icons/spotify.png" alt="Spotify" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Spotify Integration</h3><span>Media</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="spotify">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="spotify">—</span><span
+                        data-rating-count="spotify">(0)</span></div>
+            </div>
+            <p class="extension-description">Control Spotify playback directly from your notch. See album art, track
+                info, and playback controls without switching apps.</p>
+            <div class="extension-tags"><span class="extension-tag">Media</span><span class="extension-tag">Music</span>
+            </div>
+        </div>
+
+        <div class="extension-card" data-extension="termi-notch" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/terminotch.jpg" alt="Termi-Notch" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Termi-Notch</h3><span>Productivity</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="termi-notch">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="termi-notch">—</span><span
+                        data-rating-count="termi-notch">(0)</span></div>
+            </div>
+            <p class="extension-description">Quick terminal access from your notch. Run commands instantly with a custom
+                shortcut or by clicking the terminal icon in the expanded shelf.</p>
+            <div class="extension-tags"><span class="extension-tag">Terminal</span><span
+                    class="extension-tag">Productivity</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="camera" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/snap-camera-v2.png" alt="Notchface" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Notchface</h3><span>Productivity</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="camera">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="camera">—</span><span
+                        data-rating-count="camera">(0)</span></div>
+            </div>
+            <p class="extension-description">Adds a live camera preview to the right side of your expanded shelf with
+                automatic spacing and smooth alignment.</p>
+            <div class="extension-tags"><span class="extension-tag">Camera</span><span
+                    class="extension-tag">Productivity</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="video-target-size" data-category="media">
+            <div class="extension-header">
+                <img src="assets/icons/targeted-video-size.jpg" alt="Video Target Size" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Video Target Size</h3><span>Media</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="video-target-size">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="video-target-size">—</span><span
+                        data-rating-count="video-target-size">(0)</span></div>
+            </div>
+            <p class="extension-description">Compress videos to exact file sizes using FFmpeg two-pass encoding. Perfect
+                for Discord, email, or social media limits.</p>
+            <div class="extension-tags"><span class="extension-tag">Video</span><span
+                    class="extension-tag">Compression</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="voice-transcribe" data-category="ai">
+            <div class="extension-header">
+                <img src="assets/icons/voice-transcribe.jpg" alt="Voice Transcribe" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Voice Transcribe</h3><span>AI</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="voice-transcribe">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="voice-transcribe">—</span><span
+                        data-rating-count="voice-transcribe">(0)</span></div>
+            </div>
+            <p class="extension-description">Transcribe audio recordings to text using WhisperKit AI. 100% on-device
+                processing means your voice never leaves your Mac—completely private.</p>
+            <div class="extension-tags"><span class="extension-tag">AI</span><span class="extension-tag">Audio</span>
+            </div>
+        </div>
+
+        <div class="extension-card" data-extension="high-alert" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/high-alert.jpg" alt="High Alert" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>High Alert</h3><span>Productivity • Community</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="high-alert">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="high-alert">—</span><span
+                        data-rating-count="high-alert">(0)</span></div>
+            </div>
+            <p class="extension-description">Prevent your Mac from going to sleep. Set a timer or keep
+                awake indefinitely. Perfect for downloads or presentations.</p>
+            <div class="extension-tags"><span class="extension-tag">Sleep Prevention</span><span
+                    class="extension-tag">Community</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="notify-me" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/notification-hud.png" alt="Notify me!" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Notify me!</h3><span>Productivity • Community</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="notify-me">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="notify-me">—</span><span
+                        data-rating-count="notify-me">(0)</span></div>
+            </div>
+            <p class="extension-description">Capture macOS notifications and display them in your notch like iPhone's
+                Dynamic Island. Click to open, swipe to dismiss.</p>
+            <div class="extension-tags"><span class="extension-tag">Notifications</span><span
+                    class="extension-tag">Community</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="todo" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/reminders.png" alt="Reminders" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Reminders</h3><span>Productivity • Community</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="todo">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="todo">—</span><span data-rating-count="todo">(0)</span>
+                </div>
+            </div>
+            <p class="extension-description">Capture tasks in natural language with list and date mentions, plus
+                multilingual input and smart cleanup.</p>
+            <div class="extension-tags"><span class="extension-tag">Tasks</span><span
+                    class="extension-tag">Community</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="window-snap" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/window-snap.jpg" alt="Window Snap" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Window Snap</h3><span>Productivity</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="window-snap">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="window-snap">—</span><span
+                        data-rating-count="window-snap">(0)</span></div>
+            </div>
+            <p class="extension-description">Snap windows to halves, quarters, thirds, or full screen with customizable
+                keyboard shortcuts. Multi-monitor support included.</p>
+            <div class="extension-tags"><span class="extension-tag">Windows</span><span
+                    class="extension-tag">Productivity</span></div>
+        </div>
+
+        <div class="extension-card" data-extension="menu-bar-manager" data-category="productivity">
+            <div class="extension-header">
+                <img src="assets/icons/menubarmanager.png" alt="Menu Bar Manager" class="extension-icon">
+                <div class="extension-meta">
+                    <h3>Menu Bar Manager</h3><span>Productivity</span>
+                </div>
+            </div>
+            <div class="extension-stats">
+                <div class="stat-item"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg><span class="stat-value" data-install-count="menu-bar-manager">0</span> installs</div>
+                <div class="stat-item"><svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg><span class="stat-value" data-rating="menu-bar-manager">—</span><span
+                        data-rating-count="menu-bar-manager">(0)</span></div>
+            </div>
+            <p class="extension-description">Clean up your menu bar with an eye icon toggle. Click to hide icons — a
+                chevron shows where to drag icons.</p>
+            <div class="extension-tags"><span class="extension-tag">Menu Bar</span><span
+                    class="extension-tag">Organization</span></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal()"><svg width="16" height="16" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg></button>
+            <div class="modal-header">
+                <img id="modal-icon" class="modal-icon" src="" alt="">
+                <div class="modal-header-info">
+                    <h2 id="modal-title"></h2>
+                    <p class="modal-category" id="modal-category"></p>
+                    <div class="modal-stats">
+                        <div class="modal-stat"><svg fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                            </svg><span id="modal-installs">0</span> installs</div>
+                        <div class="modal-stat"><svg fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg><span id="modal-rating">—</span> (<span id="modal-rating-count">0</span> reviews)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="modal-description" id="modal-description"></p>
+            <img id="modal-screenshot" class="modal-screenshot" src="" alt="Screenshot" style="display: none;">
+            <div class="modal-features">
+                <h4>Features</h4>
+                <ul id="modal-features"></ul>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-button"><svg width="18" height="18" fill="none" stroke="currentColor"
+                        stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>Included with PepBox</button>
+                <a href="#" id="modal-deep-link" class="modal-button secondary"><svg width="18" height="18" fill="none"
+                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                    </svg>Open in PepBox</a>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 40px 24px 100px; color: var(--muted); font-size: 13px;">
+        <p>Made with ❤️ in The Netherlands</p>
+        <p style="margin-top: 6px;">
+            <a href="https://github.com/KPScriptz/PepBox" style="color: var(--secondary); text-decoration: none;">GitHub</a>
+            &nbsp;·&nbsp;
+            <a href="https://github.com/KPScriptz/PepBox/issues" style="color: var(--secondary); text-decoration: none;">Issues</a>
+            &nbsp;·&nbsp;
+            <a href="features.html" style="color: var(--secondary); text-decoration: none;">Features</a>
+        </p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = '';  // PepBox has no stats backend; set this to enable counts and ratings
+        const SUPABASE_ANON_KEY = '';
+
+        // Map website IDs to Supabase analytics IDs
+        const extensionIdMap = {
+            'ai-bg': 'aiBackgroundRemoval',
+            'alfred': 'alfred',
+            'apple-music': 'appleMusic',
+            'element-capture': 'elementCapture',
+            'finder': 'finder',
+            'high-alert': 'caffeine',
+            'spotify': 'spotify',
+            'voice-transcribe': 'voiceTranscribe',
+            'window-snap': 'windowSnap',
+            'video-target-size': 'ffmpegVideoCompression',
+            'termi-notch': 'terminalNotch',
+            'camera': 'camera',
+            'quickshare': 'quickshare',
+            'notify-me': 'notificationHUD',
+            'todo': 'todo',
+            'menu-bar-manager': 'menuBarManager'
+        };
+
+        // Extension data with screenshots
+        const extensionData = {
+            'ai-bg': { icon: 'assets/icons/ai-bg.jpg', title: 'AI Background Removal', category: 'AI', deepUrl: 'pepbox://extension/ai-bg', screenshot: 'assets/images/ai-bg-screenshot.png', description: 'Remove backgrounds from images instantly using local AI processing. No internet connection required.', features: ['On-device AI processing', 'No internet required', 'Instant results', 'Multiple format support', 'Batch processing'] },
+            'alfred': { icon: 'assets/icons/alfred.png', title: 'Alfred Workflows', category: 'Productivity', deepUrl: 'pepbox://extension/alfred', screenshot: 'assets/images/alfred-screenshot.png', description: 'Seamlessly add files to PepBox\'s Shelf or Basket directly from Alfred using keyboard shortcuts.', features: ['Trigger workflows from basket', 'Quick access to favorites', 'Keyboard shortcuts', 'Deep linking support'] },
+            'element-capture': { icon: 'assets/icons/element-capture.jpg', title: 'Element Capture', category: 'Utilities', deepUrl: 'pepbox://extension/element-capture', screenshot: 'assets/images/element-capture-screenshot.gif', description: 'Capture screen elements, annotate with arrows, shapes, text, and blur sensitive content, then copy to clipboard or add to PepBox. A full screenshot editor built-in.', features: ['Element detection', 'Annotate with arrows & shapes', 'Add text labels', 'Blur sensitive content', 'Auto-cropping', 'Quick save to basket'] },
+            'finder': { icon: 'assets/icons/finder.png', title: 'Finder Services', category: 'Utilities', deepUrl: 'pepbox://extension/finder', screenshot: 'assets/images/finder-screenshot.png', description: 'Access PepBox directly from Finder\'s right-click menu. Add selected files to the Shelf or Basket without switching apps.', features: ['Services menu integration', 'Right-click actions', 'Quick add to basket', 'Process with extensions'] },
+            'spotify': { icon: 'assets/icons/spotify.png', title: 'Spotify Integration', category: 'Media', deepUrl: 'pepbox://extension/spotify', screenshot: 'assets/images/spotify-screenshot.jpg', description: 'Control Spotify playback directly from your notch. See album art, track info, and playback controls without switching apps.', features: ['Now Playing widget in notch', 'Playback controls', 'Volume adjustment', 'Album artwork display', 'Keyboard shortcuts'] },
+            'apple-music': { icon: 'assets/icons/apple-music.png', title: 'Apple Music', category: 'Media', deepUrl: 'pepbox://extension/apple-music', screenshot: 'assets/images/applemusic-screenshot.jpg', description: 'Control Apple Music playback from your notch. Shuffle, repeat, and love songs with native AppleScript integration—no account linking required.', features: ['Now Playing widget in notch', 'Shuffle and repeat controls', 'Love songs instantly', 'Album artwork display', 'Enabled by default'] },
+            'voice-transcribe': { icon: 'assets/icons/voice-transcribe.jpg', title: 'Voice Transcribe', category: 'AI', deepUrl: 'pepbox://extension/voice-transcribe', screenshot: 'assets/images/voice-transcribe-screenshot.png', description: 'Transcribe audio recordings to text using WhisperKit AI. 100% on-device processing means your voice never leaves your Mac—completely private.', features: ['On-device Whisper AI', 'Multiple language support', 'Audio file upload', 'Real-time transcription', 'Export to text'] },
+            'window-snap': { icon: 'assets/icons/window-snap.jpg', title: 'Window Snap', category: 'Productivity', deepUrl: 'pepbox://extension/window-snap', screenshot: 'assets/images/window-snap-screenshot.png', description: 'Snap windows to halves, quarters, thirds, or full screen with customizable keyboard shortcuts. Multi-monitor support included.', features: ['Keyboard shortcuts', 'Custom snap areas', 'Multi-monitor support', 'Edge snapping', 'Remembers positions'] },
+            'video-target-size': { icon: 'assets/icons/targeted-video-size.jpg', title: 'Video Target Size', category: 'Media', deepUrl: 'pepbox://extension/video-target-size', screenshot: 'assets/images/video-target-size-screenshot.png', description: 'Compress videos to exact file sizes using FFmpeg two-pass encoding. Perfect for Discord, email, or social media limits.', features: ['Exact file size targeting', 'Two-pass encoding', 'H.264/AAC output', 'One-time FFmpeg install', 'Fast processing'] },
+            'termi-notch': { icon: 'assets/icons/terminotch.jpg', title: 'Termi-Notch', category: 'Productivity', deepUrl: 'pepbox://extension/termi-notch', screenshot: 'assets/images/terminal-notch-screenshot.png', description: 'Quick terminal access from your notch. Run commands instantly with a custom shortcut or by clicking the terminal icon in the expanded shelf.', features: ['Full terminal emulation', 'Custom keyboard shortcut', 'Quick command mode', 'Expanded mode for output', 'Open in Terminal.app'] },
+            'camera': { icon: 'assets/icons/snap-camera-v2.png', title: 'Notchface', category: 'Productivity', deepUrl: 'pepbox://extension/camera', screenshot: 'assets/screenshots/notchface.png', description: 'Adds a floating camera button below the shelf and opens a full camera preview with balanced padding.', features: ['Floating camera toggle button', 'Full preview mode in the notch shelf', 'Smooth low-latency startup', 'Consistent spacing with other shelf views'] },
+
+            'quickshare': { icon: 'assets/icons/quickshare.jpg', title: 'PepBox Quickshare', category: 'Utilities', deepUrl: 'pepbox://extension/quickshare', screenshot: 'assets/images/quickshare-screenshot.png', description: 'Upload files to the cloud and get instant shareable links via 0x0.st. Files auto-expire based on size (30-365 days). No account required.', features: ['Instant shareable links', 'Auto-expiring files', 'No account needed', 'Drag & drop upload', 'Built-in file manager'] },
+            'notify-me': { icon: 'assets/icons/notification-hud.png', title: 'Notify me!', category: 'Productivity • Community', deepUrl: 'pepbox://extension/notification-hud', screenshot: 'assets/images/notification-hud-screenshot.png', description: 'Capture macOS notifications and display them directly in the notch, like iPhone\'s Dynamic Island. Click to open the source app, swipe up to dismiss. A community extension by Valetivivek.', features: ['Display notifications in the notch', 'Show app icon and preview text', 'Click to open, swipe to dismiss', 'Per-app notification filtering', 'Requires Full Disk Access'] },
+            'high-alert': { icon: 'assets/icons/high-alert.jpg', title: 'High Alert', category: 'Productivity • Community', deepUrl: 'pepbox://extension/caffeine', screenshot: 'assets/images/high-alert-screenshot.gif', description: 'Prevent your Mac from going to sleep. Choose indefinite mode or set a timer for hours or minutes. Perfect for downloads, presentations, or long-running tasks. A community extension by Valetivivek.', features: ['Keep Mac awake indefinitely', 'Set sleep prevention timer', 'Hover notch to see remaining time', 'Lightweight, no battery drain', 'Quick toggle from notch'] },
+            'todo': { icon: 'assets/icons/reminders.png', title: 'Reminders', category: 'Productivity • Community', deepUrl: 'pepbox://extension/todo', screenshot: 'assets/images/reminders-screenshot.gif', description: 'Capture tasks in natural language, mention lists and dates, and sync with Apple Reminders. Supports multilingual input, priorities, and auto-cleanup. A community extension by Valetivivek.', features: ['Natural-language task capture', 'List support with list mentions', 'Date mentions like tomorrow and next Friday', 'Multilingual task input', 'Priority levels and auto-cleanup'] },
+            'menu-bar-manager': { icon: 'assets/icons/menubarmanager.png', title: 'Menu Bar Manager', category: 'Productivity • Community', deepUrl: 'pepbox://extension/menu-bar-manager', screenshot: null, description: 'Clean up your menu bar with an eye icon toggle. Click to hide icons — a chevron appears showing where to drag icons for hiding. Simple and intuitive.', features: ['Eye icon toggles visibility', 'Chevron indicates hidden zone', 'Drag icons left of chevron to hide', 'Rearrange with ⌘+drag', 'Remembers your layout'] }
+        };
+
+        let installCounts = {}, ratings = {}, currentExtension = null;
+
+        // Fetch stats from Supabase RPCs
+        async function fetchExtensionStats() {
+            if (!SUPABASE_URL) { updateUI(); return; }
+            try {
+                // Fetch install counts
+                const countsRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_extension_counts`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                if (countsRes.ok) {
+                    const counts = await countsRes.json();
+                    console.log('Extension counts:', counts);
+                    if (Array.isArray(counts)) {
+                        counts.forEach(c => { installCounts[c.extension_id] = c.install_count; });
+                    }
+                }
+
+                // Fetch ratings
+                const ratingsRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_extension_ratings`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                if (ratingsRes.ok) {
+                    const ratingsData = await ratingsRes.json();
+                    console.log('Extension ratings:', ratingsData);
+                    if (Array.isArray(ratingsData)) {
+                        ratingsData.forEach(r => { ratings[r.extension_id] = { avg: parseFloat(r.average_rating) || 0, count: parseInt(r.rating_count) || 0 }; });
+                    }
+                }
+
+                updateUI();
+            } catch (err) { console.error('Stats fetch failed:', err); }
+        }
+
+        function updateUI() {
+            Object.keys(extensionIdMap).forEach(webKey => {
+                const analyticsId = extensionIdMap[webKey];
+                const count = installCounts[analyticsId] || 0;
+                const rating = ratings[analyticsId] || { avg: 0, count: 0 };
+
+                document.querySelectorAll(`[data-install-count="${webKey}"]`).forEach(el => {
+                    el.textContent = count.toLocaleString();
+                });
+                document.querySelectorAll(`[data-rating="${webKey}"]`).forEach(el => {
+                    el.textContent = rating.count > 0 ? rating.avg.toFixed(1) : '—';
+                });
+                document.querySelectorAll(`[data-rating-count="${webKey}"]`).forEach(el => {
+                    el.textContent = `(${rating.count})`;
+                });
+            });
+        }
+
+        function openModal(extensionId) {
+            const data = extensionData[extensionId];
+            if (!data) return;
+            currentExtension = extensionId;
+
+            const analyticsId = extensionIdMap[extensionId];
+            const count = installCounts[analyticsId] || 0;
+            const ratingData = ratings[analyticsId] || { avg: 0, count: 0 };
+
+            document.getElementById('modal-icon').src = data.icon;
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-category').textContent = data.category;
+            document.getElementById('modal-description').textContent = data.description;
+            document.getElementById('modal-installs').textContent = count.toLocaleString();
+            document.getElementById('modal-rating').textContent = ratingData.count > 0 ? ratingData.avg.toFixed(1) : '—';
+            document.getElementById('modal-rating-count').textContent = ratingData.count;
+            document.getElementById('modal-deep-link').href = data.deepUrl;
+            document.getElementById('modal-features').innerHTML = data.features.map(f => `<li>${f}</li>`).join('');
+
+            // Screenshot
+            const screenshotEl = document.getElementById('modal-screenshot');
+            if (data.screenshot) {
+                screenshotEl.src = data.screenshot;
+                screenshotEl.style.display = 'block';
+            } else {
+                screenshotEl.style.display = 'none';
+            }
+
+            document.getElementById('modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentExtension = null;
+        }
+
+        document.querySelectorAll('.extension-card').forEach(card => {
+            card.addEventListener('click', () => openModal(card.dataset.extension));
+        });
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal')) closeModal();
+        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const category = btn.dataset.category;
+                document.querySelectorAll('.extension-card').forEach(card => {
+                    card.style.display = (category === 'all' || card.dataset.category === category) ? 'block' : 'none';
+                });
+            });
+        });
+
+        // Fetch on load
+        document.addEventListener('DOMContentLoaded', fetchExtensionStats);
+
+        // Search bar functionality
+        const searchContainer = document.getElementById('search-morph');
+        const searchInput = document.getElementById('extension-search');
+        const typingText = 'Search extensions here...';
+        let typingIndex = 0;
+        let hasAnimatedOnce = false;
+
+        // Typing animation on first page load
+        function typeAnimation() {
+            if (typingIndex < typingText.length) {
+                searchInput.placeholder = typingText.substring(0, typingIndex + 1) + '|';
+                typingIndex++;
+                setTimeout(typeAnimation, 60);
+            } else {
+                searchInput.placeholder = typingText;
+                hasAnimatedOnce = true;
+                // Hide search bar after animation completes (3 seconds delay)
+                setTimeout(() => {
+                    if (!searchInput.matches(':focus') && searchInput.value === '') {
+                        searchContainer.classList.remove('searching');
+                    }
+                }, 2500);
+            }
+        }
+
+        // Play intro animation on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                searchContainer.classList.add('searching');
+                searchInput.focus();
+                typeAnimation();
+            }, 800);
+        });
+
+        // Keep search visible when focused or has value
+        searchInput.addEventListener('focus', () => {
+            searchContainer.classList.add('searching');
+            if (!hasAnimatedOnce) return;
+            searchInput.placeholder = typingText;
+        });
+
+        searchInput.addEventListener('blur', () => {
+            if (searchInput.value === '') {
+                searchContainer.classList.remove('searching');
+            }
+        });
+
+        // Live search filtering
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            document.querySelectorAll('.extension-card').forEach(card => {
+                const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                const category = card.dataset.category?.toLowerCase() || '';
+                const matches = query === '' || title.includes(query) || category.includes(query);
+                card.style.display = matches ? 'block' : 'none';
+            });
+            // Reset category filter to "All" when searching
+            if (query !== '') {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.category-btn[data-category="all"]').classList.add('active');
+            }
+        });
+    </script>
+
+
+
+    <!-- Download Modal -->
+    <div class="download-modal-overlay" id="download-modal">
+        <div class="download-modal">
+            <h2>Get PepBox</h2>
+            <p class="modal-price">€6.99 · One-time payment · Lifetime</p>
+            <p class="modal-desc">
+                PepBox is a one-time purchase that unlocks every feature, every extension, and every future update —
+                forever. No subscriptions, no recurring fees.
+            </p>
+            <p class="modal-desc">
+                Your purchase directly supports an indie developer and ensures PepBox keeps getting better with new
+                features, performance improvements, and macOS compatibility updates.
+            </p>
+            <ul class="modal-perks">
+                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg> All core features & 15+ extensions</li>
+                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg> Lifetime updates, no extra cost</li>
+                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg> Supports continued development</li>
+                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg> 100% local & private — no telemetry</li>
+            </ul>
+            <div class="modal-actions">
+                <a href="https://github.com/KPScriptz/PepBox/releases/latest" target="_blank" class="modal-btn modal-btn-primary">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Buy License — €6.99
+                </a>
+                <a id="modal-direct-download" href="https://github.com/KPScriptz/PepBox/releases/latest"
+                    class="modal-btn modal-btn-secondary">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download PepBox
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Bar -->
+    <div class="cta-bar">
+        <button id="download-btn" class="btn btn-main">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download PepBox
+        </button>
+        <a href="index.html" class="btn">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Home
+        </a>
+        <a href="features.html" class="btn">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Features
+        </a>
+    </div>
+
+    <script>
+        document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
+            link.addEventListener('click', e => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript')) {
+                    e.preventDefault();
+                    document.body.classList.add('fade-out');
+                    setTimeout(() => window.location.href = href, 300);
+                }
+            });
+        });
+
+        // Staggered fade-in for cards with rotation
+        document.querySelectorAll('.card').forEach((card, i) => {
+            const rot = card.dataset.rot || 0;
+            card.style.transform = `rotate(${rot}deg)`;
+            setTimeout(() => card.classList.add('visible'), 80 + Math.random() * 500);
+        });
+
+        // Drag with momentum for cards
+        let activeCard = null, x = 0, y = 0, vx = 0, vy = 0, lastX = 0, lastY = 0;
+        const friction = 0.92, minV = 0.3;
+
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mousedown', e => {
+                activeCard = card;
+                const rect = card.getBoundingClientRect();
+                x = rect.left; y = rect.top;
+                lastX = e.clientX; lastY = e.clientY;
+                vx = 0; vy = 0;
+                card.style.position = 'fixed';
+                card.style.left = x + 'px';
+                card.style.top = y + 'px';
+                card.classList.add('dragging');
+            });
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!activeCard) return;
+            const dx = e.clientX - lastX, dy = e.clientY - lastY;
+            x += dx; y += dy;
+            vx = dx * 0.5; vy = dy * 0.5;
+            lastX = e.clientX; lastY = e.clientY;
+            activeCard.style.left = x + 'px';
+            activeCard.style.top = y + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!activeCard) return;
+            activeCard.classList.remove('dragging');
+            const card = activeCard;
+            activeCard = null;
+            const animate = () => {
+                if (Math.abs(vx) < minV && Math.abs(vy) < minV) return;
+                x += vx; y += vy;
+                vx *= friction; vy *= friction;
+                card.style.left = x + 'px';
+                card.style.top = y + 'px';
+                requestAnimationFrame(animate);
+            };
+            if (Math.abs(vx) > minV || Math.abs(vy) > minV) requestAnimationFrame(animate);
+        });
+
+        // Resolve direct download URL
+        fetch('https://api.github.com/repos/KPScriptz/PepBox/releases/latest').then(r => r.json()).then(rel => {
+            const dmg = rel.assets?.find(a => a.name.endsWith('.dmg'));
+            if (dmg) {
+                const directBtn = document.getElementById('modal-direct-download');
+                if (directBtn) directBtn.href = dmg.browser_download_url;
+            }
+        }).catch(() => { });
+
+        // Download modal logic
+        const downloadModal = document.getElementById('download-modal');
+        const downloadBtn = document.getElementById('download-btn');
+
+        downloadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            downloadModal.classList.add('active');
+        });
+
+        downloadModal.addEventListener('click', (e) => {
+            if (e.target === downloadModal) {
+                downloadModal.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -43,12 +43,10 @@ struct AIInstallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isHoveringAction = false
     @State private var isHoveringCancel = false
-    @State private var isHoveringReviews = false
     @State private var pulseAnimation = false
     @State private var showSuccessGlow = false
     @State private var showConfetti = false
     @State private var currentStep: AIInstallStep = .checking
-    @State private var showReviewsSheet = false
     
     // Stats passed from parent
     var installCount: Int?
@@ -92,11 +90,8 @@ struct AIInstallView: View {
         }
         .frame(width: 450)
         .fixedSize(horizontal: true, vertical: true)
-        .background(useTransparentBackground ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle)
+        .pepboxSurface(transparent: useTransparentBackground)
         .clipShape(RoundedRectangle(cornerRadius: PepBoxRadius.xl, style: .continuous))
-        .sheet(isPresented: $showReviewsSheet) {
-            ExtensionReviewsSheet(extensionType: .aiBackgroundRemoval)
-        }
         .onAppear {
             pulseAnimation = true
         }
@@ -170,37 +165,6 @@ struct AIInstallView: View {
             
             // Stats row: installs + rating + category badge
             HStack(spacing: 12) {
-                // Installs
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 12))
-                    Text(AnalyticsService.shared.isDisabled ? "–" : "\(installCount ?? 0)")
-                        .font(.caption.weight(.medium))
-                }
-                .foregroundStyle(.secondary)
-                
-                // Rating (clickable)
-                Button {
-                    showReviewsSheet = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.yellow)
-                        if let r = rating, r.ratingCount > 0 {
-                            Text(String(format: "%.1f", r.averageRating))
-                                .font(.caption.weight(.medium))
-                            Text("(\(r.ratingCount))")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        } else {
-                            Text("–")
-                                .font(.caption.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .buttonStyle(PepBoxSelectableButtonStyle(isSelected: false))
                 
                 // Category badge
                 Text("AI")
@@ -331,16 +295,6 @@ struct AIInstallView: View {
                 .buttonStyle(PepBoxPillButtonStyle(size: .small))
             }
             
-            // Reviews button
-            Button {
-                showReviewsSheet = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "star.bubble")
-                    Text("Reviews")
-                }
-            }
-            .buttonStyle(PepBoxPillButtonStyle(size: .small))
             
             Spacer()
             

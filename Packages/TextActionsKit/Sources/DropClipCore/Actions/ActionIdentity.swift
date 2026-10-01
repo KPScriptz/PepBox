@@ -1,0 +1,86 @@
+// ActionIdentity.swift
+// DropClip
+//
+// Canonical "loaded by" classification for an action, derived from its chrome metadata. Every UI
+// surface (bar, palette, Preferences, onboarding) previously re-wrote `if case .X = action.chrome.*`
+// heuristics; this is the single home so classification can't drift between surfaces. Pure Core —
+// no AppKit/SwiftUI, no `switch action.id` string matching.
+import Foundation
+
+public enum ActionIdentity {
+    /// True for first-party builtin rows (Copy/Cut/Search/… and the AI Tools launcher).
+    public static func isBuiltin(_ action: any Action) -> Bool {
+        if case .builtin = action.chrome.source { return true }
+        return false
+    }
+
+    /// True for actions shipped by an installed extension package (matches on either the chrome
+    /// source or the badge — both legacy carriers of the same fact).
+    public static func isExtension(_ action: any Action) -> Bool {
+        if case .extensionPkg = action.chrome.source { return true }
+        if case .extensionPkg = action.chrome.badge { return true }
+        return false
+    }
+
+    /// The extension package identifier for an extension-loaded action, if any.
+    public static func extensionPackageID(of action: any Action) -> String? {
+        if case .extensionPkg(let packageID) = action.chrome.source { return packageID }
+        if case .extensionPkg(let name) = action.chrome.badge { return name }
+        return nil
+    }
+
+    /// The set of unique installed extension package IDs present in an action list.
+    public static func installedPackageIDs(in actions: [any Action]) -> Set<String> {
+        Set(actions.compactMap { extensionPackageID(of: $0) })
+    }
+
+    /// True for AI-preset actions (`.ai` source) — reachable via the palette and Preferences,
+    /// never a popup bar row.
+    public static func isAIPreset(_ action: any Action) -> Bool {
+        if case .ai = action.chrome.source { return true }
+        return false
+    }
+
+    /// True for the inline word-completion pseudo-action. It is registered in the catalog only so
+    /// the popup can render its suggestions, and must never surface as a bar row or palette entry.
+    public static func isCompletionPseudoAction(_ action: any Action) -> Bool {
+        action.chrome.popupBehavior == .provideCompletions
+    }
+
+    /// Whether an action is eligible to be placed inside a custom action group.
+    /// Ineligible actions include AI presets, AI launchers, word completion pseudo-actions,
+    /// and other action groups (no nested groups).
+    public static func isEligibleForGrouping(_ action: any Action) -> Bool {
+        !isAIPreset(action) &&
+        !action.chrome.launchesAI &&
+        action.id != "builtin.ai_tools" &&
+        !isCompletionPseudoAction(action) &&
+        action.id != "builtin.completion" &&
+        action.chrome.popupBehavior != .showSubActions &&
+        action.chrome.rowStyle != .actionGroup &&
+        !action.id.hasPrefix("vgroup.")
+    }
+
+    /// Whether a user can assign an alias and a per-action hotkey. Only leaf actions that
+    /// actually run: groups, the AI Tools launcher, and the word-completion pseudo-action
+    /// are containers or non-palette rows.
+    public static func isBindable(_ action: any Action) -> Bool {
+        !action.chrome.launchesAI &&
+        !isCompletionPseudoAction(action) &&
+        action.chrome.popupBehavior != .showSubActions &&
+        action.chrome.rowStyle != .actionGroup
+    }
+
+    /// Whether an action can be duplicated by the user.
+    /// Custom actions and installed extension actions can be duplicated.
+    /// Builtins, AI presets, AI launchers, and word completion pseudo-actions cannot.
+    public static func canDuplicate(_ action: any Action) -> Bool {
+        if isAIPreset(action) || action.chrome.launchesAI || isCompletionPseudoAction(action) {
+            return false
+        }
+        if isBuiltin(action) {
+            return false
+        }
+        return true
+    }
+}

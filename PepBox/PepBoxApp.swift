@@ -266,11 +266,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var didStartLicensedFeatures = false
     private var didStartBackgroundUpdates = false
     
+    /// New installs start with every extension off; people turn on what they want in Settings → Extensions.
+    /// (Panel and utility extensions are already off until installed; these two were on out of the box.)
+    /// Existing users keep their setup.
+    static func turnExtensionsOffForNewInstall() {
+        let defaults = UserDefaults.standard
+        let appliedKey = "extensionsOffByDefaultApplied"
+        guard !defaults.bool(forKey: appliedKey) else { return }
+        defaults.set(true, forKey: appliedKey)
+        guard !defaults.bool(forKey: AppPreferenceKey.hasCompletedOnboarding) else { return }
+        for type in [ExtensionType.appleMusic, .quickshare] {
+            type.setRemoved(true)
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // FIX #123: Force LaunchServices re-registration on first launch
         // macOS Tahoe has a bug where apps with LSUIElement=true fail to launch from Finder/Spotlight/Dock
         // due to stale LaunchServices cache. Running lsregister once after install fixes this.
         Self.registerWithLaunchServicesIfNeeded()
+        Self.turnExtensionsOffForNewInstall()
         
         // CRITICAL: Register default preference values BEFORE any @AppStorage is read
         // This ensures UserDefaults returns correct defaults for missing keys (fixes #110)
@@ -337,6 +352,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Touch singletons on main thread to ensure proper @AppStorage / UI initialization
         _ = PepBoxState.shared
+        PepBoxState.shared.restoreShelfItems()  // Restore shelf items if "Remember Items" is on (before pinned folders touch the shelf)
         PepBoxState.shared.restorePinnedFolders()  // Restore pinned folders from previous session
         _ = DragMonitor.shared
         _ = NotchWindowController.shared
@@ -415,6 +431,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             // Initialize Menu Bar Manager (restores status items if it was enabled)
             _ = MenuBarManager.shared
+
+            // Add new screenshots to the shelf (if enabled)
+            ScreenshotWatcher.shared.updateFromPreferences()
+            
+            // Ring and Key Sounds (if installed)
+            UtilityExtensionKind.startAll()
         }
 
         // Start monitoring for drag events (polling-based, safe)
@@ -557,6 +579,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showOnboardingIfNeeded() {
         guard !UserDefaults.standard.bool(forKey: AppPreferenceKey.hasCompletedOnboarding) else {
+            WhatsNew.showIfNeeded()
             return
         }
 
@@ -580,6 +603,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         // Mark clean exit (no crash prompt on next launch)
         CrashReporter.shared.markCleanExit()
+        
+        // Give every app its normal audio path back (App Volume taps)
+        AppVolumeManager.shared.resetAll()
         
         // Stop drag monitoring
         DragMonitor.shared.stopMonitoring()

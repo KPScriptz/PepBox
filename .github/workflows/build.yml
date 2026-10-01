@@ -24,6 +24,13 @@ jobs:
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
+      - name: Logic tests
+        run: scripts/logic-tests/run.sh
+
+      - name: Six-month usage simulation
+        run: bash scripts/simulation/run.sh
+        timeout-minutes: 10
+
       - name: Build app
         run: |
           set -o pipefail

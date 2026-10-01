@@ -243,7 +243,7 @@ struct OnboardingView: View {
     
     private var pageTitle: String {
         switch currentPage {
-        case .welcome: return "Hey there! 👋"
+        case .welcome: return "Hey there!"
         case .shelf: return "The Notch Shelf"
         case .basket: return "Floating Basket"
         case .clipboard: return "Clipboard Manager"
@@ -257,10 +257,10 @@ struct OnboardingView: View {
     private var pageSubtitle: String {
         switch currentPage {
         case .welcome: return "I'm PepBox, your new productivity companion"
-        case .shelf: return "A temporary storage area right in your menu bar"
+        case .shelf: return "A temporary spot for files, right in your notch"
         case .basket: return "A drop zone that appears wherever you need it"
         case .clipboard: return "Your complete clipboard history at your fingertips"
-        case .media: return "Beautiful notifications for music, volume, and more"
+        case .media: return "Clean overlays for volume, brightness, music and more"
         // DISABLED: case .lockScreen: return "Show your notch and media controls on the lock screen"
         case .extensions: return "Extend PepBox with powerful modules"
         case .ready: return "PepBox is ready to make your Mac more productive"
@@ -353,7 +353,7 @@ private struct WelcomeContent: View {
             
             // Title and subtitle
             VStack(spacing: 6) {
-                Text("Hey there! 👋")
+                Text("Hey there!")
                     .font(.system(size: 22, weight: .bold))
                 
                 Text("I'm PepBox, your new productivity companion")
@@ -370,7 +370,7 @@ private struct WelcomeContent: View {
                 VStack(spacing: 0) {
                     WelcomeFeatureRow(icon: "tray.and.arrow.down.fill", color: .blue, text: "Drag files to your notch for quick access", isFirst: true)
                     WelcomeFeatureRow(icon: "doc.on.clipboard.fill", color: .cyan, text: "Search your clipboard history with OCR")
-                    WelcomeFeatureRow(icon: "music.note", color: .green, text: "See Now Playing right in your menu bar")
+                    WelcomeFeatureRow(icon: "music.note", color: .green, text: "See what's playing right in your notch")
                     WelcomeFeatureRow(icon: "wand.and.stars", color: .pink, text: "Auto-compress images and convert files", isLast: true)
                 }
                 .background(AdaptiveColors.overlayAuto(0.03))
@@ -497,7 +497,7 @@ private struct ShelfContent: View {
                 OnboardingToggle(icon: "tray.and.arrow.down.fill", title: "Enable Notch Shelf", color: .blue, isOn: $enableShelf)
                 
                 if enableShelf {
-                    OnboardingToggle(icon: "trash.fill", title: "Auto-Clean after dragging out", color: .gray, isOn: $enableAutoClean)
+                    OnboardingToggle(icon: "trash.fill", title: "Auto-Remove After Dragging Out", color: .gray, isOn: $enableAutoClean)
                         .transition(.opacity)
                 }
             }
@@ -561,10 +561,7 @@ private struct ClipboardContent: View {
         VStack(spacing: 20) {
             // Shortcut badge - pill shape
             HStack(spacing: 5) {
-                Image(systemName: "command")
-                Text("+")
-                    .foregroundStyle(.secondary)
-                Image(systemName: "shift")
+                Image(systemName: "option")
                 Text("+")
                     .foregroundStyle(.secondary)
                 Text("Space")
@@ -956,25 +953,25 @@ private struct ExtensionsContent: View {
                 
                 // Top row - spread evenly
                 HStack(spacing: 0) {
-                    OnboardingExtensionIcon(definition: VoiceTranscribeExtension.self, name: "Transcribe")
+                    OnboardingExtensionIcon(definition: AgentsExtension.self, name: "Agents")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: AIBackgroundRemovalExtension.self, name: "AI Removal")
+                    OnboardingExtensionIcon(definition: SnippetsExtension.self, name: "Snippets")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: TermiNotchExtension.self, name: "Terminal")
+                    OnboardingExtensionIcon(definition: LocalSendExtension.self, name: "LocalSend")
                         .frame(maxWidth: .infinity)
                 }
                 
                 // Bottom row - spread evenly
                 HStack(spacing: 0) {
-                    OnboardingExtensionIcon(definition: SpotifyExtension.self, name: "Spotify")
+                    OnboardingExtensionIcon(definition: QuickSearchExtension.self, name: "Search")
                         .frame(maxWidth: .infinity)
-                    OnboardingExtensionIcon(definition: VideoTargetSizeExtension.self, name: "Compress")
+                    OnboardingExtensionIcon(definition: UpNextExtension.self, name: "Up Next")
                         .frame(maxWidth: .infinity)
                     OnboardingExtensionIcon(definition: ElementCaptureExtension.self, name: "Capture")
                         .frame(maxWidth: .infinity)
                 }
                 
-                Text("And many more...")
+                Text("And 40 more in Settings → Extensions")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
             }
@@ -1103,14 +1100,6 @@ private struct ReadyContent: View {
                         .stroke(AdaptiveColors.overlayAuto(0.05), lineWidth: 1)
                 )
             }
-            .frame(width: 420)
-
-            OnboardingToggle(
-                icon: "hand.raised.fill",
-                title: "Skip all analytics",
-                color: .orange,
-                isOn: $disableAnalytics
-            )
             .frame(width: 420)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)

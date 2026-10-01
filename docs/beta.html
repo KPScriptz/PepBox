@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beta testing · PepBox</title>
+  <meta name="description" content="Help test PepBox: install it, work through the checklist, and report anything odd.">
+  <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f3" media="(prefers-color-scheme: light)">
+  <link rel="canonical" href="https://kpscriptz.github.io/PepBox/beta.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PepBox">
+  <meta property="og:title" content="Beta testing · PepBox">
+  <meta property="og:description" content="Help test PepBox: install it, work through the checklist, and report anything odd.">
+  <meta property="og:url" content="https://kpscriptz.github.io/PepBox/beta.html">
+  <meta property="og:image" content="https://kpscriptz.github.io/PepBox/assets/app-icon.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="assets/site.css">
+
+  <style>
+    .beta-layout { display: grid; gap: 28px; padding-bottom: 72px; max-width: 860px; }
+    .beta-group h2 { font-size: 1.15rem; margin: 0 0 10px; }
+    .checklist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border, rgba(127,127,127,.25)); border-radius: var(--radius, 14px); overflow: hidden; }
+    .checklist li + li { border-top: 1px solid var(--border, rgba(127,127,127,.18)); }
+    .check { display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; cursor: pointer; line-height: 1.45; }
+    .check:hover { background: rgba(127,127,127,.07); }
+    .check input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--accent, #f0745a); }
+    .check input:checked + span { opacity: .55; text-decoration: line-through; }
+    .beta-progress { position: sticky; top: calc(var(--header-h, 64px) + 8px); z-index: 5; padding: 14px 16px; border-radius: var(--radius, 14px);
+      background: var(--header-bg, var(--surface)); border: 1px solid var(--border, rgba(127,127,127,.25)); backdrop-filter: blur(12px); }
+    .bp-bar { height: 6px; border-radius: 99px; background: rgba(127,127,127,.25); margin: 8px 0 12px; overflow: hidden; }
+    .bp-bar span { display: block; height: 100%; width: 0; background: var(--grad, linear-gradient(90deg, #f6b25e, #e2557a)); transition: width .25s ease; }
+    .bp-note { font-size: .82rem; opacity: .7; margin: 10px 0 0; }
+    .beta-progress .btn-row { flex-wrap: wrap; }
+    @media (prefers-reduced-motion: reduce) { .bp-bar span { transition: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" alt="" width="30" height="30">PepBox</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span class="nav-toggle-bars"></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html">Features</a>
+        <a href="extensions.html">Extensions</a>
+        <a href="help.html">Help</a>
+        <a class="btn btn-primary btn-sm" href="beta.html">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Beta</span>
+        <h1>Thanks for testing PepBox.</h1>
+        <p class="lead">Install it, use it like you normally would for a few days, and work through the list below. Anything odd, slow or confusing is worth a report.</p>
+      </div>
+    </section>
+
+    <div class="container beta-layout">
+      <div class="download-card">
+        <img src="assets/app-icon.png" alt="PepBox app icon" width="72" height="72">
+        <div class="dc-text"><strong>PepBox beta for macOS 14+</strong><p>Free · the latest build is always on GitHub</p></div>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://github.com/KPScriptz/PepBox/releases/latest">Download</a>
+          <a class="btn btn-ghost" href="download.html#install">Install steps</a>
+        </div>
+      </div>
+
+      <div class="beta-progress" aria-live="polite">
+        <div class="bp-text"><strong id="bp-count">0</strong> of <span id="bp-total">0</span> checked</div>
+        <div class="bp-bar"><span id="bp-fill"></span></div>
+        <div class="btn-row">
+          <a class="btn btn-primary btn-sm" id="report-bug" href="https://github.com/KPScriptz/PepBox/issues/new?title=Beta%3A%20&body=**What happened?**%0A%0A%0A**What did you expect?**%0A%0A%0A**Steps to reproduce**%0A1.%20%0A2.%20%0A%0A**Mac and macOS version** (Apple menu → About This Mac)%0A%0A%0A**Screenshot** (drag it here)%0A" target="_blank" rel="noopener">Report a bug</a>
+          <button class="btn btn-ghost btn-sm" id="copy-results" type="button">Copy my results</button>
+          <button class="btn btn-ghost btn-sm" id="reset-results" type="button">Start over</button>
+        </div>
+        <p class="bp-note">Your ticks are saved in this browser only. "Copy my results" puts a summary on your clipboard to paste into a report or a message.</p>
+      </div>
+
+      <section class="beta-group">
+        <h2>First launch</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="install"><span>Install from the DMG, open PepBox, and grant Accessibility when asked</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="whatsnew"><span>The welcome / onboarding screens read well and nothing overlaps</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="notch"><span>Hover the notch: the shelf opens quickly and closes when you move away</span></label></li>
+        </ul>
+      </section>
+      <section class="beta-group">
+        <h2>Shelf and sending</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="drop"><span>Drag a file up to the notch and drop it on the shelf</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="send"><span>While dragging, drop a file on a send button (AirDrop, Messages, Mail, ZIP, Copy)</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="tools"><span>Right-click a shelf image → Tools → Resize, Rotate, Black & White</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="pdf"><span>Select two PDFs on the shelf → Tools → Merge PDFs</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="gif"><span>Right-click a short video → Tools → Make GIF</span></label></li>
+        </ul>
+      </section>
+      <section class="beta-group">
+        <h2>Clipboard</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="history"><span>Copy a few things, press ⌥Space, pick one with the arrows and Return</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="stack"><span>⌘-click three items (numbers show 1-2-3), choose a separator, Paste All</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="queue"><span>⌃⌥C, copy three lines, then ⌃⌥V three times: they paste in order</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="filter"><span>Use the filter button to show only Links or Images</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="pin"><span>Right-click an image → Float on Screen; double-click it to see through</span></label></li>
+        </ul>
+      </section>
+      <section class="beta-group">
+        <h2>Quick Search (⌃⌥Space)</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="qs-help"><span>Type ? and try a few examples from the list</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="qs-math"><span>Try: 15% of 80 · 5 km to mi · $20 to eur · time in tokyo</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="qs-timer"><span>Try: timer 1m tea — it counts down beside the notch and chimes</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="qs-event"><span>Try: event test tomorrow 3pm (allow Calendar) — it shows up in Calendar</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="qs-apps"><span>Open a few apps from Quick Search; they rank higher next time</span></label></li>
+        </ul>
+      </section>
+      <section class="beta-group">
+        <h2>Extensions (Settings → Extensions)</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="ext-off"><span>On a fresh install, every extension starts off</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="ext-snippets"><span>Turn on Snippets, then type ;date in any app</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="ext-upnext"><span>Turn on Up Next, set your city, check weather and meetings</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="ext-agents"><span>If you use Claude Code or Codex: turn on Agents and watch the notch</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="ext-any"><span>Turn on one more that looks useful to you and try it</span></label></li>
+        </ul>
+      </section>
+      <section class="beta-group">
+        <h2>Settings and polish</h2>
+        <ul class="checklist">
+          <li><label class="check"><input type="checkbox" data-id="settings"><span>Click through every Settings page: anything cut off, overlapping or confusing?</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="resize"><span>Make the Settings window as small as it goes: still readable?</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="dark"><span>Switch macOS between light and dark mode: everything still readable?</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="sleep"><span>Leave PepBox running overnight / through a sleep: still working next day?</span></label></li>
+        </ul>
+      </section>
+
+      <section class="callout beta-tips">
+        <h2>Good bug reports</h2>
+        <p>Say what you did, what happened, and what you expected. A screenshot (⌘⇧4) or a short screen recording (⌘⇧5) helps a lot. If PepBox froze or quit, mention roughly when.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand"><img src="assets/app-icon.png" alt="" width="24" height="24">PepBox</div>
+        <p>Free and open source. Made for macOS 14 and later.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="footer-links">
+          <li><a href="features.html">Features</a></li>
+          <li><a href="extensions.html">Extensions</a></li>
+          <li><a href="download.html">Download</a></li>
+          <li><a href="help.html">Help</a></li>
+          <li><a href="help.html#privacy">Privacy</a></li>
+          <li><a href="https://github.com/KPScriptz/PepBox">GitHub</a></li>
+          <li><a href="licenses.html">Open-source licenses</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
+  <script src="assets/site.js" defer></script>
+
+  <script>
+  (function () {
+    var KEY = 'pepbox-beta-checklist';
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('.checklist input[type=checkbox]'));
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+    function update() {
+      var done = boxes.filter(function (b) { return b.checked; }).length;
+      document.getElementById('bp-count').textContent = done;
+      document.getElementById('bp-total').textContent = boxes.length;
+      document.getElementById('bp-fill').style.width = (boxes.length ? done / boxes.length * 100 : 0) + '%';
+    }
+    boxes.forEach(function (b) {
+      b.checked = !!saved[b.dataset.id];
+      b.addEventListener('change', function () { saved[b.dataset.id] = b.checked; save(); update(); });
+    });
+    document.getElementById('reset-results').addEventListener('click', function () {
+      saved = {}; save(); boxes.forEach(function (b) { b.checked = false; }); update();
+    });
+    document.getElementById('copy-results').addEventListener('click', function (event) {
+      var lines = ['PepBox beta checklist'];
+      document.querySelectorAll('.beta-group').forEach(function (group) {
+        lines.push('', '## ' + group.querySelector('h2').textContent);
+        group.querySelectorAll('input[type=checkbox]').forEach(function (b) {
+          lines.push((b.checked ? '- [x] ' : '- [ ] ') + b.parentNode.querySelector('span').textContent);
+        });
+      });
+      var text = lines.join('\n'), button = event.currentTarget, original = button.textContent;
+      function done(ok) { button.textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(function () { button.textContent = original; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      } else {
+        var area = document.createElement('textarea'); area.value = text; document.body.appendChild(area); area.select();
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} area.remove(); done(ok);
+      }
+    });
+    update();
+  })();
+  </script>
+</body>
+</html>

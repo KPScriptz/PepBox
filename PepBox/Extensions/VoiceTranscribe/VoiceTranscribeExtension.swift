@@ -10,7 +10,7 @@ import SwiftUI
 struct VoiceTranscribeExtension: ExtensionDefinition {
     static let id = "voiceTranscribe"
     static let title = "Voice Transcribe"
-    static let subtitle = "On-device speech-to-text transcription"
+    static let subtitle = "Speech to text, on your Mac"
     static let category: ExtensionGroup = .ai
     static let categoryColor: Color = .blue
     

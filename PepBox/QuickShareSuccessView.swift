@@ -224,6 +224,13 @@ struct QuickShareSuccessView: View {
                 }
                 .buttonStyle(PepBoxPillButtonStyle(size: .small))
                 
+                // QR code of the link, to open it on a phone
+                Button(action: { QRCodePanelController.shared.show(shareURL) }) {
+                    Image(systemName: "qrcode")
+                }
+                .buttonStyle(PepBoxPillButtonStyle(size: .small))
+                .help("Show a QR code to open the link on your phone")
+                
                 // Manage button - opens Quickshare Manager
                 Button(action: openManager) {
                     HStack(spacing: 6) {

@@ -1,0 +1,597 @@
+// AIServiceManager.swift
+// DropClip
+//
+// Manages AI service provider selection, API credentials, and invocation of AI text processing actions.
+import Combine
+import Foundation
+import os
+import SwiftUI
+import DropClipCore
+import os
+
+extension Notification.Name {
+    /// Posted by `AIServiceManager` after the AI preset list has been written, so observers
+    /// (e.g. `AIActionSync`) can re-register AI actions against the freshly committed list.
+    public static let aiActionPresetsDidChange = Notification.Name("Text Actions.AIActionPresetsDidChange")
+}
+
+@MainActor
+public final class AIServiceManager: ObservableObject {
+    public static let shared = AIServiceManager()
+
+    private let settingsStore = DefaultSettingsStore.shared
+
+    // Settings-backed properties route through SettingsStore (the single settings door) and
+    // manually forward `objectWillChange` so Preferences (and any other observers) refresh when
+    // a value changes. Key names and defaults are unchanged from the former @AppStorage surface.
+    public var isAIEnabled: Bool {
+        get { settingsStore.get(.isAIEnabled) }
+        set { objectWillChange.send(); settingsStore.set(.isAIEnabled, value: newValue) }
+    }
+    public var activeProviderRaw: String {
+        get { settingsStore.get(.aiActiveProvider) }
+        set { objectWillChange.send(); settingsStore.set(.aiActiveProvider, value: newValue) }
+    }
+    // API key is stored in ~/.dropclip/secrets.json via SecretStore.
+    @Published public var cloudAPIKey: String {
+        didSet {
+            if cloudAPIKey.isEmpty {
+                SecretStore.delete(account: Self.cloudAPIKeyAccount)
+            } else {
+                let didStore = SecretStore.set(cloudAPIKey, account: Self.cloudAPIKeyAccount)
+                if !didStore {
+                    Log.settings.error("Failed to persist cloud API key to SecretStore; reverting value.")
+                    cloudAPIKey = oldValue
+                }
+            }
+        }
+    }
+    public var cloudServiceRaw: String {
+        get { settingsStore.get(.aiCloudService) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudService, value: newValue) }
+    }
+    public var cloudCustomURL: String {
+        get { settingsStore.get(.aiCloudCustomURL) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudCustomURL, value: newValue) }
+    }
+    public var cloudModel: String {
+        get { settingsStore.get(.aiCloudModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudModel, value: newValue) }
+    }
+    public var localPresetRaw: String {
+        get { settingsStore.get(.aiLocalPreset) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalPreset, value: newValue) }
+    }
+    public var localURL: String {
+        get { settingsStore.get(.aiLocalURL) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalURL, value: newValue) }
+    }
+    public var localModel: String {
+        get { settingsStore.get(.aiLocalModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalModel, value: newValue) }
+    }
+    public var cliPresetRaw: String {
+        get { settingsStore.get(.aiCLIPreset) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLIPreset, value: newValue) }
+    }
+    public var cliCustomCommand: String {
+        get { settingsStore.get(.aiCLICustomCommand) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomCommand, value: newValue) }
+    }
+    public var cliModel: String {
+        get { settingsStore.get(.aiCLIModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLIModel, value: newValue) }
+    }
+    public var cliCustomModel: String {
+        get { settingsStore.get(.aiCLICustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomModel, value: newValue) }
+    }
+    public var cliCustomAuthCommand: String {
+        get { settingsStore.get(.aiCLICustomAuthCommand) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomAuthCommand, value: newValue) }
+    }
+    public var localCustomModel: String {
+        get { settingsStore.get(.aiLocalCustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalCustomModel, value: newValue) }
+    }
+    public var cloudCustomModel: String {
+        get { settingsStore.get(.aiCloudCustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudCustomModel, value: newValue) }
+    }
+
+    public var effectiveCLIModel: String {
+        if cliModel == "custom" {
+            return cliCustomModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return (cliModel == "default") ? "" : cliModel
+    }
+
+    public var effectiveLocalModel: String {
+        if localModel == "custom" {
+            return localCustomModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return localModel
+    }
+
+    public var effectiveCloudModel: String {
+        let provider = cloudServiceProvider
+        let resolved: String
+        if cloudModel == "custom" {
+            let trimmed = cloudCustomModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            resolved = trimmed.isEmpty ? defaultCloudModel(for: provider) : trimmed
+        } else if cloudModel == "default" {
+            resolved = defaultCloudModel(for: provider)
+        } else {
+            resolved = cloudModel
+        }
+        // A retired id that reached the setting after launch (a restored backup) still gets a
+        // live model rather than a 404.
+        if provider.retiredModels.contains(resolved) {
+            return defaultCloudModel(for: provider)
+        }
+        return resolved
+    }
+
+    /// The model a request that found "Default"'s model retired moved to, per provider, for this
+    /// run only. Never saved, so "Default" keeps following DropClip's own default after an update.
+    private var recoveredDefaultModels: [CloudServiceProvider: String] = [:]
+
+    /// What "Default" means for `provider` right now.
+    private func defaultCloudModel(for provider: CloudServiceProvider) -> String {
+        recoveredDefaultModels[provider] ?? provider.primaryModel
+    }
+
+    /// A request found the chosen cloud model retired and `replacement` answering. A model picked
+    /// from the menu is replaced for good; "Default" only remembers it for this run.
+    private func adoptRecoveredCloudModel(_ replacement: String, for provider: CloudServiceProvider) {
+        guard cloudServiceProvider == provider else { return }
+        switch cloudModel {
+        case "default":
+            recoveredDefaultModels[provider] = replacement
+        case "custom":
+            // A model the user typed in is theirs to change.
+            break
+        default:
+            // The provider's own default goes back to "Default", as the settings form does after
+            // a fetch, so the choice keeps following DropClip's default after an update.
+            cloudModel = replacement == provider.primaryModel ? "default" : replacement
+        }
+    }
+
+    /// A saved cloud model its provider has switched off goes back to "Default". The model
+    /// OpenClip and DropClip up to 2.1.4 saved on picking Google Gemini, gemini-2.0-flash, has
+    /// answered every request with a 404 since Google retired it (Trench fb3c9bac). Writes only
+    /// when the saved model is retired, so it runs on every launch.
+    private func healRetiredCloudModel() {
+        let provider = cloudServiceProvider
+        guard provider != .custom else { return }
+        let retired = provider.retiredModels
+        if retired.contains(cloudModel) {
+            cloudModel = "default"
+        } else if cloudModel == "custom",
+                  retired.contains(cloudCustomModel.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            cloudModel = "default"
+        }
+    }
+
+    public var localPreset: LocalLLMPreset {
+        get { LocalLLMPreset(rawValue: localPresetRaw) ?? .lmstudio }
+        set {
+            localPresetRaw = newValue.rawValue
+            localURL = newValue.defaultBaseURL
+            if let first = newValue.defaultModels.first {
+                localModel = first
+            }
+        }
+    }
+
+    public var cliPreset: CLIPreset {
+        get { CLIPreset(rawValue: cliPresetRaw) ?? .claude }
+        set {
+            cliPresetRaw = newValue.rawValue
+            if let first = newValue.defaultModels.first {
+                cliModel = first
+            }
+        }
+    }
+
+    /// Backwards-compatibility properties for existing settings
+    public var ollamaURL: String {
+        get { localURL }
+        set { localURL = newValue }
+    }
+    public var ollamaModel: String {
+        get { localModel }
+        set { localModel = newValue }
+    }
+    public var actionPresetsJSON: String {
+        get { settingsStore.get(.aiActionPresetsJSON) }
+        set { objectWillChange.send(); settingsStore.set(.aiActionPresetsJSON, value: newValue) }
+    }
+
+    public static let defaultPresets: [AIActionPreset] = [
+        AIActionPreset(id: "proofread", title: String(localized: "Proofread"), prompt: String(localized: "Fix all spelling, punctuation, and grammar errors with the smallest possible changes. Preserve the original wording, tone, and formatting — do not rewrite or rephrase sentences"), isEnabled: true),
+        AIActionPreset(id: "rewrite", title: String(localized: "Rewrite"), prompt: String(localized: "Rewrite to improve clarity, flow, and word choice while keeping the original meaning, tone, language, and formatting"), isEnabled: true),
+        AIActionPreset(id: "summarize", title: String(localized: "Summarize"), prompt: String(localized: "Provide a concise bulleted summary of the key points, in the same language as the text. Include only essential information — no introduction or closing remarks"), isEnabled: true),
+        AIActionPreset(id: "explain", title: String(localized: "Explain"), prompt: String(localized: "Explain what the text means in clear, simple language, in the same language as the text. Cover the core idea and any important details a beginner would need"), isEnabled: true),
+        AIActionPreset(id: "translate", title: String(localized: "Translate"), prompt: String(localized: "Translate the text accurately into natural English, preserving the original meaning, tone, and formatting"), isEnabled: true),
+        AIActionPreset(id: "fix_code", title: String(localized: "Fix Code"), prompt: String(localized: "Fix bugs, syntax errors, and logic issues in this code. Keep the same programming language, style, and structure, and change as little as possible. Return only the raw working code — no markdown code fences, no explanations"), isEnabled: true),
+        AIActionPreset(id: "make_shorter", title: String(localized: "Make Shorter"), prompt: String(localized: "Condense this text to be significantly shorter while keeping all essential information, the original language, and the tone. Preserve the overall formatting such as paragraphs and lists"), isEnabled: true),
+        AIActionPreset(id: "formal_tone", title: String(localized: "Formal Tone"), prompt: String(localized: "Rewrite this text in a polished, professional, and formal tone. Keep the original meaning, language, and formatting; replace slang, contractions, and casual phrasing with formal equivalents"), isEnabled: true)
+    ]
+
+    private static let presetDecodeFailureLogged = OSAllocatedUnfairLock(initialState: false)
+
+    /// The last decoded preset list and the JSON it came from. Every AI tools switch on the
+    /// Actions page reads `presets` on each render, and each read decoded the whole list again.
+    /// Keyed on the exact stored string, so any write (here or straight to the setting) is a miss.
+    private var presetsCache: (json: String, value: [AIActionPreset])?
+
+    public var presets: [AIActionPreset] {
+        get {
+            let json = actionPresetsJSON
+            guard !json.isEmpty,
+                  let data = json.data(using: .utf8) else {
+                return Self.defaultPresets
+            }
+            if let cached = presetsCache, cached.json == json {
+                return cached.value
+            }
+            if let decoded = try? JSONDecoder().decode([AIActionPreset].self, from: data) {
+                presetsCache = (json, decoded)
+                return decoded
+            }
+            Self.presetDecodeFailureLogged.withLock { alreadyLogged in
+                guard !alreadyLogged else { return }
+                alreadyLogged = true
+                Log.ai.error("Failed to decode saved AI action presets; using defaults")
+            }
+            return Self.defaultPresets
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue),
+               let str = String(data: data, encoding: .utf8) {
+                actionPresetsJSON = str
+            } else {
+                Log.ai.error("Failed to encode AI action presets for persistence")
+            }
+            // Posted after the value above has committed, so observers always read the fresh list
+            // (objectWillChange fires before @AppStorage lands). AIActionSync keeps the registered
+            // AI actions in step with this list.
+            NotificationCenter.default.post(name: .aiActionPresetsDidChange, object: self)
+        }
+    }
+
+    public var enabledPresets: [AIActionPreset] {
+        let list = presets.filter { $0.isEnabled }
+        return list.isEmpty ? [Self.defaultPresets[0]] : list
+    }
+
+    /// Reorders the preset list, moving `id` into `gapIndex` — the gap the insertion bar was
+    /// drawn in, counted between rows (0 = above the first, `count` = below the last), matching
+    /// the drop semantics of the Actions outline. The list order *is* the order everywhere — the
+    /// AI sub-bar, the search palette, and the Preferences list all read it — so persisting the
+    /// new array is the whole feature.
+    public func movePreset(id: String, toGap gapIndex: Int) {
+        let reordered = Self.reordering(presets, moving: id, toGap: gapIndex)
+        guard reordered.map(\.id) != presets.map(\.id) else { return }
+        presets = reordered
+    }
+
+    /// Pure reorder used by `movePreset`, split out so the ordering rules are testable without the
+    /// `@AppStorage`-backed singleton. Gap indices are pre-removal (SwiftUI's `move(fromOffsets:
+    /// toOffset:)` convention), so dropping into the gap directly below a row is a no-op rather
+    /// than an off-by-one. An unknown id or an out-of-range gap leaves the list intact — the gap
+    /// is clamped, never trapped on.
+    public static func reordering(_ presets: [AIActionPreset], moving id: String, toGap gapIndex: Int) -> [AIActionPreset] {
+        guard let sourceIndex = presets.firstIndex(where: { $0.id == id }) else { return presets }
+        var list = presets
+        list.move(fromOffsets: IndexSet(integer: sourceIndex), toOffset: max(0, min(gapIndex, presets.count)))
+        return list
+    }
+
+    /// Builds a user-authored preset with a fresh `custom_` id — the same shape the "Add Custom AI
+    /// Action" sheet writes, so it is deletable in AI → Actions like any other custom preset.
+    /// Pure, so the id/title/prompt rules are testable without the `@AppStorage` singleton.
+    public static func makeCustomPreset(title: String, prompt: String) -> AIActionPreset {
+        AIActionPreset(
+            id: "custom_\(UUID().uuidString.prefix(8))",
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            prompt: prompt.trimmingCharacters(in: .whitespacesAndNewlines),
+            isEnabled: true
+        )
+    }
+
+    /// Appends a new custom preset and returns it. The preset list is the single source of truth
+    /// for every AI surface (palette, AI sub-bar, Preferences), so persisting it is the whole
+    /// registration — `AIActionSync` picks the change up through `aiActionPresetsDidChange`.
+    @discardableResult
+    public func addCustomPreset(title: String, prompt: String) -> AIActionPreset {
+        let preset = Self.makeCustomPreset(title: title, prompt: prompt)
+        updatePreset(preset)
+        return preset
+    }
+
+    /// The preset whose prompt is `prompt` (case- and whitespace-insensitive), if one exists — so
+    /// saving a prompt the user already saved reuses that tool instead of minting a duplicate.
+    public func preset(matchingPrompt prompt: String) -> AIActionPreset? {
+        Self.preset(in: presets, matchingPrompt: prompt)
+    }
+
+    /// Pure lookup behind `preset(matchingPrompt:)`.
+    public static func preset(in presets: [AIActionPreset], matchingPrompt prompt: String) -> AIActionPreset? {
+        let wanted = normalizedPrompt(prompt)
+        guard !wanted.isEmpty else { return nil }
+        return presets.first { normalizedPrompt($0.prompt) == wanted }
+    }
+
+    private static func normalizedPrompt(_ prompt: String) -> String {
+        prompt
+            .split(whereSeparator: { $0.isWhitespace || $0.isNewline })
+            .joined(separator: " ")
+            .lowercased()
+    }
+
+    public func updatePreset(_ updated: AIActionPreset) {
+        var current = presets
+        if let idx = current.firstIndex(where: { $0.id == updated.id }) {
+            current[idx] = updated
+        } else {
+            current.append(updated)
+        }
+        presets = current
+    }
+
+    /// Maps a registered AI action id (`ai.preset.<presetID>`, see `AIAction`) back to its live
+    /// preset, so palette/preferences routing can resolve the preset without touching `AIAction`'s
+    /// internals.
+    public func preset(forActionID actionID: String) -> AIActionPreset? {
+        let prefix = "ai.preset."
+        guard actionID.hasPrefix(prefix) else { return nil }
+        let presetID = String(actionID.dropFirst(prefix.count))
+        return presets.first { $0.id == presetID }
+    }
+
+    public func resetPresetsToDefault() {
+        presets = Self.defaultPresets
+    }
+
+    /// Resolves the effective prompt for an AI preset.
+    public func promptForPreset(_ preset: AIActionPreset) -> String {
+        preset.prompt
+    }
+
+    private static let cloudAPIKeyAccount = "aiCloudAPIKey"
+
+    private init() {
+        // Load the API key from the SecretStore (~/.dropclip/secrets.json)
+        if let stored = SecretStore.get(account: Self.cloudAPIKeyAccount) {
+            self.cloudAPIKey = stored
+        } else if let legacy = UserDefaults.dropclip.string(forKey: "aiCloudAPIKey"), !legacy.isEmpty {
+            if SecretStore.set(legacy, account: Self.cloudAPIKeyAccount) {
+                UserDefaults.dropclip.removeObject(forKey: "aiCloudAPIKey")
+            }
+            self.cloudAPIKey = legacy
+        } else {
+            self.cloudAPIKey = ""
+        }
+
+        let defaults = UserDefaults.dropclip
+        if defaults.object(forKey: "aiLocalURL") == nil,
+           let legacyURL = defaults.string(forKey: "aiOllamaURL"), !legacyURL.isEmpty {
+            localURL = legacyURL
+            localPresetRaw = LocalLLMPreset.ollama.rawValue
+        }
+        if defaults.object(forKey: "aiLocalModel") == nil,
+           let legacyModel = defaults.string(forKey: "aiOllamaModel"), !legacyModel.isEmpty {
+            localModel = legacyModel
+        }
+
+        if !AppleIntelligenceAvailability.isSupported && activeProviderRaw == "apple" {
+            activeProviderRaw = AIProviderType.local.rawValue
+        }
+
+        healRetiredCloudModel()
+    }
+
+    public var activeProviderType: AIProviderType {
+        get {
+            switch activeProviderRaw {
+            case "apple":
+                return AppleIntelligenceAvailability.isSupported ? .apple : .local
+            case "local", "ollama":
+                return .local
+            case "cli":
+                return .cli
+            case "cloud":
+                return .cloud
+            default:
+                return AppleIntelligenceAvailability.isSupported ? .apple : .local
+            }
+        }
+        set { activeProviderRaw = newValue.rawValue }
+    }
+
+    public var cloudServiceProvider: CloudServiceProvider {
+        get { CloudServiceProvider(rawValue: cloudServiceRaw) ?? .openai }
+        set {
+            cloudServiceRaw = newValue.rawValue
+            // "Default", not a model id: a saved id is where a provider's retirement strands the
+            // user, while "Default" follows DropClip's own current default.
+            cloudModel = "default"
+        }
+    }
+
+    /// Overrides the AI provider instance (for testing/mocking).
+    public var providerOverride: (any AIProvider)? = nil
+
+    public var currentProvider: any AIProvider {
+        if let providerOverride {
+            return providerOverride
+        }
+        switch activeProviderType {
+        case .apple:
+            return AppleIntelligenceProvider()
+        case .local:
+            return LocalLLMProvider(baseURL: localURL, model: effectiveLocalModel, disableThinking: localPreset.disablesThinking)
+        case .cli:
+            return CLIProvider(preset: cliPreset, customCommand: cliCustomCommand, modelOverride: effectiveCLIModel)
+        case .cloud:
+            let provider = cloudServiceProvider
+            return CloudAPIProvider(
+                apiKey: cloudAPIKey,
+                model: effectiveCloudModel,
+                serviceProvider: provider,
+                customBaseURL: cloudCustomURL,
+                allowsModelRecovery: cloudModel != "custom",
+                onModelRecovered: { [weak self] replacement in
+                    self?.adoptRecoveredCloudModel(replacement, for: provider)
+                }
+            )
+        }
+    }
+}
+
+public enum CloudServiceProvider: String, CaseIterable, Identifiable, Sendable {
+    case openai = "openai"
+    case anthropic = "anthropic"
+    case google = "google"
+    case deepseek = "deepseek"
+    case groq = "groq"
+    case openrouter = "openrouter"
+    case custom = "custom"
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .openai: return String(localized: "OpenAI (ChatGPT)")
+        case .anthropic: return String(localized: "Anthropic (Claude)")
+        case .google: return String(localized: "Google Gemini")
+        case .deepseek: return String(localized: "DeepSeek")
+        case .groq: return String(localized: "Groq")
+        case .openrouter: return String(localized: "OpenRouter")
+        case .custom: return String(localized: "Custom OpenAI-Compatible Endpoint")
+        }
+    }
+
+    /// The model "Default" means. Providers retire models on their own schedule (Google switched
+    /// gemini-2.0-flash off on 2026-06-01 and every request 404'd, Trench fb3c9bac), so Google's
+    /// is its own alias for its current Flash, and a request that meets a retired model moves to
+    /// a live one on its own (`CloudAPIProvider`).
+    public var primaryModel: String {
+        switch self {
+        case .openai: return "gpt-4o-mini"
+        case .anthropic: return "claude-sonnet-5"
+        case .google: return "gemini-flash-latest"
+        case .deepseek: return "deepseek-flash"
+        case .groq: return "openai/gpt-oss-120b"
+        case .openrouter: return "openai/gpt-4o-mini"
+        case .custom: return "default"
+        }
+    }
+
+    /// The models to try, best first, when the provider's own list is not at hand. Every one was
+    /// live on 2026-09-28. Opus is left out: it always thinks first, and a request asks for at
+    /// most 4096 tokens.
+    public var defaultModels: [String] {
+        switch self {
+        case .openai: return ["gpt-4o-mini", "gpt-4o", "gpt-6-luna", "gpt-6-sol"]
+        case .anthropic: return ["claude-sonnet-5", "claude-haiku-4-5"]
+        case .google: return ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash-lite"]
+        case .deepseek: return ["deepseek-flash", "deepseek-v4-pro"]
+        case .groq: return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+        case .openrouter: return ["openai/gpt-4o-mini", "anthropic/claude-sonnet-5", "google/gemini-3.8-flash", "deepseek/deepseek-v4.1-flash"]
+        case .custom: return ["default"]
+        }
+    }
+
+    /// Model ids this provider has switched off, that DropClip once offered or saved. A saved
+    /// choice of one of these goes back to "Default" (`AIServiceManager.healRetiredCloudModel`).
+    /// Only ids that are dead today; one retired later is caught when a request meets it.
+    public var retiredModels: Set<String> {
+        switch self {
+        case .openai, .custom:
+            return []
+        case .anthropic:
+            return ["claude-3-7-sonnet-latest", "claude-3-5-sonnet-latest", "claude-3-5-haiku-latest", "claude-3-opus-latest"]
+        case .google:
+            return ["gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"]
+        case .deepseek:
+            return ["deepseek-chat", "deepseek-reasoner", "deepseek-coder"]
+        case .groq:
+            return ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"]
+        case .openrouter:
+            return ["anthropic/claude-3.7-sonnet", "google/gemini-2.0-flash-001"]
+        }
+    }
+
+    /// The model to use out of `available`, the provider's own list: "Default" when it is there,
+    /// else the first of `defaultModels` that is, else the provider's newest general model.
+    /// Nil when the list is empty.
+    public func preferredModel(from available: [String]) -> String? {
+        guard !available.isEmpty else { return nil }
+        if available.contains(primaryModel) { return primaryModel }
+        if let known = defaultModels.first(where: { available.contains($0) }) { return known }
+        switch self {
+        case .google:
+            // The highest-numbered plain Flash: gemini-<major>[.<minor>]-flash, compared as numbers.
+            let flash = available.compactMap { id -> (id: String, version: [Int])? in
+                guard let version = Self.geminiFlashVersion(of: id) else { return nil }
+                return (id, version)
+            }
+            if let newest = flash.max(by: { $0.version.lexicographicallyPrecedes($1.version) }) {
+                return newest.id
+            }
+        case .anthropic:
+            // The API lists newest first.
+            if let sonnet = available.first(where: { $0.hasPrefix("claude-sonnet") }) { return sonnet }
+        default:
+            break
+        }
+        return available.first
+    }
+
+    /// [major, minor] of an id shaped exactly `gemini-<major>[.<minor>]-flash`, else nil.
+    private static func geminiFlashVersion(of id: String) -> [Int]? {
+        let prefix = "gemini-"
+        let suffix = "-flash"
+        guard id.hasPrefix(prefix), id.hasSuffix(suffix), id.count > prefix.count + suffix.count else { return nil }
+        let middle = id.dropFirst(prefix.count).dropLast(suffix.count)
+        let parts = middle.split(separator: ".", omittingEmptySubsequences: false)
+        guard (1...2).contains(parts.count) else { return nil }
+        var version: [Int] = []
+        for part in parts {
+            guard !part.isEmpty, part.allSatisfy({ $0.isASCII && $0.isNumber }), let number = Int(part) else { return nil }
+            version.append(number)
+        }
+        if version.count == 1 { version.append(0) }
+        return version
+    }
+
+    public var defaultBaseURL: String {
+        switch self {
+        case .openai: return "https://api.openai.com/v1"
+        case .anthropic: return "https://api.anthropic.com/v1"
+        case .google: return "https://generativelanguage.googleapis.com/v1beta"
+        case .deepseek: return "https://api.deepseek.com/v1"
+        case .groq: return "https://api.groq.com/openai/v1"
+        case .openrouter: return "https://openrouter.ai/api/v1"
+        case .custom: return ""
+        }
+    }
+}
+
+public struct AIActionPreset: Identifiable, Codable, Equatable, Sendable {
+    public var id: String
+    public var title: String
+    public var prompt: String
+    public var isEnabled: Bool
+
+    public init(id: String, title: String, prompt: String, isEnabled: Bool = true) {
+        self.id = id
+        self.title = title
+        self.prompt = prompt
+        self.isEnabled = isEnabled
+    }
+}

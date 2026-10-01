@@ -23,18 +23,21 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
-    var title: String { rawValue }
+    var title: String {
+        // The raw value is stored in preferences, so only the shown name changes.
+        self == .accessibility ? "Advanced" : rawValue
+    }
     
     var icon: String {
         switch self {
         case .general: return "gear"
-        case .shelf: return "star.fill"
-        case .basket: return "tray.fill"
+        case .shelf: return "tray.and.arrow.down.fill"
+        case .basket: return "basket.fill"
         case .clipboard: return "clipboard.fill"
         case .huds: return "dial.medium.fill"
         case .extensions: return "puzzlepiece.extension.fill"
         case .quickshare: return "drop.fill"
-        case .accessibility: return "accessibility"
+        case .accessibility: return "slider.horizontal.3"
         case .about: return "info.circle.fill"
         }
     }
@@ -49,7 +52,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .huds: return Color(hue: 0.50, saturation: 0.70, brightness: 0.90) // Teal/Cyan
         case .extensions: return Color(hue: 0.38, saturation: 0.65, brightness: 0.80) // Green
         case .quickshare: return Color(hue: 0.52, saturation: 0.80, brightness: 0.95) // Cyan
-        case .accessibility: return Color(hue: 0.58, saturation: 0.70, brightness: 0.95) // Blue
+        case .accessibility: return Color(hue: 0, saturation: 0, brightness: 0.55) // Gray
         case .about: return Color(hue: 0.58, saturation: 0.70, brightness: 0.95) // Blue
         }
     }
@@ -64,7 +67,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .huds: return Color(hue: 0.52, saturation: 0.85, brightness: 0.75) // Deeper Teal
         case .extensions: return Color(hue: 0.36, saturation: 0.80, brightness: 0.65) // Deeper Green
         case .quickshare: return Color(hue: 0.54, saturation: 0.90, brightness: 0.75) // Deeper Cyan
-        case .accessibility: return Color(hue: 0.60, saturation: 0.85, brightness: 0.80) // Deeper Blue
+        case .accessibility: return Color(hue: 0, saturation: 0, brightness: 0.38) // Darker Gray
         case .about: return Color(hue: 0.60, saturation: 0.85, brightness: 0.80) // Deeper Blue
         }
     }
@@ -84,7 +87,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return nil
         case .shelf: return "Features"
         case .basket, .clipboard: return nil // Same section as Shelf
-        case .huds: return "System"
+        case .huds: return nil // Same section as Shelf
         case .extensions: return "Other"
         case .quickshare: return nil // Same section as Extensions (conditional)
         case .accessibility, .about: return nil // Same section as Extensions
@@ -239,7 +242,10 @@ struct SettingsSidebar: View {
             updateButton
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 12)
+        // The window's content runs under the title bar; start below the close/minimize/zoom
+        // buttons and the sidebar toggle so they never sit on top of the first item.
+        .padding(.top, 50)
+        .padding(.bottom, 12)
         .frame(minWidth: 200)
     }
     
