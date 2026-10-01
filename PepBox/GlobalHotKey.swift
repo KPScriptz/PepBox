@@ -53,6 +53,28 @@ class GlobalHotKey {
         0x36: kVK_ANSI_Comma, 0x37: kVK_ANSI_Period, 0x38: kVK_ANSI_Slash
     ]
 
+    // MARK: - Per-app pause
+
+    /// Every live hotkey, so they can all be paused while an app from the "off in these apps" list is in front.
+    private static let live = NSHashTable<GlobalHotKey>.weakObjects()
+    private(set) static var isPaused = false
+    /// Hotkeys that keep working everywhere (e.g. Esc while a PepBox panel is open).
+    var ignoresAppRules = false
+
+    /// Pausing unregisters the Carbon hotkeys so the keystroke reaches the app in front instead of PepBox.
+    static func setPaused(_ paused: Bool) {
+        guard paused != isPaused else { return }
+        isPaused = paused
+        for hotKey in live.allObjects where !hotKey.ignoresAppRules {
+            if paused {
+                if let ref = hotKey.hotKeyRef { UnregisterEventHotKey(ref); hotKey.hotKeyRef = nil }
+                if let handler = hotKey.eventHandler { RemoveEventHandler(handler); hotKey.eventHandler = nil }
+            } else if hotKey.hotKeyRef == nil, hotKey.shouldRegisterCarbon(keyCode: hotKey.targetKeyCode, modifiers: hotKey.targetModifiers) {
+                hotKey.registerCarbon(keyCode: hotKey.targetKeyCode, modifiers: hotKey.targetModifiers)
+            }
+        }
+    }
+
     init(keyCode: Int, modifiers: UInt, block: @escaping () -> Void) {
         self.callback = block
         self.targetKeyCode = keyCode
@@ -71,6 +93,7 @@ class GlobalHotKey {
         
         // 2. Setup IOHIDManager as backup
         setupIOHIDManager()
+        Self.live.add(self)
     }
     
     deinit {
@@ -260,6 +283,8 @@ class GlobalHotKey {
         os_unfair_lock_lock(&triggerLock)
         defer { os_unfair_lock_unlock(&triggerLock) }
         
+        // The IOHID backup still sees keys while paused; drop them.
+        if Self.isPaused && !ignoresAppRules { return }
         let now = CFAbsoluteTimeGetCurrent()
         guard now - lastTriggerTime > triggerCooldown else { return }
         lastTriggerTime = now

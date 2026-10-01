@@ -408,6 +408,8 @@ struct SettingsView: View {
                 hudSettings
             case .extensions:
                 integrationsSettings
+            case .shortcuts:
+                shortcutsSettings
             case .quickshare:
                 quickshareSettings
             case .accessibility:
@@ -2429,6 +2431,97 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - Shortcuts
+
+    @State private var ringShortcut: SavedShortcut?
+    @State private var quickSearchShortcut: SavedShortcut?
+    @State private var pasteQueueShortcut: SavedShortcut?
+    @State private var pasteNextShortcut: SavedShortcut?
+
+    /// Every PepBox shortcut in one place, plus the apps where they're turned off.
+    private var shortcutsSettings: some View {
+        Group {
+            Section {
+                shortcutRow("Clipboard", "Open clipboard history", $currentShortcut,
+                            reset: SavedShortcut.clipboardDefault) { saveShortcut($0) }
+                shortcutRow("Copy & Favorite", "Copy the selection and star it in the clipboard", $copyFavoriteShortcut,
+                            reset: SavedShortcut(keyCode: 8, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue)) { saveCopyFavoriteShortcut($0) }
+                shortcutRow("Paste Queue", "Start or stop the paste queue", $pasteQueueShortcut, reset: PasteQueue.toggleDefault) {
+                    ExtensionShortcuts.save($0, key: PasteQueue.toggleKey)
+                    PasteQueue.shared.registerHotKeys()
+                }
+                shortcutRow("Paste Next", "Paste the next queued item (while the queue is on)", $pasteNextShortcut, reset: PasteQueue.pasteNextDefault) {
+                    ExtensionShortcuts.save($0, key: PasteQueue.pasteNextKey)
+                    PasteQueue.shared.registerHotKeys()
+                }
+                shortcutRow("Basket Switcher", "Show all baskets and switch between them", $basketSwitcherShortcut, reset: nil) {
+                    saveBasketSwitcherShortcut($0)
+                }
+            } header: {
+                Text("PepBox")
+            }
+
+            Section {
+                shortcutRow("Quick Search", "Search bar for apps, files and math", $quickSearchShortcut, reset: ExtensionShortcuts.quickSearchDefault) {
+                    ExtensionShortcuts.save($0, key: ExtensionShortcuts.quickSearchKey)
+                    QuickSearchController.shared.reloadShortcut()
+                }
+                shortcutRow("Ring", "Actions in a circle at your pointer", $ringShortcut, reset: ExtensionShortcuts.ringDefault) {
+                    ExtensionShortcuts.save($0, key: ExtensionShortcuts.ringKey)
+                    RingMenuController.shared.reloadShortcut()
+                }
+            } header: {
+                Text("Extensions")
+            } footer: {
+                Text("Extension shortcuts only work while that extension is turned on.")
+            }
+
+            Section {
+                HotKeyAppRulesView()
+            } header: {
+                Text("Per App")
+            }
+        }
+        .onAppear {
+            loadShortcut()
+            loadCopyFavoriteShortcut()
+            loadBasketSwitcherShortcut()
+            ringShortcut = ExtensionShortcuts.load(ExtensionShortcuts.ringKey, default: ExtensionShortcuts.ringDefault)
+            quickSearchShortcut = ExtensionShortcuts.load(ExtensionShortcuts.quickSearchKey, default: ExtensionShortcuts.quickSearchDefault)
+            pasteQueueShortcut = ExtensionShortcuts.load(PasteQueue.toggleKey, default: PasteQueue.toggleDefault)
+            pasteNextShortcut = ExtensionShortcuts.load(PasteQueue.pasteNextKey, default: PasteQueue.pasteNextDefault)
+        }
+    }
+
+    private func shortcutRow(_ title: String, _ subtitle: String, _ value: Binding<SavedShortcut?>,
+                             reset: SavedShortcut?, save: @escaping (SavedShortcut?) -> Void) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            KeyShortcutRecorder(shortcut: Binding(
+                get: { value.wrappedValue },
+                set: { newValue in
+                    value.wrappedValue = newValue
+                    save(newValue)
+                }
+            ))
+            Button {
+                value.wrappedValue = reset
+                save(reset)
+            } label: {
+                Image(systemName: "arrow.counterclockwise")
+            }
+            .buttonStyle(PepBoxCircleButtonStyle(size: 32))
+            .help("Reset to Default")
+            .disabled(value.wrappedValue == reset)
+        }
+    }
+
     private var clipboardSettings: some View {
         Group {
         Section {

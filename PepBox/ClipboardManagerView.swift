@@ -188,6 +188,9 @@ struct ClipboardManagerView: View {
             NavigationSplitView {
                 // Sidebar with entries list
                 entriesListView
+                    // The sidebar gets no title-bar safe area here, so keep the first row
+                    // below the window buttons and toolbar (Settings' List gets this for free).
+                    .safeAreaPadding(.top, Self.titleBarHeight)
                     .frame(minWidth: 400)
                     .background(Color.clear)
                     .toolbar {
@@ -264,6 +267,7 @@ struct ClipboardManagerView: View {
             } detail: {
                 // Detail view with preview pane
                 previewPane
+                    .safeAreaPadding(.top, Self.titleBarHeight)
                     .toolbar {
                         // Edit button (opens image in Screenshot Editor) - Far right of title bar
                         ToolbarItem(placement: .primaryAction) {
@@ -589,6 +593,9 @@ struct ClipboardManagerView: View {
         }
     }
     
+    /// Height of the unified title bar + toolbar.
+    static let titleBarHeight: CGFloat = 52
+
     var entriesListView: some View {
         VStack(alignment: .leading, spacing: 12) {
             
@@ -970,6 +977,8 @@ struct ClipboardManagerView: View {
                         // PERFORMANCE: ID-only Hashable makes this comparison fast
                         .animation(PepBoxAnimation.listChange, value: sortedHistory)
                     }
+                    // Rows that scroll up stop at a crisp edge under the toolbar instead of sliding beneath the window buttons.
+                    .modifier(HardTopScrollEdge())
                     .onAppear {
                         scrollProxy = proxy
                     }
@@ -3890,5 +3899,16 @@ struct TagDropDelegate: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         draggingTagId = nil
         return true
+    }
+}
+
+/// macOS 26+: a hard scroll edge at the top, so list rows don't show through the toolbar.
+private struct HardTopScrollEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content.scrollEdgeEffectStyle(.hard, for: .top)
+        } else {
+            content
+        }
     }
 }

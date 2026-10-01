@@ -7,6 +7,8 @@
 
 import Foundation
 import AppKit
+import Security
+import SwiftUI
 
 /// Handles downloading and installing app updates
 class AutoUpdater {
@@ -21,8 +23,22 @@ class AutoUpdater {
             guard let dmgURL = await downloadDMG(from: url) else {
                 return
             }
-            
-            // 2. Install and Restart using helper app
+
+            // 2. Only install an app signed by the same developer as this one, so a
+            //    tampered or wrong download can never replace PepBox.
+            if let problem = UpdateVerifier.problem(withDMGAt: dmgURL) {
+                print("AutoUpdater: Refusing update: \(problem)")
+                try? FileManager.default.removeItem(at: dmgURL)
+                await MainActor.run { Self.progress(nil, text: "Update not installed") }
+                await PepBoxAlertController.shared.showError(
+                    title: "Update Not Installed",
+                    message: "The downloaded update didn't pass PepBox's signature check, so nothing was changed. \(problem)"
+                )
+                return
+            }
+            await MainActor.run { Self.progress(1, text: "Installing update…") }
+
+            // 3. Install and Restart using helper app
             do {
                 try launchUpdaterHelper(dmgPath: dmgURL.path)
             } catch {
@@ -43,11 +59,15 @@ class AutoUpdater {
                 try FileManager.default.removeItem(at: destinationURL)
             }
             
-            let (data, _) = try await URLSession.shared.data(from: url)
-            try data.write(to: destinationURL)
+            await MainActor.run { Self.progress(0, text: "Downloading update…") }
+            let downloaded = try await UpdateDownload.run(url) { fraction in
+                Task { @MainActor in Self.progress(fraction, text: "Downloading update…") }
+            }
+            try FileManager.default.moveItem(at: downloaded, to: destinationURL)
             return destinationURL
         } catch {
             print("AutoUpdater: Download failed: \(error)")
+            await MainActor.run { Self.progress(nil, text: "Update download failed") }
             await PepBoxAlertController.shared.showError(
                 title: "Update Failed",
                 message: "Could not download the update. Please try again later."
@@ -56,6 +76,13 @@ class AutoUpdater {
         }
     }
     
+    /// Download/install progress beside the notch.
+    @MainActor
+    private static func progress(_ fraction: Double?, text: String) {
+        FlashActivity.shared.show(LiveActivity(id: "pepbox-update", icon: "arrow.down.circle.fill", tint: .blue,
+                                               text: text, progress: fraction), for: fraction == nil ? 4 : 120)
+    }
+
     private func launchUpdaterHelper(dmgPath: String) throws {
         let appPath = Bundle.main.bundlePath
         let pid = ProcessInfo.processInfo.processIdentifier
@@ -172,5 +199,99 @@ class AutoUpdater {
         
         NSWorkspace.shared.open(URL(fileURLWithPath: scriptPath))
         NSApplication.shared.terminate(nil)
+    }
+}
+
+/// Streams the DMG to disk and reports progress (0...1).
+private final class UpdateDownload: NSObject, URLSessionDownloadDelegate {
+    private let onProgress: (Double) -> Void
+    private var continuation: CheckedContinuation<URL, Error>?
+
+    private init(onProgress: @escaping (Double) -> Void) { self.onProgress = onProgress }
+
+    static func run(_ url: URL, onProgress: @escaping (Double) -> Void) async throws -> URL {
+        let delegate = UpdateDownload(onProgress: onProgress)
+        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+        return try await withCheckedThrowingContinuation { continuation in
+            delegate.continuation = continuation
+            session.downloadTask(with: url).resume()
+        }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
+                    totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        guard totalBytesExpectedToWrite > 0 else { return }
+        onProgress(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        // The temp file is deleted when this returns, so move it first.
+        let kept = FileManager.default.temporaryDirectory.appendingPathComponent("PepBoxUpdate-\(UUID().uuidString).dmg")
+        do {
+            if let http = downloadTask.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                throw URLError(.badServerResponse)
+            }
+            try FileManager.default.moveItem(at: location, to: kept)
+            continuation?.resume(returning: kept)
+        } catch {
+            continuation?.resume(throwing: error)
+        }
+        continuation = nil
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error { continuation?.resume(throwing: error); continuation = nil }
+    }
+}
+
+/// Checks the app inside an update DMG before it's installed.
+enum UpdateVerifier {
+    /// Nil when the DMG holds a validly signed PepBox.app from this app's own team; otherwise why not.
+    static func problem(withDMGAt dmg: URL) -> String? {
+        guard let team = teamID(ofCodeAt: Bundle.main.bundleURL) else {
+            return "This copy of PepBox isn't signed, so it can't check updates. Download the new version from the website."
+        }
+        let mountPoint = FileManager.default.temporaryDirectory.appendingPathComponent("PepBoxVerify-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        defer {
+            run("/usr/bin/hdiutil", ["detach", mountPoint.path, "-force", "-quiet"])
+            try? FileManager.default.removeItem(at: mountPoint)
+        }
+        guard run("/usr/bin/hdiutil", ["attach", dmg.path, "-nobrowse", "-readonly", "-noautoopen", "-quiet", "-mountpoint", mountPoint.path]) else {
+            return "The download isn't a readable disk image."
+        }
+        let app = mountPoint.appendingPathComponent("PepBox.app")
+        guard FileManager.default.fileExists(atPath: app.path) else { return "There's no PepBox.app in the download." }
+
+        var code: SecStaticCode?
+        var requirement: SecRequirement?
+        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
+              SecRequirementCreateWithString("anchor apple generic and certificate leaf[subject.OU] = \"\(team)\"" as CFString, [], &requirement) == errSecSuccess
+        else { return "Its signature couldn't be read." }
+        let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSStrictValidate | kSecCSCheckNestedCode)
+        let status = SecStaticCodeCheckValidity(code, flags, requirement)
+        return status == errSecSuccess ? nil : "It isn't signed by the PepBox developer (code \(status))."
+    }
+
+    static func teamID(ofCodeAt url: URL) -> String? {
+        var code: SecStaticCode?
+        var info: CFDictionary?
+        guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
+              SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
+              let dict = info as? [String: Any] else { return nil }
+        return dict[kSecCodeInfoTeamIdentifier as String] as? String
+    }
+
+    @discardableResult
+    private static func run(_ tool: String, _ args: [String]) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = args
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return false }
+        process.waitUntilExit()
+        return process.terminationStatus == 0
     }
 }

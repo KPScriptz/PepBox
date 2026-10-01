@@ -24,6 +24,9 @@ final class RingMenuController {
     private var panel: NSPanel?
     private var clickMonitor: Any?
     private var keyMonitor: Any?
+    /// Esc as a system hotkey while the ring is open: works without Accessibility,
+    /// which the global key monitor below needs. Released again on close.
+    private var escapeKey: GlobalHotKey?
 
     func setEnabled(_ enabled: Bool) {
         if enabled {
@@ -80,6 +83,10 @@ final class RingMenuController {
         keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == UInt16(kVK_Escape) { self?.close() }
         }
+        escapeKey = GlobalHotKey(keyCode: kVK_Escape, modifiers: 0) { [weak self] in
+            DispatchQueue.main.async { self?.close() }
+        }
+        escapeKey?.ignoresAppRules = true
     }
 
     func close() {
@@ -89,6 +96,7 @@ final class RingMenuController {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         clickMonitor = nil
         keyMonitor = nil
+        escapeKey = nil
     }
 
     // MARK: Actions

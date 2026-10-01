@@ -17,6 +17,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case clipboard = "Clipboard"
     case huds = "HUDs"
     case extensions = "Extensions"
+    case shortcuts = "Shortcuts"
     case quickshare = "Quickshare"  // Conditional: shown when enabled in settings
     case accessibility = "Accessibility"
     case about = "About"
@@ -36,6 +37,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .clipboard: return "clipboard.fill"
         case .huds: return "dial.medium.fill"
         case .extensions: return "puzzlepiece.extension.fill"
+        case .shortcuts: return "command"
         case .quickshare: return "drop.fill"
         case .accessibility: return "slider.horizontal.3"
         case .about: return "info.circle.fill"
@@ -51,6 +53,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .clipboard: return Color(hue: 0.58, saturation: 0.70, brightness: 0.95) // Blue
         case .huds: return Color(hue: 0.50, saturation: 0.70, brightness: 0.90) // Teal/Cyan
         case .extensions: return Color(hue: 0.38, saturation: 0.65, brightness: 0.80) // Green
+        case .shortcuts: return Color(hue: 0.72, saturation: 0.55, brightness: 0.90) // Indigo
         case .quickshare: return Color(hue: 0.52, saturation: 0.80, brightness: 0.95) // Cyan
         case .accessibility: return Color(hue: 0, saturation: 0, brightness: 0.55) // Gray
         case .about: return Color(hue: 0.58, saturation: 0.70, brightness: 0.95) // Blue
@@ -66,6 +69,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .clipboard: return Color(hue: 0.60, saturation: 0.85, brightness: 0.80) // Deeper Blue
         case .huds: return Color(hue: 0.52, saturation: 0.85, brightness: 0.75) // Deeper Teal
         case .extensions: return Color(hue: 0.36, saturation: 0.80, brightness: 0.65) // Deeper Green
+        case .shortcuts: return Color(hue: 0.72, saturation: 0.70, brightness: 0.72) // Deeper Indigo
         case .quickshare: return Color(hue: 0.54, saturation: 0.90, brightness: 0.75) // Deeper Cyan
         case .accessibility: return Color(hue: 0, saturation: 0, brightness: 0.38) // Darker Gray
         case .about: return Color(hue: 0.60, saturation: 0.85, brightness: 0.80) // Deeper Blue
@@ -90,7 +94,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .huds: return nil // Same section as Shelf
         case .extensions: return "Other"
         case .quickshare: return nil // Same section as Extensions (conditional)
-        case .accessibility, .about: return nil // Same section as Extensions
+        case .shortcuts, .accessibility, .about: return nil // Same section as Extensions
         }
     }
     

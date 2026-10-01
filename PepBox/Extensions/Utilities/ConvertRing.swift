@@ -43,9 +43,11 @@ final class ConvertRingController {
     /// Called on every drag-monitor tick while a drag is in progress.
     func dragMoved(to mouse: CGPoint) {
         guard isEnabled, !dismissedThisDrag else { return }
-        let flags = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard flags.contains(.shift) else { return }
-        let tools = flags.contains(.option)
+        // The window server's live key state: NSEvent.modifierFlags can lag behind
+        // while another app owns the drag, which opened the ring late.
+        let flags = CGEventSource.flagsState(.combinedSessionState)
+        guard flags.contains(.maskShift) else { return }
+        let tools = flags.contains(.maskAlternate)
         if panel != nil {
             // Switching between Shift and Option-Shift while the ring is open swaps its contents.
             if tools != model.tools { load(tools: tools) }

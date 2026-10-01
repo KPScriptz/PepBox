@@ -318,7 +318,12 @@ final class MusicManager: ObservableObject {
             // App is not running - launch it first, then send command
             print("MusicManager: Launching filtered source app: \(displayedBundle)")
             if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: displayedBundle) {
-                NSWorkspace.shared.openApplication(at: appURL, configuration: .init()) { _, error in
+                // Background playback: start the player hidden and without taking focus,
+                // so pressing play in the notch doesn't pop its window up.
+                let configuration = NSWorkspace.OpenConfiguration()
+                configuration.activates = false
+                configuration.hides = true
+                NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
                     if let error = error {
                         print("MusicManager: Failed to launch app: \(error)")
                     }
@@ -331,8 +336,9 @@ final class MusicManager: ObservableObject {
             }
         }
 
-        // Apple Music does not need activation to receive AppleScript commands
-        if displayedBundle == AppleMusicController.appleMusicBundleId {
+        // Apple Music and Spotify take AppleScript commands in the background, so don't
+        // activate them (that pulled their window to the front on every play/pause/skip).
+        if displayedBundle == AppleMusicController.appleMusicBundleId || displayedBundle == SpotifyController.spotifyBundleId {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 completion()
             }
