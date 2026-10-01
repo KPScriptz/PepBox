@@ -1,0 +1,74 @@
+🔐 PermissionManager: Initialized
+🔐 ========== PERMISSION STATUS ==========
+🔐 ACCESSIBILITY:
+🔐   AXIsProcessTrusted() = true
+🔐   Cache = true
+🔐   isAccessibilityGranted = true
+🔐 SCREEN RECORDING:
+🔐   CGPreflightScreenCaptureAccess() = true
+🔐   Cache = true
+🔐   isScreenRecordingGranted = true
+🔐 INPUT MONITORING:
+🔐   Cache = true
+🔐   (Runtime check done via GlobalHotKey)
+🔐 =========================================
+🔧 CrashReporter: No recent crash log found after last clean exit, skipping prompt
+UpdateChecker: Starting background update scheduler (interval: 24h)
+UpdateChecker: Skipping check, last check was 0h ago
+🐉 DragMonitor.checkForActiveDrag: isDragging=false, dragActive=false, mouseIsDown=false
+⚠️ Refusing to save empty clipboard history (use clearAll to intentionally clear)
+NotificationHUD: Using database at /Users/runner/Library/Group Containers/group.com.apple.usernoted/db2/db
+BrightnessManager: DisplayServices framework loaded
+BrightnessManager: Could not read brightness, isSupported: false (will retry within 30s)
+BatteryManager: No power sources found (likely desktop Mac)
+BatteryManager: Started monitoring power source changes
+CapsLockManager: Started monitoring Caps Lock state
+MusicManager: MediaRemote commands loaded, seek available: true
+MusicManager: Script path: /Users/runner/work/PepBox/PepBox/build/Build/Products/Release/PepBox.app/Contents/Resources/mediaremote-adapter.pl
+MusicManager: Framework path: /Users/runner/work/PepBox/PepBox/build/Build/Products/Release/PepBox.app/Contents/Frameworks/MediaRemoteAdapter.framework
+MusicManager: Framework verified to exist
+MusicManager: MediaRemoteAdapter process started with PID: 32416
+MusicManager: Sleep/wake observers registered
+DNDManager: ❌ No Full Disk Access
+⌨️ PepBox: Starting Global Clipboard Monitor
+⌨️ GlobalHotKey: Init (Code: 49, Mods: 524288)
+✅ GlobalHotKey: Carbon Registered
+✅ GlobalHotKey: IOHIDManager Monitoring Active (attempt 1)
+⌨️ PepBox: Copy+Favorite disabled
+🎛️ PepBox: Starting Media Key Interceptor for HUD
+MediaKeyInterceptor: Using session event tap
+MediaKeyInterceptor: Started successfully on dedicated queue
+🎧 PepBox: Starting AirPods Connection Monitor
+[AirPods] Starting connection monitoring
+🔒 PepBox: Starting Lock Screen HUD
+MediaKeyInterceptor: Event tap verified as valid and enabled
+LockScreenManager: ✅ Observers enabled
+🔐 DEBUG: needsAccessibility=true hudEnabled=true clipboardEnabled=true
+🔐 DEBUG: AXIsProcessTrusted()=true cache=true isGranted=true
+🔐 DEBUG: NOT prompting - needsAccessibility=true isGranted=true
+MusicManager: Received 42 bytes
+MusicManager: JSON line: {"type":"data","diff":false,"payload":{}}...
+MusicManager: Raw JSON received: {"type":"data","diff":false,"payload":{}}
+MusicManager: Updated - title='', artist='', isPlaying=false, elapsed=0.0, duration=0.0, rate=1.0
+[AirPods] Connection monitoring active
+[WindowSnap] loadAndStartMonitoring called
+[WindowSnap] Extension is enabled, loading shortcuts...
+[WindowSnap] loadShortcuts: Reading from key 'windowSnapShortcuts'
+[WindowSnap] loadShortcuts: No data found in UserDefaults
+[WindowSnap] Loaded 0 shortcuts from UserDefaults
+[WindowSnap] No shortcuts configured, not starting monitors
+[MenuBarManager] INIT CALLED, isEnabled: true
+[MenuBarManager] Sections initialized: ["Visible", "Hidden"]
+[ControlItem] Triggering initial state for Visible
+[MenuBarManager] Updated main item appearance: eye.fill
+[ControlItem] Status item length: -1.0, isVisible: true
+[ControlItem] Triggering initial state for Hidden
+[ControlItem] Status item length: 10000.0, isVisible: true
+[MenuBarManager] Enabled
+⌨️ GlobalHotKey: Init (Code: 8, Mods: 786432)
+✅ GlobalHotKey: Carbon Registered
+✅ GlobalHotKey: IOHIDManager Monitoring Active (attempt 1)
+MusicManager: Cold start fetch received 5 bytes
+MusicManager: Raw JSON received: null
+
+MusicManager: Failed to decode JSON: DecodingError.valueNotFound: Expected value of type Dictionary<String, Any> but found null instead. Debug description: Cannot get keyed dec

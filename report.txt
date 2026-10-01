@@ -1,0 +1,67 @@
+== screen 1024x768
+total 112
+drwxr-xr-x  4 runner  staff    128 Oct  1 20:04 .
+drwx------+ 5 runner  staff    160 Oct  1 20:04 ..
+-rw-r--r--  1 runner  staff     30 Oct  1 20:04 note.txt
+-rw-r--r--  1 runner  staff  51599 Oct  1 20:04 picture.png
+== PepBox pid 32409 running: yes
+== screenshot 01-launched
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=162 y=78 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+== hover the notch
+== screenshot 02-hover-notch
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=162 y=78 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+760, 200, 1260, 600
+== screenshot 03-finder-ready
+Finder	layer=0	x=760 y=200 w=501 h=400	pepbox-drop-target
+Finder	layer=0	x=80 y=200 w=600 h=400	pepbox-ui-test
+Finder	layer=-2147483603	x=0 y=0 w=1024 h=768	
+== drag note.txt from Finder onto the notch
+== screenshot 04-mid-drag-to-notch
+== screenshot 05-after-drop-on-notch
+== screenshot 06-shelf-after-drop
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=162 y=78 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+== add picture.png through the pepbox:// URL scheme
+== screenshot 07-shelf-after-url-add
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=162 y=78 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=162 y=78 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+== shelf window guess: x=262 y=0 w=500 h=280
+== drag shelf item at 452,150 out to the drop-target window
+== screenshot 08-mid-drag-out
+== screenshot 09-after-drag-out
+== drop-target folder now contains: 
+== floating basket: shake while dragging picture.png
+== screenshot 10-basket-jiggle
+== screenshot 11-basket-after-release
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=323 y=391 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+== clipboard history: copy text, press cmd+shift+space
+== screenshot 12-clipboard-shortcut
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=3	x=323 y=391 w=700 h=580	
+PepBox	layer=0	x=252 y=60 w=520 h=592	
+== menu bar icon
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+PepBox	layer=25	x=262 y=0 w=500 h=280	
+Control Center	layer=25	x=736 y=0 w=36 h=30	PepBoxMBM_Icon
+Control Center	layer=25	x=772 y=0 w=36 h=30	PepBoxMBM_Icon
+Control Center	layer=25	x=808 y=0 w=31 h=30	Item-0
+== PepBox still running at end: yes
+== screenshot 13-final
