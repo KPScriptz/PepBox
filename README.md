@@ -159,19 +159,16 @@ off until `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set in `docs/extensions.htm
 ## Changelog
 
 <!-- CHANGELOG_START -->
-## Unreleased
-
-- 11 new extensions: Pomodoro, Emoji Picker, Teleprompter, Meetings, App Volume, Obsidian, Ring, Key Sounds, Quick Search, Text Actions (DropClip) and Smooth Scroll
-- Shelf: add new screenshots automatically, remember items across restarts, Copy Path and Show in Finder, reorder widget buttons
-- Clipboard: ⌥Space to open (macOS 27 takes ⌘⇧Space), ⌥Return pastes as plain text
-- Fixes: launch freeze on Bluetooth permission, 1 s hover delay, rename popover after Create ZIP, silent paste without Accessibility, empty instant basket left on screen
-
 ## What's New in PepBox 1.0.0
 
-- First release of PepBox
-- New name, icon and bundle identifier (com.pivotxp.PepBox)
-- Extension icons and previews now ship inside the app
-- No analytics
+First release of PepBox, a free notch shelf for macOS.
+
+- Drop files on the notch to keep them on the shelf, then drag them out anywhere
+- Clipboard history with stacking and a Paste Queue
+- Quick Search, Snippets, Text Actions, Grab Text and the Ring
+- 57 extensions, including 20 shelf widgets: World Clock, Calculator, Timers, Habits, Moon, Month and more
+- Every extension starts off; turn on only the ones you want under Settings › Extensions
+- Everything runs on your Mac. No analytics.
 <!-- CHANGELOG_END -->
 
 ## License

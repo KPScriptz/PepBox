@@ -1,8 +1,8 @@
 cask "pepbox" do
   version "1.0.0"
-  sha256 :no_check # release_pepbox.sh writes the real checksum on each release
+  sha256 "844557c0b60b42553ff267be743853b12470b09df96a572f3c708b7f74b95149"
 
-  url "https://github.com/KPScriptz/PepBox/releases/download/v#{version}/PepBox-#{version}.dmg"
+  url "https://github.com/KPScriptz/PepBox/releases/download/v1.0.0/PepBox-1.0.0.dmg"
   name "PepBox"
   desc "Drag and drop file shelf for macOS"
   homepage "https://github.com/KPScriptz/PepBox"
@@ -19,7 +19,7 @@ cask "pepbox" do
   end
 
   caveats <<~EOS
-    Thank you for installing PepBox!
+    Thank you for installing PepBox! 
     The ultimate drag-and-drop file shelf for macOS.
   EOS
 
