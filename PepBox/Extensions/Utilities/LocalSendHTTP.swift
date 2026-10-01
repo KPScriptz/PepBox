@@ -52,6 +52,7 @@ final class HTTPRequestReader {
                 chunkState = .size
             } else {
                 remaining = parsed.contentLength ?? 0
+                if remaining < 0 { return finish(with: .malformed, into: events) }
                 if remaining == 0 { return finish(with: .end, into: events) }
             }
         }
@@ -74,10 +75,12 @@ final class HTTPRequestReader {
         while true {
             switch chunkState {
             case .size:
-                guard let lineEnd = buffer.range(of: Data("\r\n".utf8)) else { return events }
+                guard let lineEnd = buffer.range(of: Data("\r\n".utf8)) else {
+                    return buffer.count > 1024 ? finish(with: .malformed, into: events) : events  // a size line never runs this long
+                }
                 let sizeText = String(decoding: buffer[..<lineEnd.lowerBound], as: UTF8.self)
                     .split(separator: ";").first.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
-                guard let size = Int(sizeText, radix: 16) else { return finish(with: .malformed, into: events) }
+                guard let size = Int(sizeText, radix: 16), size >= 0 else { return finish(with: .malformed, into: events) }
                 buffer.removeSubrange(..<lineEnd.upperBound)
                 if size == 0 { return finish(with: .end, into: events) }  // trailers are ignored
                 chunkState = .data(size)

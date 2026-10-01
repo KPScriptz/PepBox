@@ -957,20 +957,20 @@ struct ExtensionsShopView: View {
                 .sorted { $0.title < $1.title }
         }
         
-        // nil = show all, otherwise filter by category
+        // nil = show all (turned-off ones too, so new users can find everything to turn on)
         guard let category = selectedCategory else {
-            return allExtensions.filter { !$0.extensionType.isRemoved }.sorted { $0.title < $1.title }
+            return allExtensions.sorted { $0.title < $1.title }
         }
         
         switch category {
         case .all:
-            return allExtensions.filter { !$0.extensionType.isRemoved }.sorted { $0.title < $1.title }
+            return allExtensions.sorted { $0.title < $1.title }
         case .installed:
             return allExtensions.filter { $0.isInstalled && !$0.extensionType.isRemoved }.sorted { $0.title < $1.title }
         case .disabled:
             return allExtensions.filter { $0.extensionType.isRemoved }.sorted { $0.title < $1.title }
         default:
-            return allExtensions.filter { $0.category == category && !$0.extensionType.isRemoved }.sorted { $0.title < $1.title }
+            return allExtensions.filter { $0.category == category }.sorted { $0.title < $1.title }
         }
     }
 }
