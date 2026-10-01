@@ -1,1495 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PepBox — The native productivity layer macOS is missing</title>
-    <meta name="description"
-        content="PepBox: The ultimate drag-and-drop productivity companion for macOS. Open-source and built entirely in Swift.">
-    <link rel="icon" type="image/png" href="assets/app-icon.png">
-    <link rel="preconnect" href="https://rsms.me/">
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <style>
-        :root {
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --bg: #0a0a0a;
-            --bg-card: rgba(38, 38, 38, 0.92);
-            --border: rgba(255, 255, 255, 0.08);
-            --primary: #fafafa;
-            --secondary: #a1a1aa;
-            --muted: #71717a;
-            --gray-100: #f4f4f5;
-            --gray-200: #e4e4e7;
-            --gray-800: #27272a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-sans);
-            background: var(--bg);
-            color: var(--primary);
-            -webkit-font-smoothing: antialiased;
-            overflow: hidden;
-        }
-
-        /* Snap Scroll Container */
-        .scroll-container {
-            height: 100vh;
-            width: 100%;
-            overflow-y: scroll;
-            overflow-x: hidden;
-            scroll-snap-type: y mandatory;
-            -webkit-overflow-scrolling: touch;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .scroll-container.fade-out {
-            opacity: 0;
-        }
-
-        .slide {
-            height: 100vh;
-            min-height: 100vh;
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .slide-1 {
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .page {
-            position: absolute;
-            inset: 0;
-            height: 100vh;
-            overflow: hidden;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .page.fade-in {
-            opacity: 0;
-        }
-
-        .page.fade-out {
-            opacity: 0;
-        }
-
-        .card {
-            position: absolute;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px 22px;
-            min-width: 175px;
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            cursor: grab;
-            opacity: 0;
-            transition: opacity 0.5s ease-out;
-            touch-action: none;
-        }
-
-        .card.visible {
-            opacity: var(--op, 0.7);
-        }
-
-        .card:active {
-            cursor: grabbing;
-        }
-
-        .card.dragging {
-            z-index: 200 !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-            opacity: 1 !important;
-            transition: none;
-        }
-
-        .card:hover:not(.dragging) {
-            z-index: 100;
-        }
-
-        .card.main {
-            min-width: 200px;
-            padding: 18px 26px;
-            border-radius: 18px;
-        }
-
-        .card.main .card-title {
-            font-size: 17px;
-            font-weight: 600;
-        }
-
-        .card.main .card-sub {
-            font-size: 13px;
-        }
-
-        .card.main .checkbox {
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
-        }
-
-        .checkbox {
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            border: 1.5px solid var(--muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .checkbox.checked {
-            background: var(--muted);
-            border-color: var(--muted);
-        }
-
-        .checkbox svg {
-            width: 11px;
-            height: 11px;
-            stroke: var(--bg);
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            display: none;
-        }
-
-        .checkbox.checked svg {
-            display: block;
-        }
-
-        .card.main .checkbox svg {
-            width: 13px;
-            height: 13px;
-        }
-
-        .card-body {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .card-title {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--primary);
-            white-space: nowrap;
-        }
-
-        .card-sub {
-            font-size: 12px;
-            font-weight: 400;
-            color: var(--muted);
-        }
-
-        /* Positions */
-        .t1 {
-            top: -15px;
-            left: -20px;
-        }
-
-        .t2 {
-            top: -8px;
-            left: 10%;
-        }
-
-        .t3 {
-            top: -12px;
-            left: 20%;
-        }
-
-        .t4 {
-            top: -8px;
-            left: 30%;
-        }
-
-        .t5 {
-            top: -10px;
-            left: 40%;
-        }
-
-        .t6 {
-            top: -10px;
-            right: 40%;
-        }
-
-        .t7 {
-            top: -8px;
-            right: 30%;
-        }
-
-        .t8 {
-            top: -12px;
-            right: 20%;
-        }
-
-        .t9 {
-            top: -8px;
-            right: 10%;
-        }
-
-        .t10 {
-            top: -15px;
-            right: -20px;
-        }
-
-        .l1 {
-            top: 10%;
-            left: -25px;
-        }
-
-        .l2 {
-            top: 20%;
-            left: -20px;
-        }
-
-        .l3 {
-            top: 30%;
-            left: -25px;
-        }
-
-        .l4 {
-            top: 40%;
-            left: -20px;
-        }
-
-        .l5 {
-            top: 52%;
-            left: -25px;
-        }
-
-        .l6 {
-            top: 62%;
-            left: -20px;
-        }
-
-        .l7 {
-            top: 72%;
-            left: -25px;
-        }
-
-        .l8 {
-            top: 82%;
-            left: -20px;
-        }
-
-        .r1 {
-            top: 10%;
-            right: -25px;
-        }
-
-        .r2 {
-            top: 20%;
-            right: -20px;
-        }
-
-        .r3 {
-            top: 30%;
-            right: -25px;
-        }
-
-        .r4 {
-            top: 40%;
-            right: -20px;
-        }
-
-        .r5 {
-            top: 52%;
-            right: -25px;
-        }
-
-        .r6 {
-            top: 62%;
-            right: -20px;
-        }
-
-        .r7 {
-            top: 72%;
-            right: -25px;
-        }
-
-        .r8 {
-            top: 82%;
-            right: -20px;
-        }
-
-        .b1 {
-            bottom: -15px;
-            left: -20px;
-        }
-
-        .b2 {
-            bottom: -8px;
-            left: 10%;
-        }
-
-        .b3 {
-            bottom: -12px;
-            left: 20%;
-        }
-
-        .b4 {
-            bottom: -8px;
-            left: 30%;
-        }
-
-        .b5 {
-            bottom: -10px;
-            left: 40%;
-        }
-
-        .b6 {
-            bottom: -10px;
-            right: 40%;
-        }
-
-        .b7 {
-            bottom: -8px;
-            right: 30%;
-        }
-
-        .b8 {
-            bottom: -12px;
-            right: 20%;
-        }
-
-        .b9 {
-            bottom: -8px;
-            right: 10%;
-        }
-
-        .b10 {
-            bottom: -15px;
-            right: -20px;
-        }
-
-        /* Center content */
-        .center {
-            position: relative;
-            min-height: 80vh;
-            text-align: center;
-            z-index: 50;
-            width: 100%;
-            max-width: 950px;
-            margin: 0 auto;
-            padding: 60px 48px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .logo {
-            width: 130px;
-            height: 130px;
-            margin-bottom: 16px;
-            filter: drop-shadow(0 0 80px rgba(59, 130, 246, 0.3));
-            animation: float 6s ease-in-out infinite;
-            pointer-events: auto;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-8px);
-            }
-        }
-
-        .headline {
-            font-size: 36px;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        .headline .dim {
-            color: var(--secondary);
-        }
-
-        .headline .accent {
-            position: relative;
-            display: inline-block;
-        }
-
-        .headline .accent::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 2px;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 100%);
-            transform: scaleX(0);
-            transform-origin: left;
-            animation: scribble 0.8s ease-out 1s forwards;
-            border-radius: 2px;
-        }
-
-        @keyframes scribble {
-            0% {
-                transform: scaleX(0) translateY(0);
-            }
-
-            20% {
-                transform: scaleX(0.3) translateY(1px);
-            }
-
-            40% {
-                transform: scaleX(0.5) translateY(-1px);
-            }
-
-            60% {
-                transform: scaleX(0.7) translateY(1px);
-            }
-
-            80% {
-                transform: scaleX(0.9) translateY(-0.5px);
-            }
-
-            100% {
-                transform: scaleX(1) translateY(0);
-            }
-        }
-
-        .video-box {
-            width: 100%;
-            max-width: 680px;
-            margin-top: 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
-            pointer-events: auto;
-        }
-
-        .video-box video {
-            width: 100%;
-            height: auto;
-            display: block;
-            object-fit: contain;
-            border-radius: 0;
-        }
-
-        .video-box iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-
-
-        .download-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .download-modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .download-modal {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 340px;
-            width: 90%;
-            max-height: 70vh;
-            overflow-y: auto;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .download-modal {
-            max-width: 420px;
-            padding: 32px;
-        }
-
-        .download-modal-overlay.active .download-modal {
-            transform: scale(1);
-        }
-
-
-
-        /* Download Modal */
-        .download-modal h2 {
-            font-size: 20px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        .download-modal .modal-price {
-            text-align: center;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .download-modal .modal-desc {
-            font-size: 14px;
-            color: var(--secondary);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .download-modal .modal-perks {
-            list-style: none;
-            margin-bottom: 24px;
-        }
-
-        .download-modal .modal-perks li {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 0;
-            font-size: 13px;
-            color: var(--secondary);
-        }
-
-        .download-modal .modal-perks li svg {
-            width: 15px;
-            height: 15px;
-            stroke: #22c55e;
-            flex-shrink: 0;
-        }
-
-        .download-modal .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .download-modal .modal-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 13px 20px;
-            border-radius: 999px;
-            font-family: var(--font-sans);
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.2s ease, transform 0.15s ease;
-        }
-
-        .download-modal .modal-btn:active {
-            transform: scale(0.98);
-        }
-
-        .download-modal .modal-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .download-modal .modal-btn-primary {
-            background: var(--gray-100);
-            color: var(--gray-800);
-        }
-
-        .download-modal .modal-btn-primary:hover {
-            background: var(--gray-200);
-        }
-
-        .download-modal .modal-btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--secondary);
-            border: 1px solid var(--border);
-        }
-
-        .download-modal .modal-btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--primary);
-        }
-
-        .cta-bar {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 8px;
-            padding: 6px;
-            background: rgba(23, 23, 23, 0.95);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .cta-bar.fade-in {
-            opacity: 0;
-        }
-
-        .cta-bar.fade-out {
-            opacity: 0;
-        }
-
-        .cta-bar .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px 20px;
-            background: transparent;
-            border: none;
-            border-radius: 999px;
-            color: var(--secondary);
-            font-family: var(--font-sans);
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .cta-bar .btn:hover {
-            color: var(--primary);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .cta-bar .btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .cta-bar .btn-main {
-            background: var(--gray-100);
-            color: var(--gray-800);
-        }
-
-        .cta-bar .btn-main:hover {
-            background: var(--gray-200);
-            color: var(--gray-800);
-        }
-
-        @media (max-width: 1200px) {
-            .video-box {
-                max-width: 90%;
-            }
-
-            .center {
-                max-width: 90%;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .card {
-                min-width: 145px;
-                padding: 14px 18px;
-            }
-
-            .card.main {
-                min-width: 170px;
-            }
-
-            .card-title {
-                font-size: 14px;
-            }
-
-            .card.main .card-title {
-                font-size: 16px;
-            }
-
-            .headline {
-                font-size: 32px;
-            }
-
-            .logo {
-                width: 100px;
-                height: 100px;
-            }
-
-            .video-box {
-                max-width: 85%;
-                border-radius: 20px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .card {
-                min-width: 125px;
-                padding: 12px 16px;
-                display: none;
-                /* Hide floating cards on mobile */
-            }
-
-            .card.main {
-                min-width: 150px;
-            }
-
-            .card-title {
-                font-size: 13px;
-            }
-
-            .card.main .card-title {
-                font-size: 15px;
-            }
-
-            .card-sub {
-                font-size: 10px;
-            }
-
-            .headline {
-                font-size: 26px;
-                white-space: normal;
-            }
-
-            .center {
-                padding: 40px 20px;
-                width: 100%;
-                max-width: 100%;
-            }
-
-            .logo {
-                width: 85px;
-                height: 85px;
-            }
-
-            .video-box {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 16px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .cta-bar .btn {
-                padding: 10px 14px;
-                font-size: 13px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .card {
-                display: none;
-                /* Hide floating cards on small mobile */
-            }
-
-            .headline {
-                font-size: 20px;
-            }
-
-            .logo {
-                width: 60px;
-                height: 60px;
-            }
-
-            .center {
-                padding: 30px 16px;
-            }
-
-            .video-box {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 12px;
-            }
-
-            .cta-bar {
-                padding: 4px;
-                gap: 4px;
-                left: 12px;
-                right: 12px;
-                transform: none;
-            }
-
-            .cta-bar .btn {
-                padding: 8px 10px;
-                font-size: 11px;
-                flex: 1;
-            }
-
-            .cta-bar .btn svg {
-                width: 14px;
-                height: 14px;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PepBox · Everything the top of your Mac was missing</title>
+  <meta name="description" content="PepBox is a free, open-source notch shelf for macOS: drop files, clipboard history, Quick Search, live activities and 36 extensions.">
+  <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f3" media="(prefers-color-scheme: light)">
+  <link rel="canonical" href="https://kpscriptz.github.io/PepBox/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PepBox">
+  <meta property="og:title" content="PepBox · Everything the top of your Mac was missing">
+  <meta property="og:description" content="PepBox is a free, open-source notch shelf for macOS: drop files, clipboard history, Quick Search, live activities and 36 extensions.">
+  <meta property="og:url" content="https://kpscriptz.github.io/PepBox/">
+  <meta property="og:image" content="https://kpscriptz.github.io/PepBox/assets/app-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="assets/site.css">
 </head>
-
 <body>
-    <div class="scroll-container" id="scroll-container">
-        <!-- SLIDE 1: Hero -->
-        <div class="slide slide-1">
-            <div class="page">
-                <!-- TOP EDGE -->
-                <div class="card main t1" data-rot="-8" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">File Shelf</div>
-                        <div class="card-sub">Drop files to notch</div>
-                    </div>
-                </div>
-                <div class="card t2" data-rot="5" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Drag-Out Files</div>
-                        <div class="card-sub">From anywhere</div>
-                    </div>
-                </div>
-                <div class="card main t3" data-rot="-4" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Floating Basket</div>
-                        <div class="card-sub">Jiggle mouse</div>
-                    </div>
-                </div>
-                <div class="card t4" data-rot="7" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Peek & Hide</div>
-                        <div class="card-sub">Smooth animations</div>
-                    </div>
-                </div>
-                <div class="card main t5" data-rot="-6" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Clipboard Manager</div>
-                        <div class="card-sub">⌥Space • History</div>
-                    </div>
-                </div>
-                <div class="card t6" data-rot="4" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Instant Search</div>
-                        <div class="card-sub">Find anything</div>
-                    </div>
-                </div>
-                <div class="card t7" data-rot="-5" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Favorites</div>
-                        <div class="card-sub">Pin important</div>
-                    </div>
-                </div>
-                <div class="card t8" data-rot="9" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Flag Important</div>
-                        <div class="card-sub">Mark priority</div>
-                    </div>
-                </div>
-                <div class="card main t9" data-rot="-3" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Beautiful Media HUD</div>
-                        <div class="card-sub">Album art</div>
-                    </div>
-                </div>
-                <div class="card t10" data-rot="6" style="--op:0.65">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Bulk Copy</div>
-                        <div class="card-sub">Multiple items</div>
-                    </div>
-                </div>
-
-                <!-- LEFT EDGE -->
-                <div class="card main l1" data-rot="-8" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Volume HUD</div>
-                        <div class="card-sub">Smooth animation</div>
-                    </div>
-                </div>
-                <div class="card l2" data-rot="5" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Brightness HUD</div>
-                        <div class="card-sub">Beautiful design</div>
-                    </div>
-                </div>
-                <div class="card l3" data-rot="-4" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Battery HUD</div>
-                        <div class="card-sub">% indicator</div>
-                    </div>
-                </div>
-                <div class="card l4" data-rot="7" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Caps Lock HUD</div>
-                        <div class="card-sub">Visual alert</div>
-                    </div>
-                </div>
-                <div class="card l5" data-rot="-6" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Screen Unlock</div>
-                        <div class="card-sub">Notification</div>
-                    </div>
-                </div>
-                <div class="card l6" data-rot="4" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">AirPods HUD</div>
-                        <div class="card-sub">Connection status</div>
-                    </div>
-                </div>
-                <div class="card main l7" data-rot="-5" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Power Folders</div>
-                        <div class="card-sub">Drop to organize</div>
-                    </div>
-                </div>
-                <div class="card l8" data-rot="9" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Tracked Folders</div>
-                        <div class="card-sub">Auto-watch</div>
-                    </div>
-                </div>
-
-                <!-- RIGHT EDGE -->
-                <div class="card main r1" data-rot="9" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Audio Visualizer</div>
-                        <div class="card-sub">Live beats</div>
-                    </div>
-                </div>
-                <div class="card r2" data-rot="-5" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Tap-to-Seek</div>
-                        <div class="card-sub">Precise control</div>
-                    </div>
-                </div>
-                <div class="card r3" data-rot="4" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Shuffle & Repeat</div>
-                        <div class="card-sub">Playback modes</div>
-                    </div>
-                </div>
-                <div class="card r4" data-rot="-6" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Play/Pause/Skip</div>
-                        <div class="card-sub">Media controls</div>
-                    </div>
-                </div>
-                <div class="card main r5" data-rot="7" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Dynamic Island</div>
-                        <div class="card-sub">Works on any Mac</div>
-                    </div>
-                </div>
-                <div class="card r6" data-rot="-4" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Multi-Monitor</div>
-                        <div class="card-sub">All displays</div>
-                    </div>
-                </div>
-                <div class="card r7" data-rot="5" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Fullscreen Mode</div>
-                        <div class="card-sub">Smart detection</div>
-                    </div>
-                </div>
-                <div class="card r8" data-rot="-8" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Transparency</div>
-                        <div class="card-sub">See-through notch</div>
-                    </div>
-                </div>
-
-                <!-- BOTTOM EDGE -->
-                <div class="card b1" data-rot="6" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Smart Export</div>
-                        <div class="card-sub">Auto-save output</div>
-                    </div>
-                </div>
-                <div class="card main b2" data-rot="-3" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Spotify</div>
-                        <div class="card-sub">Now Playing</div>
-                    </div>
-                </div>
-                <div class="card b3" data-rot="9" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Apple Music</div>
-                        <div class="card-sub">Full controls</div>
-                    </div>
-                </div>
-                <div class="card b4" data-rot="-5" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">OCR Text</div>
-                        <div class="card-sub">Extract from images</div>
-                    </div>
-                </div>
-                <div class="card b5" data-rot="4" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Compress Files</div>
-                        <div class="card-sub">ZIP/UNZIP</div>
-                    </div>
-                </div>
-                <div class="card main b6" data-rot="-6" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Voice Transcribe</div>
-                        <div class="card-sub">Whisper AI</div>
-                    </div>
-                </div>
-                <div class="card b7" data-rot="7" style="--op:0.55">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">BG Removal</div>
-                        <div class="card-sub">AI powered</div>
-                    </div>
-                </div>
-                <div class="card b8" data-rot="-4" style="--op:0.65">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Video Compress</div>
-                        <div class="card-sub">Discord ready</div>
-                    </div>
-                </div>
-                <div class="card main b9" data-rot="5" style="--op:0.75">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Window Snap</div>
-                        <div class="card-sub">Keyboard shortcuts</div>
-                    </div>
-                </div>
-                <div class="card b10" data-rot="-8" style="--op:0.65">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Element Capture</div>
-                        <div class="card-sub">Screenshot UI</div>
-                    </div>
-                </div>
-
-                <!-- EXTRA scattered -->
-                <div class="card" style="top:15%;left:8%;--op:0.55" data-rot="-4">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Convert Images</div>
-                        <div class="card-sub">PNG/JPG/HEIC</div>
-                    </div>
-                </div>
-                <div class="card" style="top:88%;left:42%;--op:0.65" data-rot="5">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">AirDrop</div>
-                        <div class="card-sub">Quick share</div>
-                    </div>
-                </div>
-                <div class="card" style="top:88%;right:42%;--op:0.55" data-rot="-5">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Quick Actions</div>
-                        <div class="card-sub">Right-click menu</div>
-                    </div>
-                </div>
-                <div class="card" style="top:15%;right:8%;--op:0.65" data-rot="5">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Rename Entries</div>
-                        <div class="card-sub">Clipboard items</div>
-                    </div>
-                </div>
-                <div class="card" style="bottom:5%;left:5%;--op:0.55" data-rot="7">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Termi-Notch</div>
-                        <div class="card-sub">Quick terminal</div>
-                    </div>
-                </div>
-
-                <div class="card" style="top:92%;left:15%;--op:0.55" data-rot="9">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Alfred Workflow</div>
-                        <div class="card-sub">Add from Alfred</div>
-                    </div>
-                </div>
-                <div class="card" style="top:92%;right:15%;--op:0.65" data-rot="-8">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Finder Services</div>
-                        <div class="card-sub">Right-click send</div>
-                    </div>
-                </div>
-                <div class="card" style="top:5%;left:50%;--op:0.55" data-rot="-3">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Quickshare</div>
-                        <div class="card-sub">Instant sharing</div>
-                    </div>
-                </div>
-                <div class="card" style="bottom:12%;left:3%;--op:0.65" data-rot="5">
-                    <div class="checkbox"></div>
-                    <div class="card-body">
-                        <div class="card-title">Lock Screen</div>
-                        <div class="card-sub">Widgets</div>
-                    </div>
-                </div>
-                <div class="card" style="bottom:12%;right:3%;--op:0.55" data-rot="-4">
-                    <div class="checkbox checked"><svg viewBox="0 0 24 24" fill="none">
-                            <path d="M6 13l4 4 8-9" />
-                        </svg></div>
-                    <div class="card-body">
-                        <div class="card-title">Notification HUD</div>
-                        <div class="card-sub">System alerts</div>
-                    </div>
-                </div>
-
-                <!-- Center -->
-                <div class="center">
-                    <img src="assets/images/pepbox-icon-dark.png" alt="PepBox" class="logo">
-                    <p class="headline"><span class="dim">The <span class="accent">native</span> productivity
-                            layer</span>
-                        macOS is missing.</p>
-                    <div class="video-box">
-                        <video width="100%" autoplay loop muted playsinline controls>
-                            <source
-                                src="https://github.com/user-attachments/assets/813c3eea-6588-4f23-880f-135833d26a16"
-                                type="video/mp4">
-                        </video>
-                    </div>
-
-                </div>
-            </div>
-
-
-
-            <!-- Download Modal -->
-            <div class="download-modal-overlay" id="download-modal">
-                <div class="download-modal">
-                    <h2>Get PepBox</h2>
-                    <p class="modal-price">€6.99 · One-time payment · Lifetime</p>
-                    <p class="modal-desc">
-                        PepBox is a one-time purchase that unlocks every feature, every extension, and every future
-                        update — forever. No subscriptions, no recurring fees.
-                    </p>
-                    <p class="modal-desc">
-                        Your purchase directly supports an indie developer and ensures PepBox keeps getting better with
-                        new features, performance improvements, and macOS compatibility updates.
-                    </p>
-                    <ul class="modal-perks">
-                        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" />
-                            </svg> All core features & 15+ extensions</li>
-                        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" />
-                            </svg> Lifetime updates, no extra cost</li>
-                        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" />
-                            </svg> Supports continued development</li>
-                        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" />
-                            </svg> 100% local & private — no telemetry</li>
-                    </ul>
-                    <div class="modal-actions">
-                        <a href="https://github.com/KPScriptz/PepBox/releases/latest" target="_blank"
-                            class="modal-btn modal-btn-primary">
-                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Buy License — €6.99
-                        </a>
-                        <a id="modal-direct-download" href="https://github.com/KPScriptz/PepBox/releases/latest"
-                            class="modal-btn modal-btn-secondary">
-                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download PepBox
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- CTA Bar -->
-            <div class="cta-bar" id="cta-bar">
-                <button id="download-btn" class="btn btn-main">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PepBox
-                </button>
-                <a href="extensions.html" class="btn">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path
-                            d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                    </svg>
-                    Extensions
-                </a>
-                <a href="features.html" class="btn">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Features
-                </a>
-            </div>
-
-        </div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" alt="" width="30" height="30">PepBox</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span class="nav-toggle-bars"></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="features.html">Features</a>
+        <a href="extensions.html">Extensions</a>
+        <a href="help.html">Help</a>
+        <a class="btn btn-primary btn-sm" href="download.html">Download</a>
+      </nav>
     </div>
+  </header>
 
-    <footer style="text-align: center; padding: 40px 24px 100px; color: var(--muted); font-size: 13px;">
-        <p>Made with ❤️ in The Netherlands</p>
-        <p style="margin-top: 6px;">
-            <a href="https://github.com/KPScriptz/PepBox" style="color: var(--secondary); text-decoration: none;">GitHub</a>
-            &nbsp;·&nbsp;
-            <a href="https://github.com/KPScriptz/PepBox/issues" style="color: var(--secondary); text-decoration: none;">Issues</a>
-            &nbsp;·&nbsp;
-            <a href="extensions.html" style="color: var(--secondary); text-decoration: none;">Extensions</a>
-        </p>
-    </footer>
+  <main id="main" tabindex="-1">
+    <section class="hero">
+      <div class="container">
+        <img class="hero-icon" src="assets/app-icon.png" alt="PepBox app icon" width="96" height="96">
+        <h1>Everything the top of your Mac was <span class="grad-text">missing</span></h1>
+        <p class="lead">PepBox turns the notch into a shelf for files, a clipboard that remembers, a search bar that answers, and live activities that keep you posted.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://github.com/KPScriptz/PepBox/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for macOS</a>
+          <a class="btn btn-ghost" href="https://github.com/KPScriptz/PepBox"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.5 9.5 0 0 1 12 6.84c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>View on GitHub</a>
+        </div>
+        <p class="hero-meta">Free · macOS 14+ · Open source</p>
 
-    <script>
-        document.oncontextmenu = () => false;
+        <div class="mock" role="img" aria-label="Illustration: the PepBox shelf open below the notch, holding four files, with share buttons and a timer running beside the notch">
+          <div class="mock-menubar" aria-hidden="true">
+            <div class="mb-left"><span>&#63743;</span><span>Finder</span><span>File</span><span>Edit</span><span>View</span></div>
+            <div class="mb-right"><span>Wi-Fi</span><span>100%</span><span>Wed 9:41</span></div>
+          </div>
+          <div class="mock-notch-wrap" aria-hidden="true">
+            <div class="mock-notch">
+              <span class="mock-act c-orange" id="act-left"><span class="dot"></span>Timer</span>
+              <span class="mock-act c-orange" id="act-right">4:59</span>
+            </div>
+            <div class="mock-shelf">
+              <div class="mock-files">
+                <div class="mock-file"><b style="background:#ef4b5f">PDF</b><span>Contract.pdf</span></div>
+                <div class="mock-file"><b style="background:#3a86ff">PNG</b><span>Hero shot.png</span></div>
+                <div class="mock-file"><b style="background:#8b5cf6">MOV</b><span>Demo.mov</span></div>
+                <div class="mock-file"><b style="background:#22a06b">ZIP</b><span>Assets.zip</span></div>
+              </div>
+              <div class="mock-actions">
+                <span>AirDrop</span><span>LocalSend</span><span>Messages</span><span>Mail</span><span>To Phone</span><span>ZIP</span><span>Copy</span>
+              </div>
+            </div>
+          </div>
+          <div class="mock-desktop"></div>
+        </div>
+      </div>
+    </section>
 
-        // Smooth page transitions - fade out before navigation
-        document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
-            link.addEventListener('click', e => {
-                const href = link.getAttribute('href');
-                if (href && !href.startsWith('#') && !href.startsWith('javascript')) {
-                    e.preventDefault();
-                    document.getElementById('scroll-container').classList.add('fade-out');
-                    document.querySelectorAll('.cta-bar').forEach(bar => bar.classList.add('fade-out'));
-                    setTimeout(() => window.location.href = href, 300);
-                }
-            });
-        });
+    <section class="section section-alt" aria-labelledby="highlights-title">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">What it does</span>
+          <h2 id="highlights-title">Small strip of screen. A lot of work.</h2>
+          <p class="lead">Hover the notch or drag a file toward it. PepBox opens right where you were already looking.</p>
+        </div>
+        <div class="grid grid-3">
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h5l1.5 2h5L16 13h5"/><path d="M5 5h14l2 8v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg></div>
+            <h3>A shelf for anything</h3>
+            <p>Drop files on the notch to hold them. Send them with AirDrop, LocalSend, Messages or a QR code, or resize, convert and zip them in place.</p>
+            <a class="card-link" href="features.html#shelf">The shelf</a>
+          </article>
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="4" rx="1"/><path d="M17 5h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h1"/><path d="M8 12h8M8 16h5"/></svg></div>
+            <h3>Clipboard that remembers</h3>
+            <p>Press <kbd>&#8997;</kbd><kbd>Space</kbd> for your history. Paste several items in order, queue copies, and float anything on screen.</p>
+            <a class="card-link" href="features.html#clipboard">Clipboard</a>
+          </article>
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></div>
+            <h3>Quick Search</h3>
+            <p>Apps, files, math, time zones, timers, calendar events and Mac commands from one bar: <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>Space</kbd>.</p>
+            <a class="card-link" href="features.html#quick-search">Quick Search</a>
+          </article>
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></div>
+            <h3>Live Activities</h3>
+            <p>Timers, meetings, downloads, coding agents and eye breaks show up beside the notch, then get out of the way.</p>
+            <a class="card-link" href="features.html#live-activities">Live Activities</a>
+          </article>
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></div>
+            <h3>Media and HUDs</h3>
+            <p>Now playing with synced lyrics, plus cleaner volume, brightness, battery and AirPods indicators.</p>
+            <a class="card-link" href="features.html#media">Media and HUDs</a>
+          </article>
+          <article class="card">
+            <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4a2 2 0 1 1 4 0v1h4a1 1 0 0 1 1 1v4h-1a2 2 0 1 0 0 4h1v4a1 1 0 0 1-1 1h-4v-1a2 2 0 1 0-4 0v1H6a1 1 0 0 1-1-1v-4h1a2 2 0 1 0 0-4H5V6a1 1 0 0 1 1-1h4Z"/></svg></div>
+            <h3>36 extensions</h3>
+            <p>Turn on only what you want: Pomodoro, Window Snap, System Stats, Snippets, Teleprompter, LocalSend and more.</p>
+            <a class="card-link" href="extensions.html">Browse extensions</a>
+          </article>
+        </div>
+      </div>
+    </section>
 
-        // Smooth staggered fade-in
-        const cards = document.querySelectorAll('.card');
-        cards.forEach((card, i) => {
-            const rot = card.dataset.rot || 0;
-            card.style.transform = `rotate(${rot}deg)`;
-            setTimeout(() => card.classList.add('visible'), 80 + Math.random() * 500);
-        });
+    <section class="section" aria-labelledby="qs-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Quick Search does a lot</span>
+          <h2 id="qs-title">Type what you mean.</h2>
+          <p class="lead">Press <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>Space</kbd> and start typing. Answers copy with Return. Not sure what it knows? Type <code>?</code>.</p>
+        </div>
+        <div class="qs-strip">
+          <div class="qs-item"><div class="qs-query">time in tokyo</div><div class="qs-answer">10:41 PM, Wed in Tokyo</div><div class="qs-note">Time zones</div></div>
+          <div class="qs-item"><div class="qs-query">15% of 80</div><div class="qs-answer">12</div><div class="qs-note">Math and percentages</div></div>
+          <div class="qs-item"><div class="qs-query">event lunch tomorrow 1pm</div><div class="qs-answer">Add “Lunch” to Calendar</div><div class="qs-note">Calendar events</div></div>
+          <div class="qs-item"><div class="qs-query">port 3000</div><div class="qs-answer">node is listening · Return to stop</div><div class="qs-note">Your Mac</div></div>
+          <div class="qs-item"><div class="qs-query">:fire</div><div class="qs-answer">&#128293; copied</div><div class="qs-note">Emoji and generators</div></div>
+          <div class="qs-item"><div class="qs-query">?</div><div class="qs-answer">The full cheat sheet</div><div class="qs-note">Every command, with examples</div></div>
+        </div>
+        <p style="margin-top:24px"><a href="help.html#quick-search">See the command reference</a></p>
+      </div>
+    </section>
 
-        // Optimized drag with momentum
-        let activeCard = null, x = 0, y = 0, vx = 0, vy = 0, lastX = 0, lastY = 0, rot = 0;
-        const friction = 0.9, minV = 0.3;
+    <section class="section section-alt" aria-labelledby="widgets-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">On the shelf</span>
+          <h2 id="widgets-title">Widgets that live under the notch.</h2>
+          <p class="lead">Add the ones you use. Leave out the rest.</p>
+        </div>
+        <div class="grid grid-2">
+          <figure class="shot"><img src="assets/shots/agents.png" alt="Agents panel listing three coding sessions: two thinking, one done, with call and edit counts" width="1040" height="340" loading="lazy"><figcaption>Agents: see every Claude Code and Codex session at a glance.</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/system-stats.png" alt="System Stats panel with CPU, GPU and memory rings, network speeds, free disk space and battery" width="1040" height="340" loading="lazy"><figcaption>System Stats: CPU, GPU, memory, network, disk and battery.</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/pomodoro.png" alt="Pomodoro timer showing 25:00 focus with play, skip and reset buttons and focus, short and long break lengths" width="1040" height="340" loading="lazy"><figcaption>Pomodoro: focus sessions with short and long breaks.</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/shortcuts.png" alt="Shortcuts panel with six Apple Shortcuts as buttons" width="1040" height="340" loading="lazy"><figcaption>Shortcuts: run your Apple Shortcuts in one click.</figcaption></figure>
+        </div>
+      </div>
+    </section>
 
-        document.addEventListener('mousedown', e => {
-            const card = e.target.closest('.card');
-            if (!card) return;
-            activeCard = card;
-            rot = parseFloat(card.dataset.rot) || 0;
-            const style = getComputedStyle(card);
-            const matrix = new DOMMatrix(style.transform);
-            x = matrix.m41; y = matrix.m42;
-            lastX = e.clientX; lastY = e.clientY;
-            vx = 0; vy = 0;
-            card.classList.add('dragging');
-        });
+    <section class="section" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2 id="faq-title">Quick answers</h2>
+        </div>
+        <div class="faq">
+          <details><summary>Is PepBox really free?</summary><div><p>Yes. No accounts, no trials, no paid tier. The source is on <a href="https://github.com/KPScriptz/PepBox">GitHub</a>.</p></div></details>
+          <details><summary>Does my Mac need a notch?</summary><div><p>No. On Macs without a notch, and on external displays, PepBox shows a small floating pill at the top of the screen instead.</p></div></details>
+          <details><summary>Which macOS versions are supported?</summary><div><p>macOS 14 Sonoma or later.</p></div></details>
+          <details><summary>Does it collect data?</summary><div><p>No analytics and no tracking. A few features reach the network when you use them, and they are all listed on the <a href="help.html#privacy">privacy section</a> of the help page.</p></div></details>
+        </div>
+        <p style="margin-top:24px"><a href="help.html#faq">More questions and answers</a></p>
+      </div>
+    </section>
 
-        document.addEventListener('mousemove', e => {
-            if (!activeCard) return;
-            const dx = e.clientX - lastX, dy = e.clientY - lastY;
-            x += dx; y += dy;
-            vx = dx * 0.5; vy = dy * 0.5;
-            lastX = e.clientX; lastY = e.clientY;
-            activeCard.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
-        });
+    <section class="section-tight">
+      <div class="container">
+        <div class="cta">
+          <h2>Put the notch to work.</h2>
+          <p class="lead">Free · macOS 14+ · Open source</p>
+          <div class="btn-row">
+          <a class="btn btn-primary" href="https://github.com/KPScriptz/PepBox/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for macOS</a>
+          <a class="btn btn-ghost" href="https://github.com/KPScriptz/PepBox"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.5 9.5 0 0 1 12 6.84c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>View on GitHub</a>
+        </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-        document.addEventListener('mouseup', () => {
-            if (!activeCard) return;
-            activeCard.classList.remove('dragging');
-            const card = activeCard;
-            activeCard = null;
-
-            const animate = () => {
-                if (Math.abs(vx) < minV && Math.abs(vy) < minV) return;
-                x += vx; y += vy;
-                vx *= friction; vy *= friction;
-                card.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
-                requestAnimationFrame(animate);
-            };
-            if (Math.abs(vx) > minV || Math.abs(vy) > minV) requestAnimationFrame(animate);
-        });
-
-        // Touch support
-        document.addEventListener('touchstart', e => {
-            const card = e.target.closest('.card');
-            if (!card) return;
-            activeCard = card;
-            rot = parseFloat(card.dataset.rot) || 0;
-            const style = getComputedStyle(card);
-            const matrix = new DOMMatrix(style.transform);
-            x = matrix.m41; y = matrix.m42;
-            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-            vx = 0; vy = 0;
-            card.classList.add('dragging');
-        }, { passive: true });
-
-        document.addEventListener('touchmove', e => {
-            if (!activeCard) return;
-            const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY;
-            x += dx; y += dy;
-            vx = dx * 0.5; vy = dy * 0.5;
-            lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-            activeCard.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
-        }, { passive: true });
-
-        document.addEventListener('touchend', () => {
-            if (!activeCard) return;
-            activeCard.classList.remove('dragging');
-            const card = activeCard;
-            activeCard = null;
-            const animate = () => {
-                if (Math.abs(vx) < minV && Math.abs(vy) < minV) return;
-                x += vx; y += vy;
-                vx *= friction; vy *= friction;
-                card.style.transform = `translate3d(${x}px,${y}px,0) rotate(${rot}deg)`;
-                requestAnimationFrame(animate);
-            };
-            if (Math.abs(vx) > minV || Math.abs(vy) > minV) requestAnimationFrame(animate);
-        });
-
-        // Resolve direct download URL
-        let downloadUrl = 'https://github.com/KPScriptz/PepBox/releases/latest';
-        fetch('https://api.github.com/repos/KPScriptz/PepBox/releases/latest').then(r => r.json()).then(rel => {
-            const dmg = rel.assets?.find(a => a.name.endsWith('.dmg'));
-            if (dmg) {
-                downloadUrl = dmg.browser_download_url;
-                const directBtn = document.getElementById('modal-direct-download');
-                if (directBtn) directBtn.href = dmg.browser_download_url;
-            }
-        }).catch(() => { });
-
-
-
-        // Download modal logic
-        const downloadModal = document.getElementById('download-modal');
-        const downloadBtn = document.getElementById('download-btn');
-
-        downloadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            downloadModal.classList.add('active');
-        });
-
-        downloadModal.addEventListener('click', (e) => {
-            if (e.target === downloadModal) {
-                downloadModal.classList.remove('active');
-            }
-        });
-    </script>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand"><img src="assets/app-icon.png" alt="" width="24" height="24">PepBox</div>
+        <p>Free and open source. Made for macOS 14 and later.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="footer-links">
+          <li><a href="features.html">Features</a></li>
+          <li><a href="extensions.html">Extensions</a></li>
+          <li><a href="download.html">Download</a></li>
+          <li><a href="help.html">Help</a></li>
+          <li><a href="help.html#privacy">Privacy</a></li>
+          <li><a href="https://github.com/KPScriptz/PepBox">GitHub</a></li>
+          <li><a href="licenses.html">Open-source licenses</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
+  <script src="assets/site.js" defer></script>
 </body>
-
 </html>

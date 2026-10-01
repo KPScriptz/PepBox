@@ -1,1516 +1,293 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PepBox — Features</title>
-    <meta name="description"
-        content="Discover everything PepBox can do. File shelf, floating basket, clipboard manager, beautiful HUDs, media player, and 15+ modular extensions.">
-    <link rel="icon" type="image/png" href="assets/app-icon.png">
-    <link rel="preconnect" href="https://rsms.me/">
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <style>
-        :root {
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --bg: #0a0a0a;
-            --bg-card: rgba(38, 38, 38, 0.92);
-            --border: rgba(255, 255, 255, 0.08);
-            --primary: #fafafa;
-            --secondary: #a1a1aa;
-            --muted: #71717a;
-            --gray-100: #f4f4f5;
-            --gray-200: #e4e4e7;
-            --gray-800: #27272a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            background: var(--bg);
-            color: var(--primary);
-            -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-        }
-
-        /* ============================================
-           SCROLL ANIMATION SYSTEM
-           ============================================ */
-        .reveal {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .reveal-left {
-            opacity: 0;
-            transform: translateX(-60px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal-left.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .reveal-right {
-            opacity: 0;
-            transform: translateX(60px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal-right.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .reveal-scale {
-            opacity: 0;
-            transform: scale(0.9);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal-scale.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        /* Stagger children */
-        .stagger>* {
-            transition-delay: calc(var(--i, 0) * 0.1s);
-        }
-
-        /* ============================================
-           HERO SECTION
-           ============================================ */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 120px 24px 80px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -30%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .hero-logo {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 24px;
-            filter: drop-shadow(0 0 60px rgba(59, 130, 246, 0.3));
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-8px);
-            }
-        }
-
-        .hero h1 {
-            font-size: 56px;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-            margin-bottom: 16px;
-        }
-
-        .hero h1 span {
-            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero p {
-            font-size: 20px;
-            color: var(--secondary);
-            max-width: 560px;
-            line-height: 1.5;
-            margin-bottom: 40px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 32px;
-        }
-
-        .hero-capabilities {
-            display: inline-block;
-            max-width: 540px;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--muted);
-            margin-top: 24px;
-            text-align: center;
-        }
-
-        .hero-badge .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.4;
-            }
-        }
-
-        .scroll-indicator {
-            position: absolute;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            color: var(--muted);
-            font-size: 12px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            100% {
-                transform: translateX(-50%) translateY(0);
-            }
-
-            50% {
-                transform: translateX(-50%) translateY(8px);
-            }
-        }
-
-        .scroll-indicator svg {
-            width: 20px;
-            height: 20px;
-            stroke: var(--muted);
-        }
-
-        /* ============================================
-           FEATURE SECTIONS
-           ============================================ */
-        .feature-section {
-            padding: 120px 24px;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .section-label {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--muted);
-            margin-bottom: 12px;
-        }
-
-        .section-title {
-            font-size: 42px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.15;
-            margin-bottom: 16px;
-        }
-
-        .section-desc {
-            font-size: 18px;
-            color: var(--secondary);
-            line-height: 1.6;
-            max-width: 600px;
-            margin-bottom: 48px;
-        }
-
-        /* Split layout: text + media */
-        .feature-split {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-        }
-
-        .feature-split.reverse {
-            direction: rtl;
-        }
-
-        .feature-split.reverse>* {
-            direction: ltr;
-        }
-
-        .feature-media {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
-        }
-
-        .feature-media img,
-        .feature-media video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .feature-media .glow {
-            position: absolute;
-            inset: -1px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent 50%);
-            pointer-events: none;
-        }
-
-        /* Feature bullets */
-        .feature-bullets {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            margin-top: 32px;
-        }
-
-        .feature-bullet {
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-        }
-
-        .feature-bullet .icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 18px;
-        }
-
-        .feature-bullet h4 {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .feature-bullet p {
-            font-size: 14px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        /* ============================================
-           FULL-WIDTH SHOWCASE
-           ============================================ */
-        .showcase {
-            padding: 120px 24px;
-            text-align: center;
-        }
-
-        .showcase-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .showcase-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px 24px;
-            text-align: left;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.4s ease;
-        }
-
-        .showcase-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .showcase-card .card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            margin-bottom: 16px;
-        }
-
-        .showcase-card h3 {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .showcase-card p {
-            font-size: 14px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        /* ============================================
-           EXTENSION HIGHLIGHTS
-           ============================================ */
-        .ext-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .ext-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                background 0.3s ease;
-        }
-
-        .ext-card:hover {
-            transform: translateY(-2px);
-            background: rgba(50, 50, 50, 0.95);
-        }
-
-        .ext-card img {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-        }
-
-        .ext-card h4 {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .ext-card p {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        /* ============================================
-           DIVIDER
-           ============================================ */
-        .divider {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* ============================================
-           PRICING CTA
-           ============================================ */
-        .pricing-cta {
-            padding: 120px 24px;
-            text-align: center;
-        }
-
-        .pricing-card {
-            max-width: 440px;
-            margin: 0 auto;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 48px 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .pricing-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        }
-
-        .pricing-card .price {
-            font-size: 56px;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            margin-bottom: 4px;
-        }
-
-        .pricing-card .price-label {
-            font-size: 15px;
-            color: var(--muted);
-            margin-bottom: 24px;
-        }
-
-        .pricing-card .price-features {
-            text-align: left;
-            margin-bottom: 32px;
-        }
-
-        .pricing-card .price-feature {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            font-size: 14px;
-            color: var(--secondary);
-        }
-
-        .pricing-card .price-feature svg {
-            width: 16px;
-            height: 16px;
-            stroke: #22c55e;
-            flex-shrink: 0;
-        }
-
-        .pricing-card .download-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 14px 24px;
-            background: #ffffff;
-            color: var(--gray-800);
-            border: none;
-            border-radius: 999px;
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .pricing-card .download-btn:hover {
-            background: var(--gray-200);
-        }
-
-        .pricing-card .download-btn svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* ============================================
-           CTA BAR (matches homepage)
-           ============================================ */
-        .cta-bar {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 8px;
-            padding: 6px;
-            background: rgba(23, 23, 23, 0.95);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            opacity: 0;
-            transform: translateX(-50%) translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .cta-bar.visible {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .cta-bar.fade-out {
-            opacity: 0;
-        }
-
-        .cta-bar .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px 20px;
-            background: transparent;
-            border: none;
-            border-radius: 999px;
-            color: var(--secondary);
-            font-family: var(--font-sans);
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .cta-bar .btn:hover {
-            color: var(--primary);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .cta-bar .btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .cta-bar .btn-main {
-            background: var(--gray-100);
-            color: var(--gray-800);
-        }
-
-        .cta-bar .btn-main:hover {
-            background: var(--gray-200);
-            color: var(--gray-800);
-        }
-
-        /* Download Modal */
-        .download-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .download-modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .download-modal {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 420px;
-            width: 90%;
-            max-height: 70vh;
-            overflow-y: auto;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .download-modal-overlay.active .download-modal {
-            transform: scale(1);
-        }
-
-        .download-modal h2 {
-            font-size: 20px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        .download-modal .modal-price {
-            text-align: center;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .download-modal .modal-desc {
-            font-size: 14px;
-            color: var(--secondary);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .download-modal .modal-perks {
-            list-style: none;
-            margin-bottom: 24px;
-        }
-
-        .download-modal .modal-perks li {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 0;
-            font-size: 13px;
-            color: var(--secondary);
-        }
-
-        .download-modal .modal-perks li svg {
-            width: 15px;
-            height: 15px;
-            stroke: #22c55e;
-            flex-shrink: 0;
-        }
-
-        .download-modal .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .download-modal .modal-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 13px 20px;
-            border-radius: 999px;
-            font-family: var(--font-sans);
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.2s ease, transform 0.15s ease;
-        }
-
-        .download-modal .modal-btn:active {
-            transform: scale(0.98);
-        }
-
-        .download-modal .modal-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .download-modal .modal-btn-primary {
-            background: var(--gray-100);
-            color: var(--gray-800);
-        }
-
-        .download-modal .modal-btn-primary:hover {
-            background: var(--gray-200);
-        }
-
-        .download-modal .modal-btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--secondary);
-            border: 1px solid var(--border);
-        }
-
-        .download-modal .modal-btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--primary);
-        }
-
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
-        @media (max-width: 1024px) {
-            .hero h1 {
-                font-size: 42px;
-            }
-
-            .section-title {
-                font-size: 34px;
-            }
-
-            .feature-split {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-
-            .feature-split.reverse {
-                direction: ltr;
-            }
-
-            .showcase-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .ext-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 32px;
-            }
-
-            .hero p {
-                font-size: 16px;
-            }
-
-            .section-title {
-                font-size: 28px;
-            }
-
-            .section-desc {
-                font-size: 16px;
-            }
-
-            .feature-section {
-                padding: 80px 20px;
-            }
-
-            .showcase {
-                padding: 80px 20px;
-            }
-
-            .showcase-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .ext-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .pricing-cta {
-                padding: 80px 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero {
-                padding: 100px 16px 60px;
-            }
-
-            .hero h1 {
-                font-size: 26px;
-            }
-
-            .section-title {
-                font-size: 24px;
-            }
-
-            .feature-section {
-                padding: 60px 16px;
-            }
-
-            .ext-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cta-bar {
-                padding: 4px;
-                gap: 4px;
-                left: 12px;
-                right: 12px;
-                transform: none;
-            }
-
-            .cta-bar.visible {
-                transform: translateY(0);
-            }
-
-            .cta-bar .btn {
-                padding: 8px 10px;
-                font-size: 11px;
-                flex: 1;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Features · PepBox</title>
+  <meta name="description" content="Everything PepBox does: the file shelf, clipboard history and Paste Queue, Quick Search, Live Activities, media HUDs, snippets, Grab Text and agents.">
+  <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f3" media="(prefers-color-scheme: light)">
+  <link rel="canonical" href="https://kpscriptz.github.io/PepBox/features.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PepBox">
+  <meta property="og:title" content="Features · PepBox">
+  <meta property="og:description" content="Everything PepBox does: the file shelf, clipboard history and Paste Queue, Quick Search, Live Activities, media HUDs, snippets, Grab Text and agents.">
+  <meta property="og:url" content="https://kpscriptz.github.io/PepBox/features.html">
+  <meta property="og:image" content="https://kpscriptz.github.io/PepBox/assets/app-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="assets/site.css">
 </head>
-
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" alt="" width="30" height="30">PepBox</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span class="nav-toggle-bars"></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html" aria-current="page">Features</a>
+        <a href="extensions.html">Extensions</a>
+        <a href="help.html">Help</a>
+        <a class="btn btn-primary btn-sm" href="download.html">Download</a>
+      </nav>
+    </div>
+  </header>
 
-    <!-- ==========================================
-         HERO
-         ========================================== -->
-    <section class="hero">
-        <img src="assets/images/pepbox-icon-dark.png" alt="PepBox" class="hero-logo reveal">
-        <div class="hero-badge reveal" style="transition-delay: 0.1s">
-            <span class="dot"></span>
-            100% Swift · Signed & Notarized · Open Source
-        </div>
-        <h1 class="reveal" style="transition-delay: 0.2s"><span>Everything your Mac<br>should already do.</span></h1>
-        <p class="reveal" style="transition-delay: 0.3s">PepBox transforms your notch into a powerful productivity hub.
-            Drag, drop, manage, and control — all from one place.</p>
-        <div class="hero-capabilities reveal" style="transition-delay: 0.4s">
-            Includes a full-fledged menu bar manager, reminders that sync with Apple's, window snapping, voice
-            transcribing, screenshotting + editing, full external monitor brightness/volume controls and more.
-        </div>
-        <div class="scroll-indicator">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            Scroll to explore
-        </div>
+  <main id="main" tabindex="-1">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Features</span>
+        <h1>Everything PepBox does, in one place.</h1>
+        <p class="lead">Most of it sits quietly at the top of your screen until you need it. Here is what is there.</p>
+        <ul class="toc" aria-label="On this page">
+          <li><a href="#shelf">Shelf</a></li>
+          <li><a href="#clipboard">Clipboard</a></li>
+          <li><a href="#quick-search">Quick Search</a></li>
+          <li><a href="#live-activities">Live Activities</a></li>
+          <li><a href="#media">Media and HUDs</a></li>
+          <li><a href="#snippets">Snippets</a></li>
+          <li><a href="#float">Float on Screen</a></li>
+          <li><a href="#grab-text">Grab Text</a></li>
+          <li><a href="#agents">Agents</a></li>
+          <li><a href="#widgets">Shelf widgets</a></li>
+        </ul>
+      </div>
     </section>
 
-    <!-- ==========================================
-         FEATURE 1: FILE SHELF
-         ========================================== -->
-    <section class="feature-section">
-        <div class="feature-split">
-            <div>
-                <p class="section-label reveal">Core Feature</p>
-                <h2 class="section-title reveal">File Shelf</h2>
-                <p class="section-desc reveal">Drop any file into your notch and it stays there until you need it. Drag
-                    files between apps without switching windows. Your notch becomes a staging area.</p>
-                <div class="feature-bullets stagger">
-                    <div class="feature-bullet reveal" style="--i:0">
-                        <div class="icon">📂</div>
-                        <div>
-                            <h4>Drag & Drop Anything</h4>
-                            <p>Files, folders, images, URLs, text — drop it all onto the notch. Pick it up in any app.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:1">
-                        <div class="icon">📌</div>
-                        <div>
-                            <h4>Folders, Favorites & Tracked Folders</h4>
-                            <p>Create folders, pin files, or watch a directory — its contents appear on the shelf
-                                automatically.</p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:2">
-                        <div class="icon">⚡</div>
-                        <div>
-                            <h4>Full File Management</h4>
-                            <p>Right-click for Copy, Move, Share, AirDrop, ZIP, Rename, Quick Look, OCR, and more — all
-                                from the notch.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="feature-media reveal-right">
-                <img src="assets/images/feature-shelf.png" alt="File Shelf">
-                <div class="glow"></div>
-            </div>
+    <div class="container">
+      <section class="feature" id="shelf" aria-labelledby="shelf-title">
+        <div>
+          <span class="eyebrow">Shelf</span>
+          <h2 id="shelf-title">Drop files on the notch. Do something with them.</h2>
+          <p>Drag anything toward the top of the screen and the shelf opens to catch it. Files stay there until you send, use or clear them.</p>
+          <h3>Send buttons on the island</h3>
+          <ul class="pills">
+            <li>AirDrop</li><li>Private AirDrop</li><li>LocalSend</li><li>Messages</li><li>Mail</li><li>Quickshare</li><li>To Phone</li><li>ZIP</li><li>Copy</li><li>Notes</li>
+          </ul>
+          <p><strong>LocalSend</strong> sends to Android, Windows and Linux devices on your Wi-Fi with no cloud in between. <strong>To Phone</strong> uploads the file and shows a QR code any phone can scan.</p>
+          <h3>Shelf Tools</h3>
+          <p>Right-click a file on the shelf:</p>
+          <ul class="ticks">
+            <li><strong>Images:</strong> resize, rotate, flip, black and white</li>
+            <li><strong>Video:</strong> make a GIF</li>
+            <li><strong>PDF:</strong> merge PDFs, turn images into a PDF, convert PDF pages</li>
+            <li><strong>Privacy:</strong> remove photo location data</li>
+            <li><strong>Convert:</strong> audio and video formats</li>
+            <li><strong>Check:</strong> SHA-256 checksum</li>
+          </ul>
         </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         FEATURE 2: FLOATING BASKET
-         ========================================== -->
-    <section class="feature-section">
-        <div class="feature-split reverse">
-            <div>
-                <p class="section-label reveal">Core Feature</p>
-                <h2 class="section-title reveal">Floating Basket</h2>
-                <p class="section-desc reveal">Jiggle your mouse and a floating basket appears — ready to catch files
-                    from anywhere. Drag items in, then drop them wherever you need.</p>
-                <div class="feature-bullets stagger">
-                    <div class="feature-bullet reveal" style="--i:0">
-                        <div class="icon">🫧</div>
-                        <div>
-                            <h4>Spawn with a Jiggle</h4>
-                            <p>Shake your mouse while dragging and a floating basket appears instantly — anywhere on
-                                screen.</p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:1">
-                        <div class="icon">🎨</div>
-                        <div>
-                            <h4>Multiple Color-Coded Baskets</h4>
-                            <p>Spawn multiple baskets with unique colors to organize different workflows simultaneously.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:2">
-                        <div class="icon">⚡</div>
-                        <div>
-                            <h4>Batch Drag & Auto-Hide</h4>
-                            <p>Select multiple items and drag them all at once. Baskets auto-hide when empty or idle.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="feature-media reveal-left">
-                <img src="assets/images/feature-basket.png" alt="Floating Basket">
-                <div class="glow"></div>
-            </div>
+        <div class="feature-media media-stack">
+          <figure class="shot"><img src="assets/shots/localsend.png" alt="LocalSend window with two files ready, looking for nearby devices on the same Wi-Fi" width="640" height="600" loading="lazy"><figcaption>LocalSend looks for nearby devices on your network.</figcaption></figure>
         </div>
-    </section>
+      </section>
 
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         FEATURE 3: CLIPBOARD MANAGER
-         ========================================== -->
-    <section class="feature-section">
-        <div class="feature-split">
-            <div>
-                <p class="section-label reveal">Core Feature</p>
-                <h2 class="section-title reveal">Clipboard Manager</h2>
-                <p class="section-desc reveal">Every text, image, link, and file you copy — saved and searchable. Access
-                    your entire clipboard history with a single shortcut.</p>
-                <div class="feature-bullets stagger">
-                    <div class="feature-bullet reveal" style="--i:0">
-                        <div class="icon">📋</div>
-                        <div>
-                            <h4>Persistent History</h4>
-                            <p>Every text, image, file, link, and color you copy — saved across restarts. Never lose a
-                                copy again.</p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:1">
-                        <div class="icon">🏷️</div>
-                        <div>
-                            <h4>Tags, Favorites & Search</h4>
-                            <p>Organize with custom tags, star favorites, and full-text search. Filter by source app.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:2">
-                        <div class="icon">⚡</div>
-                        <div>
-                            <h4>Quick Actions</h4>
-                            <p>Paste, copy, flag, tag, or delete — with rich previews for images, videos, and documents.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="feature-media reveal-right">
-                <img src="assets/images/feature-clipboard.png" alt="Clipboard Manager">
-                <div class="glow"></div>
-            </div>
+      <section class="feature flip" id="clipboard" aria-labelledby="clipboard-title">
+        <div>
+          <span class="eyebrow">Clipboard</span>
+          <h2 id="clipboard-title">A clipboard that keeps up with you.</h2>
+          <p>Press <kbd>&#8997;</kbd><kbd>Space</kbd> to open your history. Pick an item and press Return to paste it, or <kbd>&#8997;</kbd><kbd>Return</kbd> to paste it as plain text.</p>
+          <ul class="ticks">
+            <li><strong>Stacks:</strong> select several items and they are numbered in the order you picked them. Paste them together with a separator of your choice.</li>
+            <li><strong>Paste Queue:</strong> <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>C</kbd> collects copies, <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>V</kbd> pastes them one by one.</li>
+            <li><strong>Jump:</strong> <kbd>&#8984;</kbd><kbd>1</kbd>&ndash;<kbd>9</kbd> pastes the first nine items.</li>
+            <li><strong>Filter</strong> by kind: text, links, images, files.</li>
+          </ul>
+          <h3>Right-click any item</h3>
+          <ul class="pills">
+            <li>Merge</li><li>Delete After</li><li>Save as Snippet</li><li>Float on Screen</li><li>Show QR</li><li>Paste Transformed</li>
+          </ul>
         </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         FEATURE 4: BEAUTIFUL HUDs
-         ========================================== -->
-    <section class="feature-section">
-        <div class="feature-split reverse">
-            <div>
-                <p class="section-label reveal">Core Feature</p>
-                <h2 class="section-title reveal">Beautiful HUDs</h2>
-                <p class="section-desc reveal">Replace macOS's boring system overlays with gorgeous HUDs that appear
-                    right in your notch. Volume, brightness, media, AirPods — all premium.</p>
-                <div class="feature-bullets stagger">
-                    <div class="feature-bullet reveal" style="--i:0">
-                        <div class="icon">🔊</div>
-                        <div>
-                            <h4>Volume, Brightness & External Monitors</h4>
-                            <p>Sleek animated HUDs — including full brightness and volume control for external displays.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:1">
-                        <div class="icon">🎵</div>
-                        <div>
-                            <h4>Now Playing with Album Art</h4>
-                            <p>Beautiful media controls with album art, progress scrubbing, visualizer, and lyrics —
-                                Spotify & Apple Music.</p>
-                        </div>
-                    </div>
-                    <div class="feature-bullet reveal" style="--i:2">
-                        <div class="icon">🎧</div>
-                        <div>
-                            <h4>AirPods, Battery & Keyboard</h4>
-                            <p>AirPods connection, battery levels, charging state, and keyboard brightness — all in
-                                premium HUDs.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="feature-media reveal-left">
-                <img src="assets/images/feature-huds.png" alt="Beautiful HUDs">
-                <div class="glow"></div>
-            </div>
+        <div class="feature-media">
+          <figure class="shot pad"><img src="assets/shots/qr.png" alt="QR code window showing a link, with Copy Image and Done buttons" width="600" height="718" loading="lazy"></figure>
+          <p class="figcap" style="border-radius:0 0 var(--radius-sm) var(--radius-sm);margin:0">Show QR turns a copied link into a code your phone can scan.</p>
         </div>
-    </section>
+      </section>
 
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         MORE FEATURES GRID
-         ========================================== -->
-    <section class="showcase">
-        <p class="section-label reveal">And so much more</p>
-        <h2 class="section-title reveal" style="margin-bottom: 48px;">Built-in power features.</h2>
-        <div class="showcase-grid stagger">
-            <div class="showcase-card reveal" style="--i:0">
-                <div class="card-icon">🎯</div>
-                <h3>Dynamic Island Mode</h3>
-                <p>No notch? No problem. PepBox creates a Dynamic Island-style notch on any Mac, including external
-                    displays.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:1">
-                <div class="card-icon">🌙</div>
-                <h3>Advanced Autofade</h3>
-                <p>The shelf auto-hides and auto-reveals based on what you're doing. Per-app rules for complete control.
-                </p>
-            </div>
-            <div class="showcase-card reveal" style="--i:2">
-                <div class="card-icon">🖼️</div>
-                <h3>Folder Interactions</h3>
-                <p>Create folders on the shelf, preview contents, drag between them. Full Finder-like file management in
-                    the notch.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:3">
-                <div class="card-icon">🔄</div>
-                <h3>AirDrop Integration</h3>
-                <p>Drop files onto the AirDrop zone to instantly share with nearby devices. Seamless wireless sharing.
-                </p>
-            </div>
-            <div class="showcase-card reveal" style="--i:4">
-                <div class="card-icon">⌨️</div>
-                <h3>Keyboard Shortcuts</h3>
-                <p>Global shortcuts for clipboard, shelf, basket, and every extension. Fully customizable.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:5">
-                <div class="card-icon">🔒</div>
-                <h3>Privacy First</h3>
-                <p>Everything runs locally. No telemetry, no analytics, no cloud. Your data stays on your Mac.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:6">
-                <div class="card-icon">🙈</div>
-                <h3>Hide Notch</h3>
-                <p>Mask the physical notch with a clean black bar. Your display looks seamless — like it was always
-                    meant to.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:7">
-                <div class="card-icon">📁</div>
-                <h3>Tracked Folders</h3>
-                <p>Watch any folder and its contents appear on the shelf automatically. Perfect for Downloads, Desktop,
-                    or project folders.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:8">
-                <div class="card-icon">🖥️</div>
-                <h3>Multi-Display Support</h3>
-                <p>PepBox works across all your displays. Independent notch, shelf, and HUDs on every screen.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:9">
-                <div class="card-icon">🎬</div>
-                <h3>Media Player</h3>
-                <p>Rich now-playing controls with album art, progress scrubbing, and playback buttons — right in the
-                    notch.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:10">
-                <div class="card-icon">🔍</div>
-                <h3>Quick Look Previews</h3>
-                <p>Hover to peek at any shelf file. Rich thumbnails for images, PDFs, videos, archives, and more.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:11">
-                <div class="card-icon">🔠</div>
-                <h3>OCR / Text Recognition</h3>
-                <p>Extract text from any image on the shelf using on-device OCR. Copy, paste, and use — instantly.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:12">
-                <div class="card-icon">⚡</div>
-                <h3>Quick Actions</h3>
-                <p>Right-click any shelf item for powerful actions: open, share, copy path, compress, reveal in Finder,
-                    and more.</p>
-            </div>
-            <div class="showcase-card reveal" style="--i:13">
-                <div class="card-icon">🔖</div>
-                <h3>Favorites & Pinning</h3>
-                <p>Pin frequently used files and folders to the shelf. They persist across restarts for instant access.
-                </p>
-            </div>
-            <div class="showcase-card reveal" style="--i:14">
-                <div class="card-icon">🕶️</div>
-                <h3>Incognito Mode</h3>
-                <p>Pause clipboard history and media tracking. Your sensitive content stays private when you need it to.
-                </p>
-            </div>
+      <section class="feature" id="quick-search" aria-labelledby="qs-title">
+        <div>
+          <span class="eyebrow">Quick Search</span>
+          <h2 id="qs-title">One bar for apps, files and answers.</h2>
+          <p>Press <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>Space</kbd>. Type an app or file name to open it, or ask for something. Answers copy with Return. Type <code>?</code> for the full cheat sheet.</p>
+          <ul class="ticks">
+            <li><strong>Math, units and currency:</strong> <code>(3+2)^2</code>, <code>5 km to mi</code>, <code>$20 to eur</code></li>
+            <li><strong>Time:</strong> <code>time in tokyo</code>, <code>days until dec 25</code>, <code>stopwatch</code></li>
+            <li><strong>Timers and reminders:</strong> <code>timer 10m pizza</code></li>
+            <li><strong>Calendar, notes and tasks:</strong> <code>event lunch tomorrow 1pm</code>, <code>todo call Sam</code></li>
+            <li><strong>Your Mac:</strong> <code>port 3000</code>, <code>battery</code>, <code>lock</code>, <code>quit Slack</code></li>
+            <li><strong>Screen tools:</strong> <code>ocr</code>, <code>pick color</code>, <code>qr hello</code></li>
+            <li><strong>Developer:</strong> <code>sha256 hi</code>, <code>chmod 755</code>, <code>http 404</code></li>
+            <li><strong>Generators:</strong> <code>:fire</code>, <code>uuid</code>, <code>password 24</code></li>
+          </ul>
+          <p><a href="help.html#quick-search">Full command reference</a></p>
         </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         EXTENSIONS SHOWCASE
-         ========================================== -->
-    <section class="showcase">
-        <p class="section-label reveal">Modular Extensions</p>
-        <h2 class="section-title reveal">Install only what you need.</h2>
-        <p class="section-desc reveal" style="margin: 0 auto 48px; text-align: center;">15+ extensions that add powerful
-            capabilities — from music control to AI background removal. All included with your license.</p>
-
-        <div class="ext-grid stagger">
-            <a href="extensions.html" class="ext-card reveal" style="--i:0; text-decoration: none; color: inherit;">
-                <img src="assets/icons/apple-music.png" alt="Apple Music">
-                <div>
-                    <h4>Apple Music</h4>
-                    <p>Controls, lyrics & live visualizer</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:1; text-decoration: none; color: inherit;">
-                <img src="assets/icons/spotify.png" alt="Spotify">
-                <div>
-                    <h4>Spotify</h4>
-                    <p>Album art, controls & visualizer</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:2; text-decoration: none; color: inherit;">
-                <img src="assets/icons/notification-hud.png" alt="Notify Me!">
-                <div>
-                    <h4>Notify Me!</h4>
-                    <p>Beautiful banners replace ugly alerts</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:3; text-decoration: none; color: inherit;">
-                <img src="assets/icons/window-snap.jpg" alt="Window Snap">
-                <div>
-                    <h4>Window Snap</h4>
-                    <p>Tile & organize with custom shortcuts</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:4; text-decoration: none; color: inherit;">
-                <img src="assets/icons/element-capture.jpg" alt="Element Capture">
-                <div>
-                    <h4>Element Capture</h4>
-                    <p>Capture, annotate & share instantly</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:5; text-decoration: none; color: inherit;">
-                <img src="assets/icons/terminotch.jpg" alt="Termi-Notch">
-                <div>
-                    <h4>Termi-Notch</h4>
-                    <p>Run commands without leaving your flow</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:6; text-decoration: none; color: inherit;">
-                <img src="assets/icons/ai-bg.jpg" alt="AI Background Removal">
-                <div>
-                    <h4>AI Background Removal</h4>
-                    <p>Drop an image, get a clean cutout</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:7; text-decoration: none; color: inherit;">
-                <img src="assets/icons/voice-transcribe.jpg" alt="Voice Transcribe">
-                <div>
-                    <h4>Voice Transcribe</h4>
-                    <p>Speak to text, fully on-device</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:8; text-decoration: none; color: inherit;">
-                <img src="assets/icons/high-alert.jpg" alt="High Alert">
-                <div>
-                    <h4>High Alert</h4>
-                    <p>Prevent sleep with timed caffeine</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:9; text-decoration: none; color: inherit;">
-                <img src="assets/icons/snap-camera-v2.png" alt="Notchface">
-                <div>
-                    <h4>Notchface</h4>
-                    <p>Webcam preview lives in your notch</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:10; text-decoration: none; color: inherit;">
-                <img src="assets/icons/reminders.png" alt="Reminders">
-                <div>
-                    <h4>Reminders</h4>
-                    <p>Type tasks, dates detected automatically</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:11; text-decoration: none; color: inherit;">
-                <img src="assets/icons/alfred.png" alt="Alfred">
-                <div>
-                    <h4>Alfred</h4>
-                    <p>Launch workflows from your notch</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:12; text-decoration: none; color: inherit;">
-                <img src="assets/icons/quickshare.jpg" alt="Quickshare">
-                <div>
-                    <h4>Quickshare</h4>
-                    <p>Upload &amp; share files with one click</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:13; text-decoration: none; color: inherit;">
-                <img src="assets/icons/finder.png" alt="Finder Services">
-                <div>
-                    <h4>Finder Services</h4>
-                    <p>Deep Finder integration &amp; automation</p>
-                </div>
-            </a>
-            <a href="extensions.html" class="ext-card reveal" style="--i:14; text-decoration: none; color: inherit;">
-                <img src="assets/icons/targeted-video-size.jpg" alt="Targeted Video Size">
-                <div>
-                    <h4>Targeted Video Size</h4>
-                    <p>Compress videos to exact file sizes</p>
-                </div>
-            </a>
+        <div class="feature-media">
+          <div class="la-list" role="img" aria-label="Illustration of Quick Search results for the query 15% of 80">
+            <div class="qs-item" style="border:0;padding:4px 4px 10px"><div class="qs-query">15% of 80</div></div>
+            <div class="qs-item"><div class="qs-answer" style="margin:0">12</div><div class="qs-note">= 15% of 80 · Return to copy</div></div>
+            <div class="qs-item"><div class="qs-answer" style="margin:0;color:#fff">Search the web for “15% of 80”</div><div class="qs-note">Fallback, always last</div></div>
+          </div>
         </div>
-    </section>
+      </section>
 
-    <div class="divider"></div>
-
-    <!-- ==========================================
-         PRICING CTA
-         ========================================== -->
-    <section class="pricing-cta">
-        <p class="section-label reveal">Simple Pricing</p>
-        <h2 class="section-title reveal" style="margin-bottom: 48px;">One price. Everything included.</h2>
-
-        <div class="pricing-card reveal-scale">
-            <div class="price">€6.99</div>
-            <div class="price-label">One-time payment · Lifetime</div>
-            <div class="price-features">
-                <div class="price-feature">
-                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg>
-                    All core features included
-                </div>
-                <div class="price-feature">
-                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg>
-                    All 15+ extensions included
-                </div>
-                <div class="price-feature">
-                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg>
-                    All future updates included
-                </div>
-                <div class="price-feature">
-                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg>
-                    No subscriptions, no recurring fees
-                </div>
-            </div>
-            <a id="pricing-download-btn" href="https://github.com/KPScriptz/PepBox/releases/latest" target="_blank" class="download-btn">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Buy License
-            </a>
-            <p style="margin-top: 12px; font-size: 12px; color: var(--muted);">Then <a
-                    href="https://github.com/KPScriptz/PepBox/releases/latest"
-                    style="color: var(--secondary); text-decoration: underline;">download PepBox</a> and activate with
-                your key.</p>
+      <section class="feature flip" id="live-activities" aria-labelledby="la-title">
+        <div>
+          <span class="eyebrow">Live Activities</span>
+          <h2 id="la-title">Status beside the notch.</h2>
+          <p>Things that are running get a small indicator on either side of the notch, so you can check on them without switching windows.</p>
+          <ul class="ticks">
+            <li><strong>Timers and stopwatch</strong> from Quick Search, with a chime when they finish</li>
+            <li><strong>Meetings</strong> in Zoom, Teams and Meet</li>
+            <li><strong>Downloads</strong> from your browser</li>
+            <li><strong>Agents</strong> working, done, or waiting on you</li>
+            <li><strong>Eye breaks</strong> every 20 minutes</li>
+            <li><strong>Paste Queue</strong> while it collects copies</li>
+          </ul>
         </div>
-    </section>
-
-    <!-- ==========================================
-         FOOTER
-         ========================================== -->
-    <footer style="text-align: center; padding: 40px 24px 100px; color: var(--muted); font-size: 13px;">
-        <p>Made with ❤️ in The Netherlands</p>
-        <p style="margin-top: 6px;">
-            <a href="https://github.com/KPScriptz/PepBox" style="color: var(--secondary); text-decoration: none;">GitHub</a>
-            &nbsp;·&nbsp;
-            <a href="https://github.com/KPScriptz/PepBox/issues" style="color: var(--secondary); text-decoration: none;">Issues</a>
-            &nbsp;·&nbsp;
-            <a href="extensions.html" style="color: var(--secondary); text-decoration: none;">Extensions</a>
-        </p>
-    </footer>
-
-    <!-- Download Modal -->
-    <div class="download-modal-overlay" id="download-modal">
-        <div class="download-modal">
-            <h2>Get PepBox</h2>
-            <p class="modal-price">€6.99 · One-time payment · Lifetime</p>
-            <p class="modal-desc">
-                PepBox is a one-time purchase that unlocks every feature, every extension, and every future update —
-                forever. No subscriptions, no recurring fees.
-            </p>
-            <p class="modal-desc">
-                Your purchase directly supports an indie developer and ensures PepBox keeps getting better with new
-                features, performance improvements, and macOS compatibility updates.
-            </p>
-            <ul class="modal-perks">
-                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg> All core features & 15+ extensions</li>
-                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg> Lifetime updates, no extra cost</li>
-                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg> Supports continued development</li>
-                <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                    </svg> 100% local & private — no telemetry</li>
-            </ul>
-            <div class="modal-actions">
-                <a href="https://github.com/KPScriptz/PepBox/releases/latest" target="_blank" class="modal-btn modal-btn-primary">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Buy License — €6.99
-                </a>
-                <a id="modal-direct-download" href="https://github.com/KPScriptz/PepBox/releases/latest"
-                    class="modal-btn modal-btn-secondary">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PepBox
-                </a>
-            </div>
+        <div class="feature-media">
+          <div class="la-list" role="img" aria-label="Illustration: six live activities beside a notch: a timer at 4:59, an agent running tests, an agent that needs you, an eye break, the paste queue and a finished timer">
+            <div class="la-row c-orange"><span class="la-ic">&#9201;</span><span class="la-notch"></span><span class="la-label">4:59</span></div>
+            <div class="la-row c-orange"><span class="la-ic">&#10022;</span><span class="la-notch"></span><span class="la-label">Running tests</span></div>
+            <div class="la-row c-yellow"><span class="la-ic">&#9995;</span><span class="la-notch"></span><span class="la-label">Needs you</span></div>
+            <div class="la-row c-green"><span class="la-ic">&#9673;</span><span class="la-notch"></span><span class="la-label">Look away 18s</span></div>
+            <div class="la-row c-purple"><span class="la-ic">&#9776;</span><span class="la-notch"></span><span class="la-label">Copy to queue</span></div>
+            <div class="la-row c-orange"><span class="la-ic">&#128276;</span><span class="la-notch"></span><span class="la-label">Pizza done</span></div>
+          </div>
         </div>
+      </section>
+
+      <section class="feature" id="media" aria-labelledby="media-title">
+        <div>
+          <span class="eyebrow">Media and HUDs</span>
+          <h2 id="media-title">Cleaner system indicators.</h2>
+          <p>PepBox replaces the big macOS overlays with small ones that grow out of the notch.</p>
+          <ul class="ticks">
+            <li><strong>Now playing</strong> with album art and controls</li>
+            <li><strong>Synced lyrics</strong> while a song plays (opt-in)</li>
+            <li><strong>Volume</strong> in 7% steps, a little finer than the default</li>
+            <li><strong>Brightness</strong>, <strong>battery</strong> and <strong>AirPods</strong> connection</li>
+            <li><strong>Lock screen</strong> indicator</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="la-list" role="img" aria-label="Illustration of volume, brightness and battery indicators beside the notch">
+            <div class="la-row"><span class="la-ic">&#128266;</span><span class="la-notch" style="background:linear-gradient(90deg,#fff 63%,#2a2a30 63%);border-radius:999px;height:6px"></span><span class="la-label">63%</span></div>
+            <div class="la-row c-yellow"><span class="la-ic">&#9728;</span><span class="la-notch" style="background:linear-gradient(90deg,#ffd23f 75%,#2a2a30 75%);border-radius:999px;height:6px"></span><span class="la-label">75%</span></div>
+            <div class="la-row c-green"><span class="la-ic">&#9889;</span><span class="la-notch"></span><span class="la-label">45% charging</span></div>
+            <div class="la-row c-blue"><span class="la-ic">&#127911;</span><span class="la-notch"></span><span class="la-label">AirPods connected</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature flip" id="snippets" aria-labelledby="snip-title">
+        <div>
+          <span class="eyebrow">Snippets</span>
+          <h2 id="snip-title">Type a shortcut, get the full text.</h2>
+          <p>Type a trigger like <code>;date</code> in any app and PepBox replaces it. Make your own, or right-click clipboard text and choose Save as Snippet.</p>
+          <p>Snippets can include placeholders that fill in when you type them:</p>
+        </div>
+        <div class="feature-media">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Placeholder</th><th scope="col">Becomes</th></tr></thead>
+              <tbody>
+                <tr><td><code>{date}</code></td><td>Today's date</td></tr>
+                <tr><td><code>{time}</code></td><td>The current time</td></tr>
+                <tr><td><code>{weekday}</code></td><td>The day of the week</td></tr>
+                <tr><td><code>{year}</code></td><td>The current year</td></tr>
+                <tr><td><code>{clipboard}</code></td><td>Whatever you last copied</td></tr>
+                <tr><td><code>{uuid}</code></td><td>A fresh random UUID</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature" id="float" aria-labelledby="float-title">
+        <div>
+          <span class="eyebrow">Float on Screen</span>
+          <h2 id="float-title">Keep a reference in view.</h2>
+          <p>Pin an image or a bit of text so it floats above your other windows. Handy for a design reference, a checklist, or the numbers you are typing in somewhere else.</p>
+          <p>Right-click a clipboard item or a shelf file and choose Float on Screen.</p>
+        </div>
+        <div class="feature-media media-stack">
+          <figure class="shot"><img src="assets/shots/pin-image.png" alt="A floating image card labelled Reference image" width="840" height="560" loading="lazy"><figcaption>A pinned image floats above your work.</figcaption></figure>
+          <figure class="shot pad" style="background:transparent;box-shadow:none"><img src="assets/shots/pin-note.png" alt="A yellow floating note with a short meeting checklist" width="560" height="192" loading="lazy"></figure>
+        </div>
+      </section>
+
+      <section class="feature feature-solo" id="grab-text" aria-labelledby="grab-title">
+        <div>
+          <span class="eyebrow">Grab Text</span>
+          <h2 id="grab-title">Copy text out of anything on screen.</h2>
+          <p>Drag a box over a screenshot, a video, a slide or a locked PDF and PepBox copies the text inside it. Recognition happens on your Mac. Start it from Quick Search by typing <code>ocr</code>.</p>
+        </div>
+      </section>
+
+      <section class="feature flip" id="agents" aria-labelledby="agents-title">
+        <div>
+          <span class="eyebrow">Agents</span>
+          <h2 id="agents-title">Your coding agents, at a glance.</h2>
+          <p>Running Claude Code or Codex? PepBox shows each session's progress beside the notch and in a panel on the shelf.</p>
+          <ul class="ticks">
+            <li><strong>Every session</strong> with what it is doing and how many tool calls and edits it has made</li>
+            <li><strong>Needs you</strong> appears when an agent is waiting for an answer or a permission</li>
+            <li><strong>Chimes</strong> when an agent finishes or needs you (you can turn this off)</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <figure class="shot"><img src="assets/shots/agents.png" alt="Agents panel showing three running sessions: public thinking, realtor-sites done, PepBox running tests" width="1040" height="340" loading="lazy"><figcaption>Three sessions, one glance.</figcaption></figure>
+        </div>
+      </section>
+
+      <section class="feature" id="widgets" aria-labelledby="widgets-title">
+        <div>
+          <span class="eyebrow">Shelf widgets</span>
+          <h2 id="widgets-title">Little tools, right under the notch.</h2>
+          <p>Notes, Pomodoro, System Stats, Shortcuts, Up Next, Obsidian and more can live on the shelf. Turn them on from Extensions.</p>
+          <p><a href="extensions.html">Browse all extensions</a></p>
+        </div>
+        <div class="feature-media media-stack">
+          <figure class="shot"><img src="assets/shots/notes.png" alt="Notes widget with a list of notes and an empty editor" width="1040" height="340" loading="lazy"><figcaption>Notes: a notepad on your shelf.</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/pomodoro.png" alt="Pomodoro timer at 25:00 with focus and break lengths" width="1040" height="340" loading="lazy"><figcaption>Pomodoro: focus timer with breaks.</figcaption></figure>
+        </div>
+      </section>
     </div>
 
-    <!-- ==========================================
-         CTA BAR
-         ========================================== -->
-    <div class="cta-bar" id="cta-bar">
-        <button id="download-btn" class="btn btn-main">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download
-        </button>
-        <a href="index.html" class="btn">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
-            </svg>
-            Home
-        </a>
-        <a href="extensions.html" class="btn">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path
-                    d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-            </svg>
-            Extensions
-        </a>
+    <section class="section-tight">
+      <div class="container">
+        <div class="cta">
+          <h2>Try it on your Mac.</h2>
+          <p class="lead">Free · macOS 14+ · Open source</p>
+          <div class="btn-row">
+          <a class="btn btn-primary" href="https://github.com/KPScriptz/PepBox/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for macOS</a>
+          <a class="btn btn-ghost" href="https://github.com/KPScriptz/PepBox"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.5 9.5 0 0 1 12 6.84c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>View on GitHub</a>
+        </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand"><img src="assets/app-icon.png" alt="" width="24" height="24">PepBox</div>
+        <p>Free and open source. Made for macOS 14 and later.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="footer-links">
+          <li><a href="features.html">Features</a></li>
+          <li><a href="extensions.html">Extensions</a></li>
+          <li><a href="download.html">Download</a></li>
+          <li><a href="help.html">Help</a></li>
+          <li><a href="help.html#privacy">Privacy</a></li>
+          <li><a href="https://github.com/KPScriptz/PepBox">GitHub</a></li>
+          <li><a href="licenses.html">Open-source licenses</a></li>
+        </ul>
+      </nav>
     </div>
-
-    <!-- ==========================================
-         SCRIPTS
-         ========================================== -->
-    <script>
-        document.oncontextmenu = () => false;
-
-        // Scroll-triggered reveal animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -60px 0px'
-        });
-
-        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
-            observer.observe(el);
-        });
-
-        // Show CTA bar after scrolling past hero
-        const ctaBar = document.getElementById('cta-bar');
-        const heroObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) {
-                    ctaBar.classList.add('visible');
-                } else {
-                    ctaBar.classList.remove('visible');
-                }
-            });
-        }, { threshold: 0.3 });
-
-        heroObserver.observe(document.querySelector('.hero'));
-
-        // Smooth page transitions
-        document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
-            link.addEventListener('click', e => {
-                const href = link.getAttribute('href');
-                if (href && !href.startsWith('#') && !href.startsWith('javascript')) {
-                    e.preventDefault();
-                    document.body.style.opacity = '0';
-                    document.body.style.transition = 'opacity 0.3s ease';
-                    ctaBar.classList.add('fade-out');
-                    setTimeout(() => window.location.href = href, 300);
-                }
-            });
-        });
-
-        // Direct download link to latest DMG
-        fetch('https://api.github.com/repos/KPScriptz/PepBox/releases/latest').then(r => r.json()).then(rel => {
-            const dmg = rel.assets?.find(a => a.name.endsWith('.dmg'));
-            if (dmg) {
-                const directBtn = document.getElementById('modal-direct-download');
-                if (directBtn) directBtn.href = dmg.browser_download_url;
-            }
-        }).catch(() => { });
-
-        // Download modal logic
-        const downloadModal = document.getElementById('download-modal');
-        const downloadBtn = document.getElementById('download-btn');
-
-        downloadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            downloadModal.classList.add('active');
-        });
-
-        downloadModal.addEventListener('click', (e) => {
-            if (e.target === downloadModal) {
-                downloadModal.classList.remove('active');
-            }
-        });
-    </script>
+  </footer>
+  <script src="assets/site.js" defer></script>
 </body>
-
 </html>

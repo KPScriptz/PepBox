@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open-source licenses · PepBox</title>
+  <meta name="description" content="PepBox license, attribution and third-party open-source notices.">
+  <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f3" media="(prefers-color-scheme: light)">
+  <link rel="canonical" href="https://kpscriptz.github.io/PepBox/licenses.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PepBox">
+  <meta property="og:title" content="Open-source licenses · PepBox">
+  <meta property="og:description" content="PepBox license, attribution and third-party open-source notices.">
+  <meta property="og:url" content="https://kpscriptz.github.io/PepBox/licenses.html">
+  <meta property="og:image" content="https://kpscriptz.github.io/PepBox/assets/app-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" alt="" width="30" height="30">PepBox</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span class="nav-toggle-bars"></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html">Features</a>
+        <a href="extensions.html">Extensions</a>
+        <a href="help.html">Help</a>
+        <a class="btn btn-primary btn-sm" href="download.html">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Legal</span>
+        <h1>Open-source licenses.</h1>
+        <p class="lead">PepBox is built on open-source work. Here is where it comes from and the terms it is shared under.</p>
+      </div>
+    </section>
+
+    <div class="container doc-layout">
+      <aside class="doc-side" aria-label="On this page">
+        <p class="side-title">On this page</p>
+        <ul>
+          <li><a href="#pepbox">PepBox</a></li>
+          <li><a href="#third-party">Third-party code</a></li>
+          <li><a href="#trademarks">Trademarks</a></li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <section id="pepbox" aria-labelledby="pepbox-title">
+          <h2 id="pepbox-title">PepBox</h2>
+          <p>PepBox, Copyright &copy; 2026 PivotXP.</p>
+          <div class="legal">
+            <p>PepBox is a modified version of Droppy (<a href="https://github.com/iordv/Droppy">https://github.com/iordv/Droppy</a>), Copyright (c) 2026 Jordy Spruit, licensed under GPL-3.0 with the Commons Clause License Condition v1.0. PepBox is distributed under the same terms.</p>
+          </div>
+          <p>The full license text is in the <a href="https://github.com/KPScriptz/PepBox/blob/main/LICENSE">LICENSE</a> file, and the complete notice is in <a href="https://github.com/KPScriptz/PepBox/blob/main/NOTICE">NOTICE</a>. The source code is available at <a href="https://github.com/KPScriptz/PepBox">github.com/KPScriptz/PepBox</a>.</p>
+          <h3>Changes made in PepBox</h3>
+          <p>Modifications by PivotXP, starting 2026-09-27:</p>
+          <ul>
+            <li>Renamed the app, bundle identifier (com.pivotxp.PepBox), URL scheme (pepbox://), helper tools and all user-facing text from Droppy to PepBox, per the Droppy trademark policy.</li>
+            <li>Replaced the app icon, menu bar icon and Alfred workflow icon.</li>
+            <li>Removed the upstream analytics and extension-ratings service; PepBox sends no usage data.</li>
+            <li>Bundled extension icons and screenshots in the app instead of loading them from the Droppy website.</li>
+            <li>Pointed the update checker, crash-report links, website, Homebrew cask and release script at KPScriptz/PepBox; the release script takes the signing identity and team from the environment and no longer expects Gumroad keys.</li>
+            <li>Replaced Droppy's logos on the website; its stats backend is disabled.</li>
+            <li>Kept Droppy's original README, release notes and launch post, unmodified, in <code>upstream/</code>.</li>
+          </ul>
+        </section>
+
+        <section id="third-party" aria-labelledby="tp-title">
+          <h2 id="tp-title">Third-party code</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Project</th><th scope="col">License</th><th scope="col">Copyright</th></tr></thead>
+              <tbody>
+                <tr><td><a href="https://github.com/Ebullioscopic/Atoll">Atoll (DynamicIsland)</a></td><td>GPL-3.0</td><td>Copyright (C) 2024-2026 Atoll Contributors</td></tr>
+                <tr><td>DropClip, based on OpenClip</td><td>MIT</td><td>Copyright (c) 2026 Ganesh M and OpenClip Contributors; Copyright (c) 2026 Jordy Spruit</td></tr>
+                <tr><td>OpenSelection</td><td>Apache-2.0</td><td>Copyright 2026 Ganesh M</td></tr>
+                <tr><td><a href="https://github.com/sindresorhus/KeyboardShortcuts">KeyboardShortcuts</a> (part)</td><td>MIT</td><td>Copyright (c) Sindre Sorhus</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Text Actions</h3>
+          <p>Text Actions (<code>Packages/TextActionsKit</code>) is DropClip, based on OpenClip by Ganesh M, together with OpenSelection (unmodified) and part of KeyboardShortcuts. Their license texts and notices are in <code>Packages/TextActionsKit/Legal</code> and ship inside the app. PepBox's changes to DropClip are listed in <code>Packages/TextActionsKit/PEPBOX_CHANGES.md</code>.</p>
+          <h3>Code derived from Atoll</h3>
+          <p><code>Parallax3DModifier.swift</code>, <code>LockScreenManager.swift</code>, <code>TemporaryFileStorageService.swift</code>, <code>BrightnessManager.swift</code>, <code>VolumeManager.swift</code> and <code>MediaKeyInterceptor.swift</code> contain code derived from Atoll (DynamicIsland), <a href="https://github.com/Ebullioscopic/Atoll">https://github.com/Ebullioscopic/Atoll</a>, Copyright (C) 2024-2026 Atoll Contributors, licensed under the GNU General Public License v3 (some of it originally from boring.notch). Each file carries Atoll's copyright notice and the GPL v3 header, as requested in the DMCA notice github/dmca 2026-02-10-atoll.md that removed the upstream Droppy repository.</p>
+        </section>
+
+        <section id="trademarks" aria-labelledby="tm-title">
+          <h2 id="tm-title">Trademarks</h2>
+          <p>&ldquo;Droppy&rdquo; and the Droppy logo are trademarks of Jordy Spruit. PepBox is not affiliated with or endorsed by the Droppy project.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand"><img src="assets/app-icon.png" alt="" width="24" height="24">PepBox</div>
+        <p>Free and open source. Made for macOS 14 and later.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="footer-links">
+          <li><a href="features.html">Features</a></li>
+          <li><a href="extensions.html">Extensions</a></li>
+          <li><a href="download.html">Download</a></li>
+          <li><a href="help.html">Help</a></li>
+          <li><a href="help.html#privacy">Privacy</a></li>
+          <li><a href="https://github.com/KPScriptz/PepBox">GitHub</a></li>
+          <li><a href="licenses.html">Open-source licenses</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
+  <script src="assets/site.js" defer></script>
+</body>
+</html>

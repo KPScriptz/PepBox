@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Help · PepBox</title>
+  <meta name="description" content="PepBox FAQ, keyboard shortcuts, the Quick Search command reference and privacy details.">
+  <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f3" media="(prefers-color-scheme: light)">
+  <link rel="canonical" href="https://kpscriptz.github.io/PepBox/help.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PepBox">
+  <meta property="og:title" content="Help · PepBox">
+  <meta property="og:description" content="PepBox FAQ, keyboard shortcuts, the Quick Search command reference and privacy details.">
+  <meta property="og:url" content="https://kpscriptz.github.io/PepBox/help.html">
+  <meta property="og:image" content="https://kpscriptz.github.io/PepBox/assets/app-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" alt="" width="30" height="30">PepBox</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span class="nav-toggle-bars"></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html">Features</a>
+        <a href="extensions.html">Extensions</a>
+        <a href="help.html" aria-current="page">Help</a>
+        <a class="btn btn-primary btn-sm" href="download.html">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Help</span>
+        <h1>Help and reference.</h1>
+        <p class="lead">Answers, keyboard shortcuts, every Quick Search command, and exactly what touches the network.</p>
+      </div>
+    </section>
+
+    <div class="container doc-layout">
+      <aside class="doc-side" aria-label="On this page">
+        <p class="side-title">On this page</p>
+        <ul>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+          <li><a href="#quick-search">Quick Search commands</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#support">Get help</a></li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <section id="faq" aria-labelledby="faq-title">
+          <h2 id="faq-title">FAQ</h2>
+          <div class="faq">
+            <details><summary>Is PepBox really free?</summary><div><p>Yes. No accounts, no trials and no paid tier. The full source is on <a href="https://github.com/KPScriptz/PepBox">GitHub</a> under the GPL-3.0 with the Commons Clause; see <a href="licenses.html">open-source licenses</a>.</p></div></details>
+            <details><summary>Does my Mac need a notch?</summary><div><p>No. On Macs without a notch, and on external displays, PepBox shows a small floating pill at the top of the screen. You can also hide it on external displays in Settings.</p></div></details>
+            <details><summary>Which macOS versions are supported?</summary><div><p>macOS 14 Sonoma or later.</p></div></details>
+            <details><summary>How do I open the shelf?</summary><div><p>Drag a file toward the notch, or hover over the notch. Drop files on it to keep them there until you need them.</p></div></details>
+            <details><summary>How do I turn on extensions?</summary><div><p>Open PepBox's settings and go to Extensions. Each one can be turned on or off on its own. See the <a href="extensions.html">full list</a>.</p></div></details>
+            <details><summary>How do I update?</summary><div><p>PepBox checks GitHub for new releases and lets you know. You can always grab the newest version from the <a href="https://github.com/KPScriptz/PepBox/releases/latest">latest release</a>.</p></div></details>
+            <details><summary>How do I uninstall?</summary><div><p>Quit PepBox from its menu bar icon, then drag it from Applications to the Trash. To clear its settings first, use Settings &rarr; About &rarr; Hard Reset.</p></div></details>
+            <details><summary>My shortcuts stopped working.</summary><div><p>Check System Settings &rarr; Privacy &amp; Security &rarr; Accessibility. If PepBox is listed but shortcuts still fail, toggle it off and on. More fixes are on the <a href="download.html#troubleshooting">download page</a>.</p></div></details>
+          </div>
+        </section>
+
+        <section id="shortcuts" aria-labelledby="sc-title">
+          <h2 id="sc-title">Keyboard shortcuts</h2>
+          <p>These are the defaults. You can change them in PepBox's settings.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Shortcut</th><th scope="col">What it does</th></tr></thead>
+              <tbody>
+                <tr><td><kbd>&#8997;</kbd> <kbd>Space</kbd></td><td>Open clipboard history</td></tr>
+                <tr><td><kbd>&#8963;</kbd> <kbd>&#8997;</kbd> <kbd>Space</kbd></td><td>Open Quick Search</td></tr>
+                <tr><td><kbd>&#8997;</kbd> <kbd>&#8679;</kbd> <kbd>Space</kbd></td><td>Open the Ring at your cursor</td></tr>
+                <tr><td><kbd>&#8963;</kbd> <kbd>&#8997;</kbd> <kbd>C</kbd></td><td>Paste Queue: collect copies</td></tr>
+                <tr><td><kbd>&#8963;</kbd> <kbd>&#8997;</kbd> <kbd>V</kbd></td><td>Paste Queue: paste the next one</td></tr>
+                <tr><td><kbd>&#8984;</kbd> <kbd>1</kbd>&ndash;<kbd>9</kbd></td><td>In clipboard history: paste item 1 to 9</td></tr>
+                <tr><td><kbd>&#8997;</kbd> <kbd>Return</kbd></td><td>In clipboard history: paste as plain text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="quick-search" aria-labelledby="qsr-title">
+          <h2 id="qsr-title">Quick Search commands</h2>
+          <p>Open Quick Search with <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>Space</kbd>. Type <code>?</code> or <code>help</code> to see this list inside the app; pick a line to try it. Anything else searches your apps and files, with a web search as the last result.</p>
+          <div class="table-wrap">
+            <table class="cmd-table">
+              <thead><tr><th scope="col">Category</th><th scope="col">Try typing</th></tr></thead>
+              <tbody>
+                <tr><td>Math</td><td><code>12*4</code> <code>(3+2)^2</code></td></tr>
+                <tr><td>Units and currency</td><td><code>5 km to mi</code> <code>$20 to eur</code></td></tr>
+                <tr><td>Time zones</td><td><code>time in tokyo</code> <code>3pm est in pst</code></td></tr>
+                <tr><td>Dates</td><td><code>days until dec 25</code> <code>today + 30 days</code></td></tr>
+                <tr><td>Timers and reminders</td><td><code>timer 10m pizza</code> <code>remind stretch in 20m</code></td></tr>
+                <tr><td>Colors, numbers, percentages</td><td><code>#ff8800</code> <code>255 in hex</code> <code>15% of 80</code></td></tr>
+                <tr><td>Notes and tasks</td><td><code>note buy milk</code> <code>todo call Sam</code></td></tr>
+                <tr><td>Calendar events</td><td><code>event lunch with Sam tomorrow 1pm</code></td></tr>
+                <tr><td>Your day</td><td><code>join</code> <code>agenda</code> <code>weather</code></td></tr>
+                <tr><td>Clipboard</td><td><code>cb invoice</code> <code>count</code> <code>queue</code></td></tr>
+                <tr><td>Look things up</td><td><code>define serendipity</code> <code>yt lofi</code> <code>github.com</code></td></tr>
+                <tr><td>Your Mac</td><td><code>port 3000</code> <code>ip</code> <code>battery</code> <code>awake 1h</code></td></tr>
+                <tr><td>Commands and settings</td><td><code>lock</code> <code>sleep</code> <code>quit Slack</code> <code>wifi</code></td></tr>
+                <tr><td>Screen tools</td><td><code>ocr</code> <code>screenshot</code> <code>pick color</code> <code>qr hello</code></td></tr>
+                <tr><td>Generators</td><td><code>:fire</code> <code>uuid</code> <code>password 24</code> <code>base64 hi</code></td></tr>
+                <tr><td>Developer</td><td><code>sha256 hi</code> <code>jwt eyJ…</code> <code>http 404</code> <code>chmod 755</code> <code>dns github.com</code></td></tr>
+                <tr><td>Design and text</td><td><code>contrast #fff #333</code> <code>24px</code> <code>roman 2026</code> <code>char 65</code></td></tr>
+                <tr><td>Time and money</td><td><code>stopwatch</code> <code>clocks</code> <code>sunrise</code> <code>week</code> <code>split 120 by 4</code></td></tr>
+                <tr><td>Sound, display, clipboard</td><td><code>volume 50</code> <code>mute</code> <code>brightness 70</code> <code>upper</code> <code>json</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="privacy" aria-labelledby="privacy-title">
+          <h2 id="privacy-title">Privacy</h2>
+          <p><strong>PepBox has no analytics and no tracking.</strong> It does not send usage data anywhere. Your clipboard history, notes and settings stay on your Mac.</p>
+          <p>A few features need the internet. Each one only connects when you use it:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Service</th><th scope="col">When</th></tr></thead>
+              <tbody>
+                <tr><td>Open-Meteo</td><td>Weather in Up Next and Quick Search</td></tr>
+                <tr><td>LRCLIB</td><td>Synced lyrics, only if you turn lyrics on</td></tr>
+                <tr><td>open.er-api.com</td><td>Daily currency rates for Quick Search conversions</td></tr>
+                <tr><td>api.ipify.org</td><td>The <code>ip</code> command in Quick Search</td></tr>
+                <tr><td>0x0.st</td><td>Quickshare and To Phone uploads; the file becomes reachable by its link</td></tr>
+                <tr><td>GitHub</td><td>Checking for new PepBox releases</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>LocalSend stays on your local network.</strong> Files go straight from your Mac to the other device over your Wi-Fi, with no server in between.</p>
+        </section>
+
+        <section id="support" aria-labelledby="support-title">
+          <h2 id="support-title">Get help</h2>
+          <p>Found a bug or have an idea? <a href="https://github.com/KPScriptz/PepBox/issues">Open an issue on GitHub</a>. Include your macOS version and what you were doing when it happened.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand"><img src="assets/app-icon.png" alt="" width="24" height="24">PepBox</div>
+        <p>Free and open source. Made for macOS 14 and later.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="footer-links">
+          <li><a href="features.html">Features</a></li>
+          <li><a href="extensions.html">Extensions</a></li>
+          <li><a href="download.html">Download</a></li>
+          <li><a href="help.html">Help</a></li>
+          <li><a href="help.html#privacy">Privacy</a></li>
+          <li><a href="https://github.com/KPScriptz/PepBox">GitHub</a></li>
+          <li><a href="licenses.html">Open-source licenses</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
+  <script src="assets/site.js" defer></script>
+</body>
+</html>
