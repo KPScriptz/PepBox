@@ -135,6 +135,8 @@ struct DisableExtensionButton: View {
             return "This will stop PepBox from receiving LocalSend transfers. Sending still works. You can enable it again later."
         case .snippets:
             return "This will stop expanding snippet triggers. Your snippets are kept. You can enable it again later."
+        case .convertRing:
+            return "Shift-dragging files will no longer open the Convert Ring. You can enable it again later."
         }
     }
     

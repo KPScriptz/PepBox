@@ -111,6 +111,7 @@ final class NotificationHUDManager {
 
         guard hasFullDiskAccess else {
             print("NotificationHUD: Cannot start - Full Disk Access not granted")
+            waitForAccess()
             return
         }
 
@@ -263,6 +264,23 @@ final class NotificationHUDManager {
         print("NotificationHUD: Darwin observer stopped")
     }
     
+    private var accessRetryTimer: Timer?
+
+    /// Starts by itself once Full Disk Access is granted, without a relaunch.
+    private func waitForAccess() {
+        guard accessRetryTimer == nil else { return }
+        accessRetryTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] timer in
+            guard let self else { timer.invalidate(); return }
+            guard self.isInstalled else { timer.invalidate(); self.accessRetryTimer = nil; return }
+            self.recheckAccess()
+            if self.hasFullDiskAccess {
+                timer.invalidate()
+                self.accessRetryTimer = nil
+                self.startMonitoring()
+            }
+        }
+    }
+
     func stopMonitoring() {
         pollingTimer?.invalidate()
         pollingTimer = nil
@@ -282,7 +300,11 @@ final class NotificationHUDManager {
     
     func recheckAccess() {
         let testPath = Self.notificationDatabasePath
-        hasFullDiskAccess = FileManager.default.isReadableFile(atPath: testPath)
+        // The database is world-readable by its permissions, so isReadableFile says yes even
+        // without Full Disk Access. Only a real open tells whether privacy protection allows it.
+        let fd = open(testPath, O_RDONLY)
+        hasFullDiskAccess = fd >= 0
+        if fd >= 0 { close(fd) }
     }
     
     func openFullDiskAccessSettings() {

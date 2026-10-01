@@ -67,6 +67,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case downloadsActivity
     case localSend
     case snippets
+    case convertRing
 
     /// URL-safe ID for deep links
     case finderServices  // Alias for finder
@@ -125,7 +126,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
         case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar:
             return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
-        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets:
+        case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets, .convertRing:
             return UtilityExtensionKind(extensionType: self)?.isInstalled ?? false
         }
     }

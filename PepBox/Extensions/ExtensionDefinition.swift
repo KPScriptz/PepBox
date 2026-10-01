@@ -175,6 +175,7 @@ final class ExtensionRegistry {
         register(DownloadsActivityExtension.self)
         register(LocalSendExtension.self)
         register(SnippetsExtension.self)
+        register(ConvertRingExtension.self)
 
     }
     

@@ -281,6 +281,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        HotKeyAppRules.shared.start()
+        NotchWidgetKind.migrateMergedWidgets()
         // FIX #123: Force LaunchServices re-registration on first launch
         // macOS Tahoe has a bug where apps with LSUIElement=true fail to launch from Finder/Spotlight/Dock
         // due to stale LaunchServices cache. Running lsregister once after install fixes this.

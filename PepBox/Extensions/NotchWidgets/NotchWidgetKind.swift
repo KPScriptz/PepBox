@@ -100,18 +100,18 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .shortcuts: return "square.2.layers.3d.fill"
         case .agents: return "sparkle"
         case .notes: return "note.text.badge.plus"
-        case .worldClock: return "globe"
-        case .calculator: return "plus.forwardslash.minus"
+        case .worldClock: return "clock.fill"
+        case .calculator: return "wrench.and.screwdriver.fill"
         case .dice: return "dice.fill"
         case .colorPicker: return "eyedropper"
         case .countdown: return "hourglass"
         case .stopwatchWidget: return "stopwatch"
         case .timers: return "timer"
-        case .habits: return "checkmark.seal.fill"
+        case .habits: return "heart.fill"
         case .water: return "drop.fill"
         case .breathe: return "wind"
         case .network: return "network"
-        case .recentClips: return "doc.on.clipboard.fill"
+        case .recentClips: return "clock.arrow.circlepath"
         case .recentDownloads: return "arrow.down.circle.fill"
         case .screenshots: return "camera.viewfinder"
         case .quickLinks: return "link"
@@ -167,7 +167,73 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     var isAvailable: Bool { isInstalled && !extensionType.isRemoved }
 
     /// Available widgets in the user's chosen order (Settings → Shelf → Widget Buttons).
-    static var available: [NotchWidgetKind] { ordered.filter(\.isAvailable) }
+    static var available: [NotchWidgetKind] { ordered.filter { $0.isAvailable && $0.mergedInto == nil } }
+
+    // MARK: Combined widgets
+
+    /// The tabs of a combined widget (the first tab is the widget's own view), or [] for a plain one.
+    var tabs: [NotchWidgetKind] {
+        switch self {
+        case .worldClock: return [.worldClock, .monthCalendar, .dayProgress, .moonPhase, .countdown]
+        case .timers: return [.timers, .stopwatchWidget]
+        case .habits: return [.habits, .water, .breathe]
+        case .calculator: return [.calculator, .dice, .passwordGenerator, .colorPicker, .counter, .network]
+        case .recentClips: return [.recentClips, .recentDownloads, .screenshots, .quickLinks]
+        default: return []
+        }
+    }
+
+    /// The combined widget this one is now a tab of.
+    var mergedInto: NotchWidgetKind? {
+        Self.allCases.first { $0 != self && $0.tabs.contains(self) }
+    }
+
+    /// Short name on a tab.
+    var tabTitle: String {
+        switch self {
+        case .worldClock: return "Clock"
+        case .monthCalendar: return "Month"
+        case .dayProgress: return "Day"
+        case .moonPhase: return "Moon"
+        case .countdown: return "Countdown"
+        case .timers: return "Timers"
+        case .stopwatchWidget: return "Stopwatch"
+        case .habits: return "Habits"
+        case .water: return "Water"
+        case .breathe: return "Breathe"
+        case .calculator: return "Calc"
+        case .dice: return "Dice"
+        case .passwordGenerator: return "Password"
+        case .colorPicker: return "Color"
+        case .counter: return "Counter"
+        case .network: return "Network"
+        case .recentClips: return "Clips"
+        case .recentDownloads: return "Downloads"
+        case .screenshots: return "Screenshots"
+        case .quickLinks: return "Links"
+        default: return title
+        }
+    }
+
+    /// Icon on a tab (the combined widgets' own icons changed, so their first tab keeps the old one).
+    var tabIcon: String {
+        switch self {
+        case .worldClock: return "globe"
+        case .calculator: return "plus.forwardslash.minus"
+        case .habits: return "checkmark.seal.fill"
+        case .recentClips: return "doc.on.clipboard.fill"
+        default: return icon
+        }
+    }
+
+    /// Someone who turned on a widget that's now a tab gets the combined widget instead. Runs at launch.
+    static func migrateMergedWidgets() {
+        for kind in allCases {
+            guard let parent = kind.mergedInto, kind.isAvailable else { continue }
+            if !parent.isAvailable { parent.install() }
+            UserDefaults.standard.set(false, forKey: kind.installedKey)
+        }
+    }
 
     private static let orderKey = "notchWidgetOrder"
 
@@ -217,6 +283,18 @@ struct NotchWidgetPanel: View {
 
     var body: some View {
         Group {
+            if kind.tabs.isEmpty {
+                Self.content(for: kind)
+            } else {
+                WidgetTabsView(parent: kind)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(NotchLayoutConstants.contentEdgeInsets(notchHeight: notchHeight, isExternalWithNotchStyle: isExternalWithNotchStyle))
+    }
+
+    @ViewBuilder
+    static func content(for kind: NotchWidgetKind) -> some View {
             switch kind {
             case .pomodoro:
                 PomodoroNotchView(manager: PomodoroManager.shared)
@@ -281,8 +359,47 @@ struct NotchWidgetPanel: View {
             case .monthCalendar:
                 MonthWidgetView()
             }
+    }
+}
+
+/// A combined widget: a row of tabs over the chosen tab's view. Remembers the last tab.
+struct WidgetTabsView: View {
+    let parent: NotchWidgetKind
+    @AppStorage private var selected: String
+
+    init(parent: NotchWidgetKind) {
+        self.parent = parent
+        _selected = AppStorage(wrappedValue: parent.rawValue, "widgetTab_\(parent.rawValue)")
+    }
+
+    var body: some View {
+        let current = parent.tabs.first { $0.rawValue == selected } ?? parent
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                ForEach(parent.tabs) { tab in
+                    let on = tab == current
+                    Button {
+                        withAnimation(.easeOut(duration: 0.15)) { selected = tab.rawValue }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: tab.tabIcon)
+                                .font(.system(size: 10, weight: .semibold))
+                            Text(tab.tabTitle)
+                                .font(.system(size: 11, weight: .semibold))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(on ? Color.white : Color.white.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(on ? parent.tint.opacity(0.45) : Color.white.opacity(0.08)))
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            NotchWidgetPanel.content(for: current)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .id(current)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(NotchLayoutConstants.contentEdgeInsets(notchHeight: notchHeight, isExternalWithNotchStyle: isExternalWithNotchStyle))
     }
 }

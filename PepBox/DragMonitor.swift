@@ -266,6 +266,7 @@ final class DragMonitor: ObservableObject {
                     detectJiggle(currentLocation: currentMouseLocation)
                 }
                 lastDragLocation = currentMouseLocation
+                ConvertRingController.shared.dragMoved(to: currentMouseLocation)
             }
             
             // Detect drag END
@@ -279,6 +280,7 @@ final class DragMonitor: ObservableObject {
                 for controller in FloatingBasketWindowController.visibleBaskets {
                     controller.onDragEnded()
                 }
+                ConvertRingController.shared.dragEnded()
                 
                 resetJiggle()
             }

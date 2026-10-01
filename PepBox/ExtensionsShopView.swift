@@ -756,10 +756,10 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "worldClock",
-                iconPlaceholder: "globe",
+                iconPlaceholder: "clock.fill",
                 iconPlaceholderColor: .cyan,
-                title: "World Clock",
-                subtitle: "Times around the world",
+                title: "Time",
+                subtitle: "Clock, calendar, moon and countdowns",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.worldClock.isInstalled,
                 analyticsKey: "worldClock",
@@ -774,10 +774,10 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "calculator",
-                iconPlaceholder: "plus.forwardslash.minus",
+                iconPlaceholder: "wrench.and.screwdriver.fill",
                 iconPlaceholderColor: .orange,
-                title: "Calculator",
-                subtitle: "A quick calculator",
+                title: "Tools",
+                subtitle: "Calculator, dice, passwords and more",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.calculator.isInstalled,
                 analyticsKey: "calculator",
@@ -867,7 +867,7 @@ struct ExtensionsShopView: View {
                 iconPlaceholder: "timer",
                 iconPlaceholderColor: .orange,
                 title: "Timers",
-                subtitle: "One-tap timers",
+                subtitle: "Timers and a stopwatch",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.timers.isInstalled,
                 analyticsKey: "timers",
@@ -882,10 +882,10 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "habits",
-                iconPlaceholder: "checkmark.seal.fill",
+                iconPlaceholder: "heart.fill",
                 iconPlaceholderColor: .green,
-                title: "Habits",
-                subtitle: "Daily check-ins with streaks",
+                title: "Wellbeing",
+                subtitle: "Habits, water and breathing",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.habits.isInstalled,
                 analyticsKey: "habits",
@@ -954,10 +954,10 @@ struct ExtensionsShopView: View {
             },
             ExtensionListItem(
                 id: "recentClips",
-                iconPlaceholder: "doc.on.clipboard.fill",
+                iconPlaceholder: "clock.arrow.circlepath",
                 iconPlaceholderColor: .indigo,
-                title: "Recent Clips",
-                subtitle: "Your last copies, one click away",
+                title: "Recents",
+                subtitle: "Clips, downloads, screenshots and links",
                 category: .productivity,
                 isInstalled: NotchWidgetKind.recentClips.isInstalled,
                 analyticsKey: "recentClips",
@@ -1277,6 +1277,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "convertRing",
+                iconPlaceholder: "arrow.triangle.2.circlepath.circle",
+                iconPlaceholderColor: .orange,
+                title: "Convert Ring",
+                subtitle: "Shift-drag files to convert them",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.convertRing.isInstalled,
+                analyticsKey: "convertRing",
+                extensionType: .convertRing
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .convertRing,
+                    onAction: { UtilityExtensionKind.convertRing.install() },
+                    installCount: extensionCounts["convertRing"],
+                    rating: extensionRatings["convertRing"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",
@@ -1308,6 +1326,8 @@ struct ExtensionsShopView: View {
                 ))
             },
         ]
+        // The small widgets now live as tabs inside five combined ones; don't list them on their own.
+        .filter { NotchWidgetKind(extensionType: $0.extensionType)?.mergedInto == nil }
         
         // Search narrows everything (including disabled ones) by name or description.
         let query = searchText.trimmingCharacters(in: .whitespaces)

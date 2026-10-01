@@ -32,5 +32,6 @@ swiftc -O -o "$OUT" \
     "$ROOT/PepBox/FileTools.swift" \
     "$ROOT/PepBox/ClipboardStack.swift" \
     "$ROOT/PepBox/Extensions/NotchWidgets/MoreWidgetsLogic.swift" \
+    "$ROOT/PepBox/Extensions/Utilities/ConvertRingLogic.swift" \
     "$ROOT/scripts/logic-tests/main.swift"
 "$OUT"

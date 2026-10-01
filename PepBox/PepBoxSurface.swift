@@ -24,7 +24,15 @@ private struct PepBoxSurfaceModifier<S: Shape>: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *), liquidGlass {
-            content.glassEffect(.regular, in: shape)
+            if S.self == Rectangle.self {
+                // A whole window: glass alone is see-through, so whatever is behind the window
+                // shows through the title bar and empty areas. Back it with the solid panel colour.
+                content
+                    .glassEffect(.regular, in: shape)
+                    .background(AdaptiveColors.panelBackgroundOpaqueStyle, in: shape)
+            } else {
+                content.glassEffect(.regular, in: shape)
+            }
         } else {
             content.background(
                 transparent ? AnyShapeStyle(.ultraThinMaterial) : AdaptiveColors.panelBackgroundOpaqueStyle,

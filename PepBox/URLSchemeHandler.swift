@@ -73,6 +73,40 @@ struct URLSchemeHandler {
                     NotchWidgetPanel(kind: kind).frame(width: 560, height: 190).background(Color.black).environment(\.colorScheme, .dark),
                     size: NSSize(width: 560, height: 190), to: URL(fileURLWithPath: out))
             }
+        case "qa-convert", "qa-ring":
+            // Testing only. pepbox://qa-convert?target=image.png&file=/a.heic&file=/b.heic&out=/tmp/r.txt runs a
+            // Convert Ring target; pepbox://qa-ring?file=/a.heic&tools=1&highlight=2&out=/tmp/ring.png draws the ring.
+            guard UserDefaults.standard.bool(forKey: "qaSnapshotsEnabled"),
+                  let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+                  let out = items.first(where: { $0.name == "out" })?.value else { return }
+            let files = items.filter { $0.name == "file" }.compactMap(\.value).map { URL(fileURLWithPath: $0) }
+            let extensions = files.map(\.pathExtension)
+            let ffmpeg = ConvertRingEngine.ffmpegPath != nil
+            let tools = items.contains { $0.name == "tools" && $0.value == "1" }
+            if host == "qa-ring" {
+                let model = ConvertRingModel()
+                model.tools = tools
+                model.count = files.count
+                model.targets = tools ? ConvertRing.toolTargets(for: extensions) : ConvertRing.formatTargets(for: extensions, ffmpeg: ffmpeg)
+                model.highlighted = items.first(where: { $0.name == "highlight" })?.value.flatMap(Int.init)
+                DispatchQueue.main.async {
+                    SettingsWindowController.shared.snapshotView(
+                        ConvertRingView(model: model).background(Color(white: 0.35)),
+                        size: NSSize(width: 300, height: 300), to: URL(fileURLWithPath: out))
+                }
+                return
+            }
+            let all = ConvertRing.formatTargets(for: extensions, ffmpeg: ffmpeg) + ConvertRing.toolTargets(for: extensions)
+            guard let id = items.first(where: { $0.name == "target" })?.value,
+                  let target = all.first(where: { $0.id == id }) else {
+                try? ("no target; offered: " + all.map(\.id).joined(separator: " ")).write(toFile: out, atomically: true, encoding: .utf8)
+                return
+            }
+            Task {
+                let result = await ConvertRingEngine.run(target, on: files)
+                let report = (result.outputs.map(\.path) + ["failures=\(result.failures)", "message=\(result.message ?? "")"]).joined(separator: "\n")
+                try? report.write(toFile: out, atomically: true, encoding: .utf8)
+            }
         case "settings":
             // pepbox://settings/clipboard (or ?tab=clipboard) opens Settings on that tab
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
