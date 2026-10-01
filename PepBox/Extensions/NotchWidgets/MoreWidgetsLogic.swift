@@ -100,6 +100,31 @@ enum WidgetMath {
         return String(format: "%04d-%02d-%02d", p.year ?? 0, p.month ?? 0, p.day ?? 0)
     }
 
+    // MARK: Secrets
+
+    /// True for text that looks like a credential: known key prefixes, JWTs, private keys,
+    /// or a single long random-looking token. Used to mask clips that are shown on screen.
+    static func looksLikeSecret(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 16 else { return false }
+        let prefixes = ["sk-", "sk_live_", "sk_test_", "rk_live_", "pk_live_", "ghp_", "gho_", "ghs_", "ghu_", "github_pat_",
+                        "xoxb-", "xoxp-", "xoxa-", "AKIA", "ASIA", "GOCSPX-", "AIza", "ya29.", "glpat-", "npm_", "SG.", "shpat_"]
+        if prefixes.contains(where: { trimmed.hasPrefix($0) }) { return true }
+        if trimmed.contains("-----BEGIN") && trimmed.contains("PRIVATE KEY") { return true }
+        if trimmed.hasPrefix("eyJ") && trimmed.split(separator: ".").count == 3 { return true }
+        // One long token with no spaces, mixing letters and digits, and not a URL, path or plain word.
+        guard trimmed.count >= 24, !trimmed.contains(where: { $0.isWhitespace }),
+              !trimmed.contains("://"), !trimmed.hasPrefix("/"), !trimmed.hasPrefix("~") else { return false }
+        let letters = trimmed.filter(\.isLetter).count, digits = trimmed.filter(\.isNumber).count
+        let upper = trimmed.filter(\.isUppercase).count, lower = trimmed.filter(\.isLowercase).count
+        return digits >= 3 && letters >= 8 && upper >= 2 && lower >= 2
+    }
+
+    /// "GOCSPX-abc…" → "GOCS••••••••" (first four characters, then dots).
+    static func masked(_ text: String) -> String {
+        String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(4)) + String(repeating: "•", count: 8)
+    }
+
     // MARK: Calculator
 
     /// Applies a calculator key to the display text. "C" clears, "⌫" deletes, "=" evaluates.

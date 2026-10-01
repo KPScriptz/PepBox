@@ -576,6 +576,15 @@ do {
     expect(WidgetMath.streak(doneDays: done, now: date(2026, 10, 1), calendar: cal), 2, "habit streak survives today")
     expect(WidgetMath.streak(doneDays: done, now: date(2026, 10, 2), calendar: cal), 0, "habit streak broken")
 
+    for secret in ["sk-proj-abcdefghijklmnop1234", "ghp_ABCdef1234567890ABCdef1234567890ab", "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",
+                   "AKIAIOSFODNN7EXAMPLE", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig", "-----BEGIN PRIVATE KEY-----\nabc", "Xk9mQ2vR7tLp4Wz8Bn3Hy6Ja"] {
+        expect(WidgetMath.looksLikeSecret(secret), true, "secret detected \(secret.prefix(8))")
+    }
+    for plain in ["hello world this is a note", "https://github.com/KPScriptz/PepBox/releases", "/Users/kp/Documents/report2026.pdf",
+                  "pneumonoultramicroscopic", "1234567890123456789012345", "meeting at 3pm with Sam about Q4 budget"] {
+        expect(WidgetMath.looksLikeSecret(plain), false, "not a secret \(plain.prefix(10))")
+    }
+    expect(WidgetMath.masked("GOCSPX-abc123"), "GOCS••••••••", "masked")
     var display = "0"
     for key in ["1", "2", "×", "4", "="] { display = WidgetMath.calculatorKey(key, display: display) }
     expect(display, "48", "calculator multiply")

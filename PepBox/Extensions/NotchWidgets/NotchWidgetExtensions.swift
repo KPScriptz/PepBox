@@ -390,7 +390,7 @@ struct RecentDownloadsWidgetExtension: ExtensionDefinition {
     static let subtitle = "Your newest downloads"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .blue
-    static let description = "Your six newest downloads. Drag one where it needs to go, or double-click to open."
+    static let description = "Your six newest downloads. Drag one where it needs to go, or double-click to open. macOS asks once for access to your Downloads folder."
     static let features: [(icon: String, text: String)] = [("arrow.down.circle.fill", "Your newest downloads"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
@@ -404,7 +404,7 @@ struct ScreenshotsWidgetExtension: ExtensionDefinition {
     static let subtitle = "Your latest screenshots"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .teal
-    static let description = "Your latest screenshots and screen recordings from wherever macOS saves them. Drag one into any app."
+    static let description = "Your latest screenshots and screen recordings from wherever macOS saves them. Drag one into any app. macOS asks once for access to that folder (usually the Desktop)."
     static let features: [(icon: String, text: String)] = [("camera.viewfinder", "Your latest screenshots"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }

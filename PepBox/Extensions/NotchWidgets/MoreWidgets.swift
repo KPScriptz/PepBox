@@ -500,8 +500,10 @@ struct RecentClipsWidgetView: View {
             }
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                 ForEach(Array(clips), id: \.id) { clip in
-                    Button { copyToClipboard(clip.content ?? "") } label: {
-                        Text((clip.content ?? "").replacingOccurrences(of: "\n", with: " "))
+                    let content = clip.content ?? ""
+                    Button { copyToClipboard(content) } label: {
+                        // Keys and tokens are masked on screen (screen sharing); clicking still copies them.
+                        Text(WidgetMath.looksLikeSecret(content) ? WidgetMath.masked(content) : content.replacingOccurrences(of: "\n", with: " "))
                             .font(.system(size: 11)).foregroundStyle(.white).lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 8).padding(.vertical, 6)
