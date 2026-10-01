@@ -225,8 +225,10 @@ struct ConvertRingView: View {
     var body: some View {
         let count = model.targets.count
         ZStack {
+            // Dense enough that text behind the ring doesn't compete with the labels.
             Circle()
-                .fill(.ultraThinMaterial)
+                .fill(.regularMaterial)
+                .overlay(Circle().fill(Color.black.opacity(0.35)))
                 .frame(width: outer * 2, height: outer * 2)
                 .shadow(color: .black.opacity(0.3), radius: 18, y: 6)
 

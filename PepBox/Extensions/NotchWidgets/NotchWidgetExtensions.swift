@@ -218,29 +218,29 @@ struct QuickNotesExtension: ExtensionDefinition {
 
 struct WorldClockWidgetExtension: ExtensionDefinition {
     static let id = "worldClock"
-    static let title = "World Clock"
-    static let subtitle = "Times around the world"
+    static let title = "Time"
+    static let subtitle = "Clock, calendar, moon and countdowns"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .cyan
-    static let description = "Up to eight cities side by side, updated live. Type a city or an abbreviation like PST to add it; right-click to remove."
-    static let features: [(icon: String, text: String)] = [("globe", "Times around the world"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static let description = "Everything about time in one widget, with tabs: world clocks for up to eight cities, this month at a glance, how far through the day, week and year you are, tonight's moon, and countdowns to the dates that matter."
+    static let features: [(icon: String, text: String)] = [("globe", "World clocks"), ("calendar", "Month view"), ("chart.bar.fill", "Day, week and year progress"), ("moon.stars.fill", "Moon phase"), ("hourglass", "Countdowns")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
-    static let iconPlaceholder = "globe"
+    static let iconPlaceholder = "clock.fill"
     static let iconPlaceholderColor: Color = .cyan
 }
 
 struct CalculatorWidgetExtension: ExtensionDefinition {
     static let id = "calculator"
-    static let title = "Calculator"
-    static let subtitle = "A quick calculator"
+    static let title = "Tools"
+    static let subtitle = "Calculator, dice, passwords and more"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .orange
-    static let description = "A keypad calculator on the shelf, with percentages and brackets. Copy the result with one click."
-    static let features: [(icon: String, text: String)] = [("plus.forwardslash.minus", "A quick calculator"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static let description = "Quick tools in one widget, with tabs: a calculator, dice and coin, a password generator, a screen color picker, a tally counter, and your IP addresses."
+    static let features: [(icon: String, text: String)] = [("plus.forwardslash.minus", "Calculator"), ("dice.fill", "Dice and coin"), ("key.fill", "Strong passwords"), ("eyedropper", "Color picker"), ("number.circle.fill", "Tally counter"), ("network", "IP addresses")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
-    static let iconPlaceholder = "plus.forwardslash.minus"
+    static let iconPlaceholder = "wrench.and.screwdriver.fill"
     static let iconPlaceholderColor: Color = .orange
 }
 
@@ -303,11 +303,11 @@ struct StopwatchWidgetWidgetExtension: ExtensionDefinition {
 struct TimersWidgetExtension: ExtensionDefinition {
     static let id = "timers"
     static let title = "Timers"
-    static let subtitle = "One-tap timers"
+    static let subtitle = "Timers and a stopwatch"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .orange
-    static let description = "Start a 1, 3, 5, 10, 15, 25 or 45 minute timer with one tap. Timers count down beside the notch and chime when done."
-    static let features: [(icon: String, text: String)] = [("timer", "One-tap timers"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static let description = "One-tap timers that run beside the notch, and a stopwatch with laps, in one widget."
+    static let features: [(icon: String, text: String)] = [("timer", "One-tap timers"), ("stopwatch", "Stopwatch with laps"), ("bell", "An alert when a timer ends")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
     static let iconPlaceholder = "timer"
@@ -316,15 +316,15 @@ struct TimersWidgetExtension: ExtensionDefinition {
 
 struct HabitsWidgetExtension: ExtensionDefinition {
     static let id = "habits"
-    static let title = "Habits"
-    static let subtitle = "Daily check-ins with streaks"
+    static let title = "Wellbeing"
+    static let subtitle = "Habits, water and breathing"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .green
-    static let description = "Tick off up to five daily habits and watch the streaks grow."
-    static let features: [(icon: String, text: String)] = [("checkmark.seal.fill", "Daily check-ins with streaks"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static let description = "Small daily habits with streaks, a water counter, and a guided box-breathing exercise, in one widget."
+    static let features: [(icon: String, text: String)] = [("checkmark.seal.fill", "Daily habits with streaks"), ("drop.fill", "Glasses of water"), ("wind", "Guided box breathing")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
-    static let iconPlaceholder = "checkmark.seal.fill"
+    static let iconPlaceholder = "heart.fill"
     static let iconPlaceholderColor: Color = .green
 }
 
@@ -372,15 +372,15 @@ struct NetworkWidgetExtension: ExtensionDefinition {
 
 struct RecentClipsWidgetExtension: ExtensionDefinition {
     static let id = "recentClips"
-    static let title = "Recent Clips"
-    static let subtitle = "Your last copies, one click away"
+    static let title = "Recents"
+    static let subtitle = "Clips, downloads, screenshots and links"
     static let category: ExtensionGroup = .productivity
     static let categoryColor: Color = .indigo
-    static let description = "Your six most recent text clips on the shelf. Click one to copy it again. Passwords are never shown."
-    static let features: [(icon: String, text: String)] = [("doc.on.clipboard.fill", "Your last copies, one click away"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static let description = "Your latest things one click away: recent copies (secrets are masked), newest downloads, latest screenshots, and your favorite websites. Downloads and Screenshots ask once for access to those folders."
+    static let features: [(icon: String, text: String)] = [("doc.on.clipboard.fill", "Recent clips"), ("arrow.down.circle.fill", "Newest downloads"), ("camera.viewfinder", "Latest screenshots"), ("link", "Quick links")]
     static var screenshotURL: URL? { nil }
     static var iconURL: URL? { nil }
-    static let iconPlaceholder = "doc.on.clipboard.fill"
+    static let iconPlaceholder = "clock.arrow.circlepath"
     static let iconPlaceholderColor: Color = .indigo
 }
 
