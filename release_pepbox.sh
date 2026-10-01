@@ -485,12 +485,17 @@ FALLBACK_NOTES
 Download \`PepBox-$VERSION.dmg\` below, open it, and drag PepBox to Applications. That's it!
 
 > ✅ **Signed & Notarized by Apple** — No quarantine warnings, no terminal commands needed.
+INSTALL_FOOTER
+    # Only mention Homebrew when the tap is actually published.
+    if [ -n "$TAP_REPO" ]; then
+        cat >> "$TEMP_NOTES" << BREW_FOOTER
 
 <img src="https://brew.sh/assets/img/homebrew.svg" height="24"> **Alternative: Install via Homebrew**
 \`\`\`bash
 brew install --cask KPScriptz/tap/pepbox
 \`\`\`
-INSTALL_FOOTER
+BREW_FOOTER
+    fi
     
     gh release create "v$VERSION" "$DMG_NAME" --title "v$VERSION" --notes-file "$TEMP_NOTES"
     rm -f "$TEMP_NOTES"
