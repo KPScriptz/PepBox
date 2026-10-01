@@ -755,6 +755,366 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "worldClock",
+                iconPlaceholder: "globe",
+                iconPlaceholderColor: .cyan,
+                title: "World Clock",
+                subtitle: "Times around the world",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.worldClock.isInstalled,
+                analyticsKey: "worldClock",
+                extensionType: .worldClock
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .worldClock,
+                    onAction: { NotchWidgetKind.worldClock.install() },
+                    installCount: extensionCounts["worldClock"],
+                    rating: extensionRatings["worldClock"]
+                ))
+            },
+            ExtensionListItem(
+                id: "calculator",
+                iconPlaceholder: "plus.forwardslash.minus",
+                iconPlaceholderColor: .orange,
+                title: "Calculator",
+                subtitle: "A quick calculator",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.calculator.isInstalled,
+                analyticsKey: "calculator",
+                extensionType: .calculator
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .calculator,
+                    onAction: { NotchWidgetKind.calculator.install() },
+                    installCount: extensionCounts["calculator"],
+                    rating: extensionRatings["calculator"]
+                ))
+            },
+            ExtensionListItem(
+                id: "dice",
+                iconPlaceholder: "dice.fill",
+                iconPlaceholderColor: .red,
+                title: "Dice & Coin",
+                subtitle: "Roll, flip or decide",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.dice.isInstalled,
+                analyticsKey: "dice",
+                extensionType: .dice
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .dice,
+                    onAction: { NotchWidgetKind.dice.install() },
+                    installCount: extensionCounts["dice"],
+                    rating: extensionRatings["dice"]
+                ))
+            },
+            ExtensionListItem(
+                id: "colorPicker",
+                iconPlaceholder: "eyedropper",
+                iconPlaceholderColor: .pink,
+                title: "Color Picker",
+                subtitle: "Pick colors from the screen",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.colorPicker.isInstalled,
+                analyticsKey: "colorPicker",
+                extensionType: .colorPicker
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .colorPicker,
+                    onAction: { NotchWidgetKind.colorPicker.install() },
+                    installCount: extensionCounts["colorPicker"],
+                    rating: extensionRatings["colorPicker"]
+                ))
+            },
+            ExtensionListItem(
+                id: "countdown",
+                iconPlaceholder: "hourglass",
+                iconPlaceholderColor: .purple,
+                title: "Countdown",
+                subtitle: "Days until what matters",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.countdown.isInstalled,
+                analyticsKey: "countdown",
+                extensionType: .countdown
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .countdown,
+                    onAction: { NotchWidgetKind.countdown.install() },
+                    installCount: extensionCounts["countdown"],
+                    rating: extensionRatings["countdown"]
+                ))
+            },
+            ExtensionListItem(
+                id: "stopwatchWidget",
+                iconPlaceholder: "stopwatch",
+                iconPlaceholderColor: .mint,
+                title: "Stopwatch",
+                subtitle: "Stopwatch with laps",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.stopwatchWidget.isInstalled,
+                analyticsKey: "stopwatchWidget",
+                extensionType: .stopwatchWidget
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .stopwatchWidget,
+                    onAction: { NotchWidgetKind.stopwatchWidget.install() },
+                    installCount: extensionCounts["stopwatchWidget"],
+                    rating: extensionRatings["stopwatchWidget"]
+                ))
+            },
+            ExtensionListItem(
+                id: "timers",
+                iconPlaceholder: "timer",
+                iconPlaceholderColor: .orange,
+                title: "Timers",
+                subtitle: "One-tap timers",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.timers.isInstalled,
+                analyticsKey: "timers",
+                extensionType: .timers
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .timers,
+                    onAction: { NotchWidgetKind.timers.install() },
+                    installCount: extensionCounts["timers"],
+                    rating: extensionRatings["timers"]
+                ))
+            },
+            ExtensionListItem(
+                id: "habits",
+                iconPlaceholder: "checkmark.seal.fill",
+                iconPlaceholderColor: .green,
+                title: "Habits",
+                subtitle: "Daily check-ins with streaks",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.habits.isInstalled,
+                analyticsKey: "habits",
+                extensionType: .habits
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .habits,
+                    onAction: { NotchWidgetKind.habits.install() },
+                    installCount: extensionCounts["habits"],
+                    rating: extensionRatings["habits"]
+                ))
+            },
+            ExtensionListItem(
+                id: "water",
+                iconPlaceholder: "drop.fill",
+                iconPlaceholderColor: .cyan,
+                title: "Water",
+                subtitle: "Track glasses of water",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.water.isInstalled,
+                analyticsKey: "water",
+                extensionType: .water
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .water,
+                    onAction: { NotchWidgetKind.water.install() },
+                    installCount: extensionCounts["water"],
+                    rating: extensionRatings["water"]
+                ))
+            },
+            ExtensionListItem(
+                id: "breathe",
+                iconPlaceholder: "wind",
+                iconPlaceholderColor: .teal,
+                title: "Breathe",
+                subtitle: "Guided box breathing",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.breathe.isInstalled,
+                analyticsKey: "breathe",
+                extensionType: .breathe
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .breathe,
+                    onAction: { NotchWidgetKind.breathe.install() },
+                    installCount: extensionCounts["breathe"],
+                    rating: extensionRatings["breathe"]
+                ))
+            },
+            ExtensionListItem(
+                id: "network",
+                iconPlaceholder: "network",
+                iconPlaceholderColor: .blue,
+                title: "Network",
+                subtitle: "Your IP addresses",
+                category: .system,
+                isInstalled: NotchWidgetKind.network.isInstalled,
+                analyticsKey: "network",
+                extensionType: .network
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .network,
+                    onAction: { NotchWidgetKind.network.install() },
+                    installCount: extensionCounts["network"],
+                    rating: extensionRatings["network"]
+                ))
+            },
+            ExtensionListItem(
+                id: "recentClips",
+                iconPlaceholder: "doc.on.clipboard.fill",
+                iconPlaceholderColor: .indigo,
+                title: "Recent Clips",
+                subtitle: "Your last copies, one click away",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.recentClips.isInstalled,
+                analyticsKey: "recentClips",
+                extensionType: .recentClips
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .recentClips,
+                    onAction: { NotchWidgetKind.recentClips.install() },
+                    installCount: extensionCounts["recentClips"],
+                    rating: extensionRatings["recentClips"]
+                ))
+            },
+            ExtensionListItem(
+                id: "recentDownloads",
+                iconPlaceholder: "arrow.down.circle.fill",
+                iconPlaceholderColor: .blue,
+                title: "Downloads",
+                subtitle: "Your newest downloads",
+                category: .files,
+                isInstalled: NotchWidgetKind.recentDownloads.isInstalled,
+                analyticsKey: "recentDownloads",
+                extensionType: .recentDownloads
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .recentDownloads,
+                    onAction: { NotchWidgetKind.recentDownloads.install() },
+                    installCount: extensionCounts["recentDownloads"],
+                    rating: extensionRatings["recentDownloads"]
+                ))
+            },
+            ExtensionListItem(
+                id: "screenshots",
+                iconPlaceholder: "camera.viewfinder",
+                iconPlaceholderColor: .teal,
+                title: "Screenshots",
+                subtitle: "Your latest screenshots",
+                category: .files,
+                isInstalled: NotchWidgetKind.screenshots.isInstalled,
+                analyticsKey: "screenshots",
+                extensionType: .screenshots
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .screenshots,
+                    onAction: { NotchWidgetKind.screenshots.install() },
+                    installCount: extensionCounts["screenshots"],
+                    rating: extensionRatings["screenshots"]
+                ))
+            },
+            ExtensionListItem(
+                id: "quickLinks",
+                iconPlaceholder: "link",
+                iconPlaceholderColor: .indigo,
+                title: "Quick Links",
+                subtitle: "Websites one click away",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.quickLinks.isInstalled,
+                analyticsKey: "quickLinks",
+                extensionType: .quickLinks
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .quickLinks,
+                    onAction: { NotchWidgetKind.quickLinks.install() },
+                    installCount: extensionCounts["quickLinks"],
+                    rating: extensionRatings["quickLinks"]
+                ))
+            },
+            ExtensionListItem(
+                id: "passwordGenerator",
+                iconPlaceholder: "key.fill",
+                iconPlaceholderColor: .yellow,
+                title: "Password",
+                subtitle: "Strong passwords on demand",
+                category: .system,
+                isInstalled: NotchWidgetKind.passwordGenerator.isInstalled,
+                analyticsKey: "passwordGenerator",
+                extensionType: .passwordGenerator
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .passwordGenerator,
+                    onAction: { NotchWidgetKind.passwordGenerator.install() },
+                    installCount: extensionCounts["passwordGenerator"],
+                    rating: extensionRatings["passwordGenerator"]
+                ))
+            },
+            ExtensionListItem(
+                id: "dayProgress",
+                iconPlaceholder: "chart.bar.fill",
+                iconPlaceholderColor: .orange,
+                title: "Day Progress",
+                subtitle: "How far through the day you are",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.dayProgress.isInstalled,
+                analyticsKey: "dayProgress",
+                extensionType: .dayProgress
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .dayProgress,
+                    onAction: { NotchWidgetKind.dayProgress.install() },
+                    installCount: extensionCounts["dayProgress"],
+                    rating: extensionRatings["dayProgress"]
+                ))
+            },
+            ExtensionListItem(
+                id: "moonPhase",
+                iconPlaceholder: "moon.stars.fill",
+                iconPlaceholderColor: .gray,
+                title: "Moon",
+                subtitle: "Tonight's moon phase",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.moonPhase.isInstalled,
+                analyticsKey: "moonPhase",
+                extensionType: .moonPhase
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .moonPhase,
+                    onAction: { NotchWidgetKind.moonPhase.install() },
+                    installCount: extensionCounts["moonPhase"],
+                    rating: extensionRatings["moonPhase"]
+                ))
+            },
+            ExtensionListItem(
+                id: "counter",
+                iconPlaceholder: "number.circle.fill",
+                iconPlaceholderColor: .pink,
+                title: "Counter",
+                subtitle: "A tally counter",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.counter.isInstalled,
+                analyticsKey: "counter",
+                extensionType: .counter
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .counter,
+                    onAction: { NotchWidgetKind.counter.install() },
+                    installCount: extensionCounts["counter"],
+                    rating: extensionRatings["counter"]
+                ))
+            },
+            ExtensionListItem(
+                id: "monthCalendar",
+                iconPlaceholder: "calendar",
+                iconPlaceholderColor: .red,
+                title: "Month",
+                subtitle: "A month at a glance",
+                category: .productivity,
+                isInstalled: NotchWidgetKind.monthCalendar.isInstalled,
+                analyticsKey: "monthCalendar",
+                extensionType: .monthCalendar
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .monthCalendar,
+                    onAction: { NotchWidgetKind.monthCalendar.install() },
+                    installCount: extensionCounts["monthCalendar"],
+                    rating: extensionRatings["monthCalendar"]
+                ))
+            },
+            ExtensionListItem(
                 id: "ring",
                 iconPlaceholder: "circle.dashed",
                 iconPlaceholderColor: .purple,

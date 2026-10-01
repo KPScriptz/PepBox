@@ -62,6 +62,17 @@ struct URLSchemeHandler {
             DispatchQueue.main.async {
                 SettingsWindowController.shared.snapshot(tab: tab, width: width, height: height, to: URL(fileURLWithPath: out))
             }
+        case "qa-widget":
+            // Layout testing only: pepbox://qa-widget?kind=calculator&out=/tmp/x.png
+            guard UserDefaults.standard.bool(forKey: "qaSnapshotsEnabled"),
+                  let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+                  let kind = items.first(where: { $0.name == "kind" })?.value.flatMap(NotchWidgetKind.init(rawValue:)),
+                  let out = items.first(where: { $0.name == "out" })?.value else { return }
+            DispatchQueue.main.async {
+                SettingsWindowController.shared.snapshotView(
+                    NotchWidgetPanel(kind: kind).frame(width: 560, height: 190).background(Color.black).environment(\.colorScheme, .dark),
+                    size: NSSize(width: 560, height: 190), to: URL(fileURLWithPath: out))
+            }
         case "settings":
             // pepbox://settings/clipboard (or ?tab=clipboard) opens Settings on that tab
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)

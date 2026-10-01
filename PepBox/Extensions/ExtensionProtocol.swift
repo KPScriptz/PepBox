@@ -38,6 +38,26 @@ enum ExtensionType: String, CaseIterable, Identifiable {
     case shortcuts
     case agents
     case quickNotes
+    case worldClock
+    case calculator
+    case dice
+    case colorPicker
+    case countdown
+    case stopwatchWidget
+    case timers
+    case habits
+    case water
+    case breathe
+    case network
+    case recentClips
+    case recentDownloads
+    case screenshots
+    case quickLinks
+    case passwordGenerator
+    case dayProgress
+    case moonPhase
+    case counter
+    case monthCalendar
     case ring
     case keySounds
     case quickSearch
@@ -103,7 +123,7 @@ enum ExtensionType: String, CaseIterable, Identifiable {
             return MenuBarManager.shared.isEnabled
         case .todo:
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.todoInstalled)
-        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes:
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar:
             return NotchWidgetKind(extensionType: self)?.isInstalled ?? false
         case .ring, .keySounds, .quickSearch, .textActions, .smoothScroll, .eyeBreaks, .downloadsActivity, .localSend, .snippets:
             return UtilityExtensionKind(extensionType: self)?.isInstalled ?? false

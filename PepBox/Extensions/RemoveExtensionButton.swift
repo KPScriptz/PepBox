@@ -115,7 +115,7 @@ struct DisableExtensionButton: View {
             return "This will restore all hidden menu bar items and disable the manager. You can enable it again later."
         case .todo:
             return "This will disable the Todo extension. Your tasks will be preserved and you can enable it again later."
-        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes:
+        case .pomodoro, .emojiPicker, .teleprompter, .meetings, .appVolume, .obsidian, .systemStats, .upNext, .shortcuts, .agents, .quickNotes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar:
             return "This will remove its button from the shelf. You can enable it again later."
         case .ring:
             return "This will turn off the ⌥⇧Space ring. You can enable it again later."

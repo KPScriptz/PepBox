@@ -28,13 +28,15 @@ struct SnippetEngine {
     /// trigger the typing ends with. (So a trigger that starts another, like ";sig" and ";sig2",
     /// always fires first; the options screen says to avoid that.)
     mutating func type(_ characters: String, snippets: [Snippet]) -> Snippet? {
+        // Keep enough typing for the longest trigger, so long triggers can still fire.
+        let limit = max(Self.bufferLimit, snippets.map(\.trigger.count).max() ?? 0)
         for character in characters {
             if character == "\u{7F}" || character == "\u{08}" {  // delete / backspace
                 if !buffer.isEmpty { buffer.removeLast() }
                 continue
             }
             buffer.append(character)
-            if buffer.count > Self.bufferLimit { buffer.removeFirst(buffer.count - Self.bufferLimit) }
+            if buffer.count > limit { buffer.removeFirst(buffer.count - limit) }
             // If two triggers end here (";d" and "x;d"), the longer one is the more specific.
             if let match = snippets.filter({ !$0.trigger.isEmpty && buffer.hasSuffix($0.trigger) })
                 .max(by: { $0.trigger.count < $1.trigger.count }) {
@@ -60,10 +62,11 @@ struct SnippetEngine {
         return text
             .replacingOccurrences(of: "{date}", with: date.string(from: now))
             .replacingOccurrences(of: "{time}", with: time.string(from: now))
-            .replacingOccurrences(of: "{clipboard}", with: clipboard ?? "")
             .replacingOccurrences(of: "{uuid}", with: UUID().uuidString)
             .replacingOccurrences(of: "{weekday}", with: { let f = DateFormatter(); f.locale = locale; f.dateFormat = "EEEE"; return f.string(from: now) }())
             .replacingOccurrences(of: "{year}", with: String(Calendar.current.component(.year, from: now)))
+            // Last, so placeholders inside the copied text are pasted as typed, not expanded.
+            .replacingOccurrences(of: "{clipboard}", with: clipboard ?? "")
     }
 }
 
@@ -78,13 +81,19 @@ final class SnippetController {
     private var engine = SnippetEngine()
     private var isExpanding = false
 
+    /// Decoded once and kept, since the key monitor reads the list on every keystroke.
+    private static var cachedSnippets: [Snippet]?
+
     static var snippets: [Snippet] {
         get {
-            guard let data = UserDefaults.standard.data(forKey: storeKey),
-                  let list = try? JSONDecoder().decode([Snippet].self, from: data) else { return defaults }
+            if let cachedSnippets { return cachedSnippets }
+            let list = UserDefaults.standard.data(forKey: storeKey)
+                .flatMap { try? JSONDecoder().decode([Snippet].self, from: $0) } ?? defaults
+            cachedSnippets = list
             return list
         }
         set {
+            cachedSnippets = newValue
             UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: storeKey)
         }
     }

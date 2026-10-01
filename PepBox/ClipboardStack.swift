@@ -60,20 +60,25 @@ enum ClipboardStack {
     /// Consecutive text becomes one paste (joined), consecutive files one paste, each image its own.
     static func plan(_ entries: [Entry], separator: StackSeparator) -> [Chunk] {
         var chunks: [Chunk] = []
+        var run: String?  // the text run so far, grown in place (rebuilding it for every item is quadratic)
         for entry in entries {
+            if case .text(let text) = entry {
+                if run == nil { run = text } else { run! += separator.string + text }
+                continue
+            }
+            if let text = run { chunks.append(.text(text)); run = nil }
             switch (entry, chunks.last) {
-            case (.text(let text), .text(let previous)?):
-                chunks[chunks.count - 1] = .text(previous + separator.string + text)
-            case (.text(let text), _):
-                chunks.append(.text(text))
             case (.file(let path), .files(let previous)?):
                 chunks[chunks.count - 1] = .files(previous + [path])
             case (.file(let path), _):
                 chunks.append(.files([path]))
             case (.image(let id), _):
                 chunks.append(.image(id))
+            case (.text, _):
+                break  // joined above
             }
         }
+        if let text = run { chunks.append(.text(text)) }
         return chunks
     }
 

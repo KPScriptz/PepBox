@@ -94,7 +94,14 @@ enum FileTools {
             break
         }
         context.draw(input, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let output = context.makeImage() else { return nil }
+        guard var output = context.makeImage() else { return nil }
+        // HEIC can't hold a one-channel image, so a black & white HEIC is saved as RGB.
+        if edit == .grayscale, UTType(type as String)?.conforms(to: .heic) == true,
+           let rgb = CGContext(data: nil, width: outWidth, height: outHeight, bitsPerComponent: 8, bytesPerRow: 0,
+                               space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) {
+            rgb.draw(output, in: CGRect(x: 0, y: 0, width: outWidth, height: outHeight))
+            output = rgb.makeImage() ?? output
+        }
         let suffix: String
         switch edit {
         case .rotateLeft: suffix = "rotated left"
@@ -245,7 +252,7 @@ enum TextTransform: String, CaseIterable, Identifiable {
         case .prettyJSON:
             guard let data = text.data(using: .utf8),
                   let object = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
-                  let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
+                  let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed])
             else { return nil }
             return String(decoding: pretty, as: UTF8.self)
         case .markdownLink:

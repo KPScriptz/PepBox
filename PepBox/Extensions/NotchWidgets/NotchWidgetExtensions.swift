@@ -215,3 +215,283 @@ struct QuickNotesExtension: ExtensionDefinition {
     static let iconPlaceholder = "note.text.badge.plus"
     static let iconPlaceholderColor: Color = .yellow
 }
+
+struct WorldClockWidgetExtension: ExtensionDefinition {
+    static let id = "worldClock"
+    static let title = "World Clock"
+    static let subtitle = "Times around the world"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .cyan
+    static let description = "Up to eight cities side by side, updated live. Type a city or an abbreviation like PST to add it; right-click to remove."
+    static let features: [(icon: String, text: String)] = [("globe", "Times around the world"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "globe"
+    static let iconPlaceholderColor: Color = .cyan
+}
+
+struct CalculatorWidgetExtension: ExtensionDefinition {
+    static let id = "calculator"
+    static let title = "Calculator"
+    static let subtitle = "A quick calculator"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .orange
+    static let description = "A keypad calculator on the shelf, with percentages and brackets. Copy the result with one click."
+    static let features: [(icon: String, text: String)] = [("plus.forwardslash.minus", "A quick calculator"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "plus.forwardslash.minus"
+    static let iconPlaceholderColor: Color = .orange
+}
+
+struct DiceWidgetExtension: ExtensionDefinition {
+    static let id = "dice"
+    static let title = "Dice & Coin"
+    static let subtitle = "Roll, flip or decide"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .red
+    static let description = "Roll a d6, 2d6, d20 or d100, flip a coin, or get a yes or no."
+    static let features: [(icon: String, text: String)] = [("dice.fill", "Roll, flip or decide"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "dice.fill"
+    static let iconPlaceholderColor: Color = .red
+}
+
+struct ColorPickerWidgetExtension: ExtensionDefinition {
+    static let id = "colorPicker"
+    static let title = "Color Picker"
+    static let subtitle = "Pick colors from the screen"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .pink
+    static let description = "Pick any color on screen; its hex is copied and kept in a row of your last ten colors to copy again."
+    static let features: [(icon: String, text: String)] = [("eyedropper", "Pick colors from the screen"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "eyedropper"
+    static let iconPlaceholderColor: Color = .pink
+}
+
+struct CountdownWidgetExtension: ExtensionDefinition {
+    static let id = "countdown"
+    static let title = "Countdown"
+    static let subtitle = "Days until what matters"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .purple
+    static let description = "Count down to trips, launches and birthdays. Days are calendar days, so it's right across time changes."
+    static let features: [(icon: String, text: String)] = [("hourglass", "Days until what matters"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "hourglass"
+    static let iconPlaceholderColor: Color = .purple
+}
+
+struct StopwatchWidgetWidgetExtension: ExtensionDefinition {
+    static let id = "stopwatchWidget"
+    static let title = "Stopwatch"
+    static let subtitle = "Stopwatch with laps"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .mint
+    static let description = "A stopwatch with laps. It keeps counting beside the notch when the shelf is closed, and stopping copies the time."
+    static let features: [(icon: String, text: String)] = [("stopwatch", "Stopwatch with laps"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "stopwatch"
+    static let iconPlaceholderColor: Color = .mint
+}
+
+struct TimersWidgetExtension: ExtensionDefinition {
+    static let id = "timers"
+    static let title = "Timers"
+    static let subtitle = "One-tap timers"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .orange
+    static let description = "Start a 1, 3, 5, 10, 15, 25 or 45 minute timer with one tap. Timers count down beside the notch and chime when done."
+    static let features: [(icon: String, text: String)] = [("timer", "One-tap timers"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "timer"
+    static let iconPlaceholderColor: Color = .orange
+}
+
+struct HabitsWidgetExtension: ExtensionDefinition {
+    static let id = "habits"
+    static let title = "Habits"
+    static let subtitle = "Daily check-ins with streaks"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .green
+    static let description = "Tick off up to five daily habits and watch the streaks grow."
+    static let features: [(icon: String, text: String)] = [("checkmark.seal.fill", "Daily check-ins with streaks"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "checkmark.seal.fill"
+    static let iconPlaceholderColor: Color = .green
+}
+
+struct WaterWidgetExtension: ExtensionDefinition {
+    static let id = "water"
+    static let title = "Water"
+    static let subtitle = "Track glasses of water"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .cyan
+    static let description = "Tap once per glass and see today's progress toward your goal."
+    static let features: [(icon: String, text: String)] = [("drop.fill", "Track glasses of water"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "drop.fill"
+    static let iconPlaceholderColor: Color = .cyan
+}
+
+struct BreatheWidgetExtension: ExtensionDefinition {
+    static let id = "breathe"
+    static let title = "Breathe"
+    static let subtitle = "Guided box breathing"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .teal
+    static let description = "A slow animated guide for box breathing: four seconds in, hold, out, hold."
+    static let features: [(icon: String, text: String)] = [("wind", "Guided box breathing"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "wind"
+    static let iconPlaceholderColor: Color = .teal
+}
+
+struct NetworkWidgetExtension: ExtensionDefinition {
+    static let id = "network"
+    static let title = "Network"
+    static let subtitle = "Your IP addresses"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .blue
+    static let description = "Your local and public IP and your Mac's name, each one click to copy."
+    static let features: [(icon: String, text: String)] = [("network", "Your IP addresses"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "network"
+    static let iconPlaceholderColor: Color = .blue
+}
+
+struct RecentClipsWidgetExtension: ExtensionDefinition {
+    static let id = "recentClips"
+    static let title = "Recent Clips"
+    static let subtitle = "Your last copies, one click away"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .indigo
+    static let description = "Your six most recent text clips on the shelf. Click one to copy it again. Passwords are never shown."
+    static let features: [(icon: String, text: String)] = [("doc.on.clipboard.fill", "Your last copies, one click away"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "doc.on.clipboard.fill"
+    static let iconPlaceholderColor: Color = .indigo
+}
+
+struct RecentDownloadsWidgetExtension: ExtensionDefinition {
+    static let id = "recentDownloads"
+    static let title = "Downloads"
+    static let subtitle = "Your newest downloads"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .blue
+    static let description = "Your six newest downloads. Drag one where it needs to go, or double-click to open."
+    static let features: [(icon: String, text: String)] = [("arrow.down.circle.fill", "Your newest downloads"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "arrow.down.circle.fill"
+    static let iconPlaceholderColor: Color = .blue
+}
+
+struct ScreenshotsWidgetExtension: ExtensionDefinition {
+    static let id = "screenshots"
+    static let title = "Screenshots"
+    static let subtitle = "Your latest screenshots"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .teal
+    static let description = "Your latest screenshots and screen recordings from wherever macOS saves them. Drag one into any app."
+    static let features: [(icon: String, text: String)] = [("camera.viewfinder", "Your latest screenshots"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "camera.viewfinder"
+    static let iconPlaceholderColor: Color = .teal
+}
+
+struct QuickLinksWidgetExtension: ExtensionDefinition {
+    static let id = "quickLinks"
+    static let title = "Quick Links"
+    static let subtitle = "Websites one click away"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .indigo
+    static let description = "Keep up to nine websites one click away. Type a domain to add it; right-click to remove."
+    static let features: [(icon: String, text: String)] = [("link", "Websites one click away"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "link"
+    static let iconPlaceholderColor: Color = .indigo
+}
+
+struct PasswordGeneratorWidgetExtension: ExtensionDefinition {
+    static let id = "passwordGenerator"
+    static let title = "Password"
+    static let subtitle = "Strong passwords on demand"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .yellow
+    static let description = "Make a strong password from 8 to 64 characters, generated on your Mac, and copy it in one click."
+    static let features: [(icon: String, text: String)] = [("key.fill", "Strong passwords on demand"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "key.fill"
+    static let iconPlaceholderColor: Color = .yellow
+}
+
+struct DayProgressWidgetExtension: ExtensionDefinition {
+    static let id = "dayProgress"
+    static let title = "Day Progress"
+    static let subtitle = "How far through the day you are"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .orange
+    static let description = "Bars for how much of the day, week, month and year has gone by."
+    static let features: [(icon: String, text: String)] = [("chart.bar.fill", "How far through the day you are"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "chart.bar.fill"
+    static let iconPlaceholderColor: Color = .orange
+}
+
+struct MoonPhaseWidgetExtension: ExtensionDefinition {
+    static let id = "moonPhase"
+    static let title = "Moon"
+    static let subtitle = "Tonight's moon phase"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .gray
+    static let description = "The moon's phase and brightness tonight, worked out on your Mac, and the days until the next full moon."
+    static let features: [(icon: String, text: String)] = [("moon.stars.fill", "Tonight's moon phase"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "moon.stars.fill"
+    static let iconPlaceholderColor: Color = .gray
+}
+
+struct CounterWidgetExtension: ExtensionDefinition {
+    static let id = "counter"
+    static let title = "Counter"
+    static let subtitle = "A tally counter"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .pink
+    static let description = "A big tally counter with a label you can name. It remembers the count."
+    static let features: [(icon: String, text: String)] = [("number.circle.fill", "A tally counter"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "number.circle.fill"
+    static let iconPlaceholderColor: Color = .pink
+}
+
+struct MonthCalendarWidgetExtension: ExtensionDefinition {
+    static let id = "monthCalendar"
+    static let title = "Month"
+    static let subtitle = "A month at a glance"
+    static let category: ExtensionGroup = .productivity
+    static let categoryColor: Color = .red
+    static let description = "A month calendar with today highlighted. Flip between months."
+    static let features: [(icon: String, text: String)] = [("calendar", "A month at a glance"), ("rectangle.bottomhalf.inset.filled", "Opens from a button under the shelf")]
+    static var screenshotURL: URL? { nil }
+    static var iconURL: URL? { nil }
+    static let iconPlaceholder = "calendar"
+    static let iconPlaceholderColor: Color = .red
+}

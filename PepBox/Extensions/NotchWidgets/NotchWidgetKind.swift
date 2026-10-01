@@ -21,6 +21,26 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
     case shortcuts
     case agents
     case notes
+    case worldClock
+    case calculator
+    case dice
+    case colorPicker
+    case countdown
+    case stopwatchWidget
+    case timers
+    case habits
+    case water
+    case breathe
+    case network
+    case recentClips
+    case recentDownloads
+    case screenshots
+    case quickLinks
+    case passwordGenerator
+    case dayProgress
+    case moonPhase
+    case counter
+    case monthCalendar
 
     var id: String { rawValue }
 
@@ -42,6 +62,26 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .shortcuts: return .shortcuts
         case .agents: return .agents
         case .notes: return .quickNotes
+        case .worldClock: return .worldClock
+        case .calculator: return .calculator
+        case .dice: return .dice
+        case .colorPicker: return .colorPicker
+        case .countdown: return .countdown
+        case .stopwatchWidget: return .stopwatchWidget
+        case .timers: return .timers
+        case .habits: return .habits
+        case .water: return .water
+        case .breathe: return .breathe
+        case .network: return .network
+        case .recentClips: return .recentClips
+        case .recentDownloads: return .recentDownloads
+        case .screenshots: return .screenshots
+        case .quickLinks: return .quickLinks
+        case .passwordGenerator: return .passwordGenerator
+        case .dayProgress: return .dayProgress
+        case .moonPhase: return .moonPhase
+        case .counter: return .counter
+        case .monthCalendar: return .monthCalendar
         }
     }
 
@@ -60,6 +100,26 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .shortcuts: return "square.2.layers.3d.fill"
         case .agents: return "sparkle"
         case .notes: return "note.text.badge.plus"
+        case .worldClock: return "globe"
+        case .calculator: return "plus.forwardslash.minus"
+        case .dice: return "dice.fill"
+        case .colorPicker: return "eyedropper"
+        case .countdown: return "hourglass"
+        case .stopwatchWidget: return "stopwatch"
+        case .timers: return "timer"
+        case .habits: return "checkmark.seal.fill"
+        case .water: return "drop.fill"
+        case .breathe: return "wind"
+        case .network: return "network"
+        case .recentClips: return "doc.on.clipboard.fill"
+        case .recentDownloads: return "arrow.down.circle.fill"
+        case .screenshots: return "camera.viewfinder"
+        case .quickLinks: return "link"
+        case .passwordGenerator: return "key.fill"
+        case .dayProgress: return "chart.bar.fill"
+        case .moonPhase: return "moon.stars.fill"
+        case .counter: return "number.circle.fill"
+        case .monthCalendar: return "calendar"
         }
     }
 
@@ -76,6 +136,26 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .shortcuts: return .indigo
         case .agents: return .orange
         case .notes: return .yellow
+        case .worldClock: return .cyan
+        case .calculator: return .orange
+        case .dice: return .red
+        case .colorPicker: return .pink
+        case .countdown: return .purple
+        case .stopwatchWidget: return .mint
+        case .timers: return .orange
+        case .habits: return .green
+        case .water: return .cyan
+        case .breathe: return .teal
+        case .network: return .blue
+        case .recentClips: return .indigo
+        case .recentDownloads: return .blue
+        case .screenshots: return .teal
+        case .quickLinks: return .indigo
+        case .passwordGenerator: return .yellow
+        case .dayProgress: return .orange
+        case .moonPhase: return .gray
+        case .counter: return .pink
+        case .monthCalendar: return .red
         }
     }
 
@@ -124,7 +204,7 @@ enum NotchWidgetKind: String, CaseIterable, Identifiable {
         case .teleprompter: TeleprompterManager.shared.pause()
         case .appVolume: AppVolumeManager.shared.resetAll()
         case .agents: AgentsMonitor.shared.setEnabled(false)
-        case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext, .shortcuts, .notes: break
+        case .emojiPicker, .meetings, .obsidian, .systemStats, .upNext, .shortcuts, .notes, .worldClock, .calculator, .dice, .colorPicker, .countdown, .stopwatchWidget, .timers, .habits, .water, .breathe, .network, .recentClips, .recentDownloads, .screenshots, .quickLinks, .passwordGenerator, .dayProgress, .moonPhase, .counter, .monthCalendar: break
         }
     }
 }
@@ -160,6 +240,46 @@ struct NotchWidgetPanel: View {
                 AgentsNotchView(monitor: AgentsMonitor.shared)
             case .notes:
                 QuickNotesNotchView(store: QuickNotesStore.shared)
+            case .worldClock:
+                WorldClockWidgetView()
+            case .calculator:
+                CalculatorWidgetView()
+            case .dice:
+                DiceWidgetView()
+            case .colorPicker:
+                ColorPickerWidgetView()
+            case .countdown:
+                CountdownWidgetView()
+            case .stopwatchWidget:
+                StopwatchWidgetView(manager: StopwatchManager.shared)
+            case .timers:
+                TimersWidgetView(manager: QuickTimerManager.shared)
+            case .habits:
+                HabitsWidgetView()
+            case .water:
+                WaterWidgetView()
+            case .breathe:
+                BreatheWidgetView()
+            case .network:
+                NetworkWidgetView()
+            case .recentClips:
+                RecentClipsWidgetView()
+            case .recentDownloads:
+                DownloadsWidgetView()
+            case .screenshots:
+                ScreenshotsWidgetView()
+            case .quickLinks:
+                QuickLinksWidgetView()
+            case .passwordGenerator:
+                PasswordWidgetView()
+            case .dayProgress:
+                DayProgressWidgetView()
+            case .moonPhase:
+                MoonWidgetView()
+            case .counter:
+                CounterWidgetView()
+            case .monthCalendar:
+                MonthWidgetView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

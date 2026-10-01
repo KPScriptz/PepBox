@@ -541,6 +541,51 @@ do {
     expect(gray?.samplesPerPixel, 1, "grayscale has one channel")
 }
 
+// MARK: - Widget math
+
+do {
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "America/Chicago")!
+    cal.firstWeekday = 1
+    func date(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 12) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d, hour: h))! }
+
+    // Known phases (2026): new moon Oct 10, full moon Oct 26, first quarter Oct 18.
+    expect(WidgetMath.moon(on: date(2026, 10, 10)).name, "New Moon", "moon new")
+    expect(WidgetMath.moon(on: date(2026, 10, 26)).name, "Full Moon", "moon full")
+    expect(WidgetMath.moon(on: date(2026, 10, 18)).name, "First Quarter", "moon first quarter")
+    expect(WidgetMath.moon(on: date(2026, 10, 26)).illumination > 0.97, true, "moon full illumination")
+    expect(WidgetMath.moon(on: date(2026, 10, 10)).illumination < 0.03, true, "moon new illumination")
+
+    let p = WidgetMath.progress(now: date(2026, 7, 2, 12), calendar: cal)
+    expect(abs(p.day - 0.5) < 0.001, true, "day progress noon")
+    expect(abs(p.year - 0.4986) < 0.002, true, "year progress July 2")
+    expect(abs(WidgetMath.progress(now: date(2026, 3, 8, 12), calendar: cal).day - 11.0 / 23.0) < 0.001, true, "day progress on 23h DST day")
+
+    let sept = WidgetMath.monthGrid(year: 2026, month: 9, calendar: cal)
+    expect(sept.first?.prefix(3).map { $0 ?? 0 }, [0, 0, 1], "month grid starts Tuesday (Sunday first)")
+    expect(sept.flatMap { $0 }.compactMap { $0 }.count, 30, "month grid 30 days")
+    expect(WidgetMath.monthGrid(year: 2028, month: 2, calendar: cal).flatMap { $0 }.compactMap { $0 }.last, 29, "leap February")
+    expect(sept.allSatisfy { $0.count == 7 }, true, "month grid full weeks")
+
+    expect(WidgetMath.daysUntil(date(2026, 12, 25, 0), from: date(2026, 9, 30, 23), calendar: cal), 86, "countdown calendar days")
+    expect(WidgetMath.daysUntil(date(2026, 11, 2), from: date(2026, 10, 31), calendar: cal), 2, "countdown across DST")
+    expect(WidgetMath.daysUntil(date(2026, 9, 1), from: date(2026, 9, 30), calendar: cal), -29, "countdown past")
+
+    let done: Set<String> = ["2026-09-30", "2026-09-29", "2026-09-27"]
+    expect(WidgetMath.streak(doneDays: done, now: date(2026, 9, 30), calendar: cal), 2, "habit streak")
+    expect(WidgetMath.streak(doneDays: done, now: date(2026, 10, 1), calendar: cal), 2, "habit streak survives today")
+    expect(WidgetMath.streak(doneDays: done, now: date(2026, 10, 2), calendar: cal), 0, "habit streak broken")
+
+    var display = "0"
+    for key in ["1", "2", "×", "4", "="] { display = WidgetMath.calculatorKey(key, display: display) }
+    expect(display, "48", "calculator multiply")
+    for key in ["C", "1", "0", "÷", "4", "="] { display = WidgetMath.calculatorKey(key, display: display) }
+    expect(display, "2.5", "calculator divide")
+    expect(WidgetMath.calculatorKey("=", display: "1+"), "Error", "calculator error")
+    expect(WidgetMath.calculatorKey("7", display: "Error"), "7", "calculator recovers from error")
+    expect(WidgetMath.calculatorKey("⌫", display: "7"), "0", "calculator backspace to zero")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]

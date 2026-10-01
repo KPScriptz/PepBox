@@ -159,7 +159,8 @@ enum QuickCurrencyConverter {
     static func convert(_ input: String, rates: [String: Double]) -> String? {
         let pattern = #"^\s*([$€£¥₹₩₽₺₪฿]?)\s*([\d.,]+)\s*([a-z$€£¥₹₩₽₺₪฿]*)\s+(?:to|in|as)\s+([a-z$€£¥₹₩₽₺₪฿]+)\s*$"#
         guard !rates.isEmpty, let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
-        let text = input.lowercased()
+        // Runs of spaces become one, or the pattern backtracks for seconds on a long run of spaces.
+        let text = input.lowercased().split(whereSeparator: \.isWhitespace).joined(separator: " ")
         guard let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
         func group(_ i: Int) -> String { Range(match.range(at: i), in: text).map { String(text[$0]) } ?? "" }
 

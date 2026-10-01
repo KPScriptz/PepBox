@@ -1219,8 +1219,9 @@ struct NotchShelfView: View {
                     // Regular floating buttons (caffeine/terminal/close) - appear when NOT dragging
                     if !dragMonitor.isDragging && (caffeineShouldShow || terminalShouldShow || cameraShouldShow || !NotchWidgetKind.available.isEmpty || !autoCollapseShelf) {
                         HStack(spacing: 12) {
-                            // Notch widget buttons (Pomodoro, Emoji, Teleprompter, Meetings)
-                            ForEach(NotchWidgetKind.available) { widget in
+                            // Notch widget buttons: the first seven, the rest in a More menu so the row never overflows
+                            let widgetButtons = NotchWidgetKind.available
+                            ForEach(widgetButtons.prefix(7)) { widget in
                                 let isHighlight = visibleNotchWidget == widget ||
                                     (widget == .pomodoro && PomodoroManager.shared.isRunning)
                                 Button(action: { toggleNotchWidget(widget) }) {
@@ -1235,6 +1236,23 @@ struct NotchShelfView: View {
                                       ? "Pomodoro: \(PomodoroManager.shared.formattedRemaining)"
                                       : widget.title)
                                 .transition(displayElementTransition)
+                            }
+                            if widgetButtons.count > 7 {
+                                Menu {
+                                    ForEach(widgetButtons.dropFirst(7)) { widget in
+                                        Button { toggleNotchWidget(widget) } label: { Label(widget.title, systemImage: widget.icon) }
+                                    }
+                                } label: {
+                                    Image(systemName: "ellipsis")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 32, height: 32)
+                                        .background(Circle().fill(isDynamicIslandMode ? dynamicIslandGray : .black))
+                                }
+                                .menuStyle(.borderlessButton)
+                                .menuIndicator(.hidden)
+                                .fixedSize()
+                                .help("More widgets")
                             }
 
                             // Caffeine button (if extension installed AND enabled)

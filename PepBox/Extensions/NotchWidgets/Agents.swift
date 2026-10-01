@@ -242,6 +242,9 @@ final class AgentsMonitor {
     private static let staleAfter: TimeInterval = 180
 
     static let chimeKey = "agents_chime"
+    /// Parsed logs by path, reused while a log's modification date is unchanged (monitor queue only).
+    private var parseCache: [String: (modified: Date, snapshot: AgentSnapshot)] = [:]
+
     /// Last seen state per session log, to chime once when one finishes or starts waiting.
     private var lastStates: [String: AgentSnapshot.State] = [:]
 
@@ -275,10 +278,20 @@ final class AgentsMonitor {
                 .prefix(4)
             var sessions: [AgentSnapshot] = []
             var states: [String: AgentSnapshot.State] = [:]
+            var freshCache: [String: (modified: Date, snapshot: AgentSnapshot)] = [:]
             for log in recent {
-                // The first line carries the working folder (Codex session_meta), which the tail may miss.
-                let lines = (Self.firstLine(of: log.url).map { [$0] } ?? []) + Self.tailLines(of: log.url, bytes: 400_000)
-                guard var parsed = log.agent == .claude ? AgentTranscriptParser.parseClaude(lines) : AgentTranscriptParser.parseCodex(lines) else { continue }
+                // Only re-read a log when it changed since the last poll; idle sessions cost nothing.
+                let cached = self.parseCache[log.url.path]
+                let parsedOrNil: AgentSnapshot?
+                if let cached, cached.modified == log.modified {
+                    parsedOrNil = cached.snapshot
+                } else {
+                    // The first line carries the working folder (Codex session_meta), which the tail may miss.
+                    let lines = (Self.firstLine(of: log.url).map { [$0] } ?? []) + Self.tailLines(of: log.url, bytes: 400_000)
+                    parsedOrNil = log.agent == .claude ? AgentTranscriptParser.parseClaude(lines) : AgentTranscriptParser.parseCodex(lines)
+                }
+                guard var parsed = parsedOrNil else { continue }
+                freshCache[log.url.path] = (log.modified, parsed)
                 let idle = now.timeIntervalSince(log.modified)
                 if case .tool = parsed.state, idle > Self.waitingAfter, log.agent == .claude,
                    let pending = parsed.pendingTool, Self.instantTools.contains(pending) {
@@ -289,6 +302,7 @@ final class AgentsMonitor {
                 sessions.append(parsed)
             }
             self.chimeOnChanges(states)
+            self.parseCache = freshCache
             let primary = sessions.first { $0.state == .waiting } ?? sessions.first
             DispatchQueue.main.async {
                 self.sessions = sessions

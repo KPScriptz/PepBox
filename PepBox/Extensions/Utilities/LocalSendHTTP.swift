@@ -72,28 +72,31 @@ final class HTTPRequestReader {
 
     private func readChunks(into events: [Event]) -> [Event] {
         var events = events
+        // Read from an offset and drop what was used once at the end; dropping each chunk as it's read is quadratic.
+        var start = buffer.startIndex
+        defer { buffer.removeSubrange(..<start) }
         while true {
             switch chunkState {
             case .size:
-                guard let lineEnd = buffer.range(of: Data("\r\n".utf8)) else {
-                    return buffer.count > 1024 ? finish(with: .malformed, into: events) : events  // a size line never runs this long
+                guard let lineEnd = buffer.range(of: Data("\r\n".utf8), in: start..<buffer.endIndex) else {
+                    return buffer.endIndex - start > 1024 ? finish(with: .malformed, into: events) : events  // a size line never runs this long
                 }
-                let sizeText = String(decoding: buffer[..<lineEnd.lowerBound], as: UTF8.self)
+                let sizeText = String(decoding: buffer[start..<lineEnd.lowerBound], as: UTF8.self)
                     .split(separator: ";").first.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
                 guard let size = Int(sizeText, radix: 16), size >= 0 else { return finish(with: .malformed, into: events) }
-                buffer.removeSubrange(..<lineEnd.upperBound)
+                start = lineEnd.upperBound
                 if size == 0 { return finish(with: .end, into: events) }  // trailers are ignored
                 chunkState = .data(size)
             case .data(let left):
-                guard !buffer.isEmpty else { return events }
-                let take = min(left, buffer.count)
-                events.append(.body(buffer.prefix(take)))
-                buffer.removeFirst(take)
+                guard start < buffer.endIndex else { return events }
+                let take = min(left, buffer.endIndex - start)
+                events.append(.body(Data(buffer[start..<(start + take)])))
+                start += take
                 chunkState = left - take > 0 ? .data(left - take) : .dataEnd
             case .dataEnd:
                 // Each chunk's data is followed by CRLF.
-                guard buffer.count >= 2 else { return events }
-                buffer.removeFirst(2)
+                guard buffer.endIndex - start >= 2 else { return events }
+                start += 2
                 chunkState = .size
             }
         }

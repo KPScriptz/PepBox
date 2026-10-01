@@ -97,7 +97,8 @@ enum QuickTools {
         "nyc": "America/New_York", "la": "America/Los_Angeles", "sf": "America/Los_Angeles",
         "dallas": "America/Chicago", "houston": "America/Chicago", "miami": "America/New_York",
         "boston": "America/New_York", "seattle": "America/Los_Angeles", "atlanta": "America/New_York",
-        "beijing": "Asia/Shanghai", "delhi": "Asia/Kolkata", "mumbai": "Asia/Kolkata", "dubai": "Asia/Dubai"
+        "beijing": "Asia/Shanghai", "delhi": "Asia/Kolkata", "mumbai": "Asia/Kolkata", "dubai": "Asia/Dubai",
+        "kolkata": "Asia/Kolkata"  // macOS lists this zone only under its old name, Asia/Calcutta
     ]
 
     static func zone(named name: String) -> TimeZone? {
@@ -117,7 +118,8 @@ enum QuickTools {
     }
 
     static func timeZones(_ text: String, now: Date, local: TimeZone) -> [QuickAnswer] {
-        let lower = text.lowercased()
+        // Runs of spaces become one, or the conversion pattern below backtracks for minutes on "1" + many spaces.
+        let lower = text.lowercased().split(whereSeparator: \.isWhitespace).joined(separator: " ")
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US")
         formatter.dateFormat = "h:mm a, EEE"
@@ -195,6 +197,7 @@ enum QuickTools {
             : unitText.hasPrefix("month") ? .month : .year
         guard let date = calendar.date(byAdding: unit, value: sign * amount, to: now) else { return [] }
         let value = output.string(from: date)
+        guard !value.isEmpty else { return [] }  // past what the formatter can show
         return [QuickAnswer(id: "date-offset", title: value, subtitle: "\(text) · Enter to copy", copy: value, symbol: "calendar")]
     }
 
@@ -203,8 +206,12 @@ enum QuickTools {
                                            "halloween": (10, 31), "valentines": (2, 14), "valentine's day": (2, 14)]
         let year = calendar.component(.year, from: now)
         func upcoming(_ month: Int, _ day: Int) -> Date? {
-            guard let thisYear = calendar.date(from: DateComponents(year: year, month: month, day: day)) else { return nil }
-            return thisYear < calendar.startOfDay(for: now) ? calendar.date(from: DateComponents(year: year + 1, month: month, day: day)) : thisYear
+            // The next one from today on; Feb 29 waits for a leap year instead of rolling over to Mar 1.
+            for offset in 0...8 {
+                guard let date = calendar.date(from: DateComponents(year: year + offset, month: month, day: day)) else { return nil }
+                if calendar.component(.day, from: date) == day && date >= calendar.startOfDay(for: now) { return date }
+            }
+            return nil
         }
         let key = text.trimmingCharacters(in: .whitespaces)
         if let (m, d) = named[key] { return upcoming(m, d) }
@@ -261,7 +268,7 @@ enum QuickTools {
         func number(_ s: Substring) -> Double? { Double(s.trimmingCharacters(in: .whitespaces)) }
         func format(_ v: Double) -> String {
             let rounded = (v * 100).rounded() / 100
-            return rounded == rounded.rounded() ? String(Int(rounded)) : String(format: "%.2f", rounded)
+            return rounded == rounded.rounded() && abs(rounded) < 1e15 ? String(Int(rounded)) : String(format: "%.2f", rounded)
         }
 
         if let match = lower.range(of: #"^(tip\s+)?([\d.]+)\s*%\s*of\s+([\d.]+)$"#, options: .regularExpression) {
@@ -419,6 +426,7 @@ extension QuickTools {
         guard let match = rest.range(of: #"^(\d+)(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?$"#, options: .regularExpression) else { return nil }
         let token = String(rest[match])
         let number = Int(token.prefix(while: \.isNumber)) ?? 0
+        guard number <= 24 * 60 else { return nil }  // too long anyway, and a huge hour count would overflow below
         let unit = token.drop(while: \.isNumber)
         let minutes = unit.hasPrefix("h") ? number * 60 : number
         return (1...(24 * 60)).contains(minutes) ? .minutes(minutes) : nil
@@ -705,7 +713,7 @@ extension QuickTools {
             let numbers = lower[match].replacingOccurrences(of: ",", with: "").components(separatedBy: CharacterSet(charactersIn: "0123456789.").inverted).compactMap(Double.init)
             guard numbers.count == 2, numbers[1] > 0 else { return [] }
             let share = String(format: "%.2f", numbers[0] / numbers[1])
-            return one("split", "\(share) each", "\(format(numbers[0])) split \(Int(numbers[1])) ways", "person.3", copy: share)
+            return one("split", "\(share) each", "\(format(numbers[0])) split \(format(numbers[1])) ways", "person.3", copy: share)
         }
 
         // Random pick: "pick pizza, tacos, sushi"
@@ -761,7 +769,7 @@ extension QuickTools {
     }
 
     private static func format(_ value: Double) -> String {
-        value == value.rounded() ? String(Int(value)) : String(format: "%g", (value * 1000).rounded() / 1000)
+        value == value.rounded() && abs(value) < 1e15 ? String(Int(value)) : String(format: "%g", (value * 1000).rounded() / 1000)
     }
 
     static let httpStatus: [Int: String] = [
