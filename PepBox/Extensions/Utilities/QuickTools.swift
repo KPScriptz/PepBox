@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 struct QuickAnswer: Equatable {
     let id: String
@@ -587,5 +588,229 @@ extension QuickTools {
                 if lu != ru { return lu > ru }
                 return lhs.count < rhs.count
             }
+    }
+}
+
+// MARK: - Developer and designer tools
+
+extension QuickTools {
+    static func devTools(_ text: String, now: Date = Date(), random: () -> UInt64 = { UInt64.random(in: .min ... .max) }) -> [QuickAnswer] {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        let lower = trimmed.lowercased()
+        func one(_ id: String, _ value: String, _ subtitle: String, _ symbol: String, copy: String? = nil) -> [QuickAnswer] {
+            [QuickAnswer(id: id, title: value, subtitle: "\(subtitle) · Enter to copy", copy: copy ?? value, symbol: symbol)]
+        }
+
+        // Hashes: "sha256 hello", "md5 hello", "sha1 hello"
+        for (name, label) in [("sha256", "SHA-256"), ("sha1", "SHA-1"), ("md5", "MD5")] {
+            if let payload = argument(trimmed, after: [name]) {
+                let data = Data(payload.utf8)
+                let digest: String
+                switch name {
+                case "sha256": digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+                case "sha1": digest = Insecure.SHA1.hash(data: data).map { String(format: "%02x", $0) }.joined()
+                default: digest = Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
+                }
+                return one("hash", digest, label, "number.square")
+            }
+        }
+
+        // JWT: "jwt eyJ…" (or a bare token)
+        if let token = argument(trimmed, after: ["jwt"]) ?? (trimmed.hasPrefix("eyJ") && trimmed.split(separator: ".").count == 3 ? trimmed : nil) {
+            let parts = token.split(separator: ".").map(String.init)
+            guard parts.count >= 2 else { return [] }
+            func decode(_ part: String) -> String? {
+                var base = part.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+                while base.count % 4 != 0 { base += "=" }
+                guard let data = Data(base64Encoded: base),
+                      let object = try? JSONSerialization.jsonObject(with: data),
+                      let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) else { return nil }
+                return String(decoding: pretty, as: UTF8.self)
+            }
+            guard let header = decode(parts[0]), let payload = decode(parts[1]) else { return [] }
+            var results = one("jwt-payload", payload, "JWT payload", "key.horizontal")
+            results += one("jwt-header", header, "JWT header", "key.horizontal")
+            if let data = payload.data(using: .utf8), let claims = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let exp = claims["exp"] as? Double {
+                let expired = Date(timeIntervalSince1970: exp) < now
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                formatter.timeStyle = .short
+                results += one("jwt-exp", "\(expired ? "Expired" : "Expires") \(formatter.string(from: Date(timeIntervalSince1970: exp)))", "JWT exp", "clock")
+            }
+            return results
+        }
+
+        // Roman numerals: "roman 2026" / "MMXXVI"
+        if let value = argument(lower, after: ["roman"]).flatMap(Int.init), let roman = toRoman(value) {
+            return one("roman", roman, "Roman numeral", "textformat")
+        }
+        if trimmed.count >= 2, trimmed == trimmed.uppercased(), let value = fromRoman(trimmed), toRoman(value) == trimmed {
+            return one("roman-in", String(value), "From Roman numerals", "textformat")
+        }
+
+        // Characters: "char 65" / "code A"
+        if let number = argument(lower, after: ["char"]).flatMap({ Int($0) ?? Int($0.replacingOccurrences(of: "u+", with: ""), radix: 16) }),
+           let scalar = Unicode.Scalar(UInt32(clamping: number)) {
+            return one("char", String(scalar), "Character \(number) · U+\(String(format: "%04X", number))", "character")
+        }
+        if let chars = argument(trimmed, after: ["code", "unicode"]), let scalar = chars.unicodeScalars.first {
+            let codes = chars.unicodeScalars.map { "U+\(String(format: "%04X", $0.value))" }.joined(separator: " ")
+            return one("code", "\(scalar.value) · \(codes)", "Character code of “\(chars)”", "character", copy: String(scalar.value))
+        }
+
+        // Contrast: "contrast #ffffff #333333"
+        if let rest = argument(lower, after: ["contrast"]) {
+            let colors = rest.split(whereSeparator: { $0 == " " || $0 == "," }).compactMap { hexColor(String($0)) }
+            guard colors.count == 2 else { return [] }
+            let l1 = luminance(colors[0]), l2 = luminance(colors[1])
+            let ratio = (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+            let grade = ratio >= 7 ? "AAA" : ratio >= 4.5 ? "AA" : ratio >= 3 ? "AA large text only" : "Fails"
+            let value = String(format: "%.2f:1", ratio)
+            return one("contrast", "\(value) · \(grade)", "WCAG contrast ratio", "circle.lefthalf.filled", copy: value)
+        }
+
+        // px ↔ rem (16px base): "24px", "1.5rem"
+        if let match = lower.range(of: #"^([\d.]+)\s*(px|rem)$"#, options: .regularExpression) {
+            let body = lower[match]
+            let number = Double(body.filter { $0.isNumber || $0 == "." }) ?? 0
+            let value = body.hasSuffix("px") ? "\(format(number / 16))rem" : "\(format(number * 16))px"
+            return one("px-rem", value, "16px base", "ruler")
+        }
+
+        // HTTP status: "http 404"
+        if let code = argument(lower, after: ["http", "status"]).flatMap(Int.init), let meaning = httpStatus[code] {
+            return one("http", "\(code) \(meaning)", "HTTP status", "network")
+        }
+
+        // chmod: "chmod 755"
+        if let mode = argument(lower, after: ["chmod"]), mode.count == 3, mode.allSatisfy({ ("0"..."7").contains($0) }) {
+            let symbolic = mode.map { digit -> String in
+                let v = Int(String(digit))!
+                return (v & 4 != 0 ? "r" : "-") + (v & 2 != 0 ? "w" : "-") + (v & 1 != 0 ? "x" : "-")
+            }
+            return one("chmod", symbolic.joined(), "owner \(symbolic[0]) · group \(symbolic[1]) · others \(symbolic[2])", "lock.doc")
+        }
+
+        // Week number: "week"
+        if ["week", "week number"].contains(lower) {
+            var calendar = Calendar(identifier: .iso8601)
+            calendar.timeZone = .current
+            let week = calendar.component(.weekOfYear, from: now)
+            return one("week", "Week \(week)", "ISO week of \(calendar.component(.yearForWeekOfYear, from: now))", "calendar", copy: String(week))
+        }
+
+        // Split: "split 120 by 4", "split 85.50 4 ways"
+        if let match = lower.range(of: #"^split\s+\$?([\d.,]+)\s+(?:by|between|among|in|/)?\s*(\d+)(?:\s+ways?|\s+people)?$"#, options: .regularExpression) {
+            let numbers = lower[match].replacingOccurrences(of: ",", with: "").components(separatedBy: CharacterSet(charactersIn: "0123456789.").inverted).compactMap(Double.init)
+            guard numbers.count == 2, numbers[1] > 0 else { return [] }
+            let share = String(format: "%.2f", numbers[0] / numbers[1])
+            return one("split", "\(share) each", "\(format(numbers[0])) split \(Int(numbers[1])) ways", "person.3", copy: share)
+        }
+
+        // Random pick: "pick pizza, tacos, sushi"
+        if let list = argument(trimmed, after: ["pick", "choose"]) {
+            let options = list.components(separatedBy: CharacterSet(charactersIn: ",|")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            guard options.count >= 2 else { return [] }
+            let choice = options[Int(random() % UInt64(options.count))]
+            return one("pick", "🎯 \(choice)", "Picked from \(options.count)", "dice", copy: choice)
+        }
+
+        // Word count of typed text: "words some text here"
+        if let body = argument(trimmed, after: ["words", "wordcount"]) {
+            let words = body.split(whereSeparator: { $0.isWhitespace }).count
+            let summary = "\(words) words · \(body.count) characters"
+            return one("words", summary, "Typed text", "textformat.123")
+        }
+
+        return []
+    }
+
+    // Helpers
+
+    static func toRoman(_ value: Int) -> String? {
+        guard (1...3999).contains(value) else { return nil }
+        let table: [(Int, String)] = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+                                      (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]
+        var remaining = value, result = ""
+        for (number, letters) in table { while remaining >= number { result += letters; remaining -= number } }
+        return result
+    }
+
+    static func fromRoman(_ text: String) -> Int? {
+        let values: [Character: Int] = ["I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000]
+        var total = 0, previous = 0
+        for character in text.reversed() {
+            guard let value = values[character] else { return nil }
+            total += value < previous ? -value : value
+            previous = max(previous, value)
+        }
+        return total > 0 ? total : nil
+    }
+
+    static func hexColor(_ text: String) -> (Double, Double, Double)? {
+        var hex = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "#", with: "")
+        if hex.count == 3 { hex = hex.map { "\($0)\($0)" }.joined() }
+        guard hex.count == 6, let value = Int(hex, radix: 16) else { return nil }
+        return (Double((value >> 16) & 0xFF) / 255, Double((value >> 8) & 0xFF) / 255, Double(value & 0xFF) / 255)
+    }
+
+    static func luminance(_ color: (Double, Double, Double)) -> Double {
+        func channel(_ c: Double) -> Double { c <= 0.03928 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
+        return 0.2126 * channel(color.0) + 0.7152 * channel(color.1) + 0.0722 * channel(color.2)
+    }
+
+    private static func format(_ value: Double) -> String {
+        value == value.rounded() ? String(Int(value)) : String(format: "%g", (value * 1000).rounded() / 1000)
+    }
+
+    static let httpStatus: [Int: String] = [
+        100: "Continue", 101: "Switching Protocols", 200: "OK", 201: "Created", 202: "Accepted", 204: "No Content",
+        206: "Partial Content", 301: "Moved Permanently", 302: "Found", 303: "See Other", 304: "Not Modified",
+        307: "Temporary Redirect", 308: "Permanent Redirect", 400: "Bad Request", 401: "Unauthorized",
+        402: "Payment Required", 403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 406: "Not Acceptable",
+        408: "Request Timeout", 409: "Conflict", 410: "Gone", 413: "Payload Too Large", 415: "Unsupported Media Type",
+        418: "I'm a Teapot", 422: "Unprocessable Content", 429: "Too Many Requests", 500: "Internal Server Error",
+        501: "Not Implemented", 502: "Bad Gateway", 503: "Service Unavailable", 504: "Gateway Timeout"
+    ]
+
+    /// "clocks": the time in a few big cities.
+    static func worldClocks(now: Date = Date()) -> [QuickAnswer] {
+        let cities: [(String, String)] = [("New York", "America/New_York"), ("Chicago", "America/Chicago"),
+                                          ("Los Angeles", "America/Los_Angeles"), ("London", "Europe/London"),
+                                          ("Berlin", "Europe/Berlin"), ("Tokyo", "Asia/Tokyo"), ("Sydney", "Australia/Sydney")]
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "h:mm a, EEE"
+        return cities.compactMap { name, id in
+            guard let zone = TimeZone(identifier: id) else { return nil }
+            formatter.timeZone = zone
+            let value = formatter.string(from: now)
+            return QuickAnswer(id: "clock-\(id)", title: "\(name)  \(value)", subtitle: "World clock · Enter to copy", copy: value, symbol: "clock")
+        }
+    }
+}
+
+// MARK: - Volume and brightness commands
+
+extension QuickTools {
+    enum LevelCommand: Equatable {
+        case volume(Float)      // 0...1
+        case brightness(Float)  // 0...1
+        case mute
+        case unmute
+    }
+
+    /// "volume 50", "vol 30%", "brightness 70", "mute", "unmute".
+    static func levelCommand(_ text: String) -> LevelCommand? {
+        let lower = text.lowercased().trimmingCharacters(in: .whitespaces)
+        if ["mute", "silence"].contains(lower) { return .mute }
+        if lower == "unmute" { return .unmute }
+        for (words, make) in [(["volume", "vol"], LevelCommand.volume), (["brightness", "bright"], LevelCommand.brightness)] {
+            guard let value = argument(lower, after: words)?.replacingOccurrences(of: "%", with: ""),
+                  let number = Int(value.trimmingCharacters(in: .whitespaces)), (0...100).contains(number) else { continue }
+            return make(Float(number) / 100)
+        }
+        return nil
     }
 }

@@ -111,7 +111,11 @@ final class QuickSearchModel {
                 ("port 3000 · ip · battery · awake 1h", "Your Mac", "laptopcomputer"),
                 ("lock · sleep · quit Slack · wifi", "Commands and settings", "power"),
                 ("ocr · screenshot · pick color · qr hello", "Screen tools", "text.viewfinder"),
-                (":fire · uuid · password 24 · base64 hi", "Generators", "wand.and.stars")
+                (":fire · uuid · password 24 · base64 hi", "Generators", "wand.and.stars"),
+                ("sha256 hi · jwt eyJ… · http 404 · chmod 755 · dns github.com", "Developer", "chevron.left.forwardslash.chevron.right"),
+                ("contrast #fff #333 · 24px · roman 2026 · char 65", "Design and text", "paintbrush"),
+                ("stopwatch · clocks · sunrise · week · split 120 by 4", "Time and money", "stopwatch"),
+                ("volume 50 · mute · brightness 70 · upper · json", "Sound, display, clipboard", "slider.horizontal.3")
             ]
             results = examples.map { example, title, symbol in
                 let first = example.components(separatedBy: " · ").first ?? example
@@ -146,7 +150,9 @@ final class QuickSearchModel {
             }
         }
 
-        list += QuickTools.answers(for: text).map {
+        let toolAnswers = QuickTools.answers(for: text) + QuickTools.devTools(text)
+            + (["clocks", "world clock", "world clocks"].contains(text.lowercased()) ? QuickTools.worldClocks() : [])
+        list += toolAnswers.map {
             QuickSearchResult(id: $0.id, title: $0.title, subtitle: $0.subtitle, kind: .answer($0.copy), customSymbol: $0.symbol)
         }
         list += QuickLookups.results(for: text) { [weak self] late in

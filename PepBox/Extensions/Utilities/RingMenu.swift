@@ -168,6 +168,9 @@ final class RingMenuController {
             RingAction(id: "pasteQueue", title: PasteQueue.shared.isActive ? "Stop Queue" : "Paste Queue", icon: "square.stack.3d.up.fill", tint: .purple) {
                 PasteQueue.shared.toggle()
             },
+            RingAction(id: "stopwatch", title: StopwatchManager.shared.isRunning ? "Stop Watch" : "Stopwatch", icon: "stopwatch", tint: .mint) {
+                StopwatchManager.shared.toggle()
+            },
             RingAction(id: "lock", title: "Lock Screen", icon: "lock.fill", tint: .gray) {
                 QuickCommand.lock.run()
             },

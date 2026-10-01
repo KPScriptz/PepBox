@@ -637,6 +637,12 @@ struct NotchItemView: View {
                                 return FileTools.resizeImage(url, maxDimension: size)
                             } }
                         }
+                        Divider()
+                        Button("Rotate Left") { runFileTool(toolTargets) { FileTools.editImage($0, .rotateLeft) } }
+                        Button("Rotate Right") { runFileTool(toolTargets) { FileTools.editImage($0, .rotateRight) } }
+                        Button("Flip Horizontally") { runFileTool(toolTargets) { FileTools.editImage($0, .flipHorizontal) } }
+                        Button("Black & White") { runFileTool(toolTargets) { FileTools.editImage($0, .grayscale) } }
+                        Divider()
                         Button(toolTargets.count > 1 ? "Combine into PDF" : "Make PDF") {
                             runFileToolOnAll(toolTargets) { FileTools.imagesToPDF($0) }
                         }

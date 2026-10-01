@@ -63,6 +63,51 @@ enum FileTools {
         return document.write(to: output) ? output : nil
     }
 
+    // MARK: Rotate, flip, grayscale
+
+    enum ImageEdit { case rotateLeft, rotateRight, flipHorizontal, grayscale }
+
+    /// Applies a simple edit and writes a copy in the same format (orientation baked in).
+    static func editImage(_ url: URL, _ edit: ImageEdit, into directory: URL = FileManager.default.temporaryDirectory) -> URL? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil), let type = CGImageSourceGetType(source),
+              let input = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true,
+                                                                          kCGImageSourceCreateThumbnailWithTransform: true,
+                                                                          kCGImageSourceThumbnailMaxPixelSize: 20_000] as CFDictionary) else { return nil }
+        let width = input.width, height = input.height
+        let swap = edit == .rotateLeft || edit == .rotateRight
+        let outWidth = swap ? height : width, outHeight = swap ? width : height
+        let space = edit == .grayscale ? CGColorSpaceCreateDeviceGray() : (input.colorSpace ?? CGColorSpaceCreateDeviceRGB())
+        let info = edit == .grayscale ? CGImageAlphaInfo.none.rawValue : CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: nil, width: outWidth, height: outHeight, bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: space, bitmapInfo: info) else { return nil }
+        switch edit {
+        case .rotateLeft:   // 90° counter-clockwise
+            context.translateBy(x: CGFloat(outWidth), y: 0)
+            context.rotate(by: .pi / 2)
+        case .rotateRight:  // 90° clockwise
+            context.translateBy(x: 0, y: CGFloat(outHeight))
+            context.rotate(by: -.pi / 2)
+        case .flipHorizontal:
+            context.translateBy(x: CGFloat(outWidth), y: 0)
+            context.scaleBy(x: -1, y: 1)
+        case .grayscale:
+            break
+        }
+        context.draw(input, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let output = context.makeImage() else { return nil }
+        let suffix: String
+        switch edit {
+        case .rotateLeft: suffix = "rotated left"
+        case .rotateRight: suffix = "rotated right"
+        case .flipHorizontal: suffix = "flipped"
+        case .grayscale: suffix = "grayscale"
+        }
+        let target = unique(directory.appendingPathComponent("\(url.deletingPathExtension().lastPathComponent) \(suffix)").appendingPathExtension(url.pathExtension))
+        guard let destination = CGImageDestinationCreateWithURL(target as CFURL, type, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, output, [kCGImageDestinationLossyCompressionQuality: 0.92] as CFDictionary)
+        return CGImageDestinationFinalize(destination) ? target : nil
+    }
+
     // MARK: Checksum
 
     /// SHA-256 of a file, read in 1 MB pieces so large files don't load into memory.
@@ -159,6 +204,7 @@ enum TextTransform: String, CaseIterable, Identifiable {
     case uniqueLines = "Remove Duplicate Lines"
     case prettyJSON = "Pretty-Print JSON"
     case slug = "slug-case"
+    case markdownLink = "Markdown Link"
 
     var id: String { rawValue }
 
@@ -202,6 +248,11 @@ enum TextTransform: String, CaseIterable, Identifiable {
                   let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
             else { return nil }
             return String(decoding: pretty, as: UTF8.self)
+        case .markdownLink:
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let url = URL(string: trimmed), let scheme = url.scheme, ["http", "https"].contains(scheme), let host = url.host else { return nil }
+            let name = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+            return "[\(name)](\(trimmed))"
         case .slug:
             let folded = text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
             let parts = folded.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }

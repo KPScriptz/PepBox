@@ -24,6 +24,7 @@ struct LiveActivity: Equatable {
 
         if let flash = FlashActivity.shared.activity { return flash }
         if let queue = PasteQueue.shared.liveActivity { return queue }
+        if let stopwatch = StopwatchManager.shared.liveActivity { return stopwatch }
 
         if UtilityExtensionKind.eyeBreaks.isAvailable, let remaining = EyeBreakManager.shared.breakRemaining {
             return LiveActivity(

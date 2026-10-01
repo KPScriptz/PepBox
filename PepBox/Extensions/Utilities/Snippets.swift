@@ -61,6 +61,9 @@ struct SnippetEngine {
             .replacingOccurrences(of: "{date}", with: date.string(from: now))
             .replacingOccurrences(of: "{time}", with: time.string(from: now))
             .replacingOccurrences(of: "{clipboard}", with: clipboard ?? "")
+            .replacingOccurrences(of: "{uuid}", with: UUID().uuidString)
+            .replacingOccurrences(of: "{weekday}", with: { let f = DateFormatter(); f.locale = locale; f.dateFormat = "EEEE"; return f.string(from: now) }())
+            .replacingOccurrences(of: "{year}", with: String(Calendar.current.component(.year, from: now)))
     }
 }
 
@@ -206,7 +209,7 @@ struct SnippetsOptions: View {
                 Label("Add Snippet", systemImage: "plus")
             }
             .buttonStyle(.borderless)
-            Text("Start triggers with ; so normal typing never sets them off, and don't make one trigger the start of another. Placeholders: {date}, {time}, {clipboard}.")
+            Text("Start triggers with ; so normal typing never sets them off, and don't make one trigger the start of another. Placeholders: {date}, {time}, {weekday}, {year}, {clipboard}, {uuid}.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

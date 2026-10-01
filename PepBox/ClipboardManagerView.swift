@@ -806,6 +806,22 @@ struct ClipboardManagerView: View {
                                                 Label("Paste as Plain Text", systemImage: "textformat")
                                             }
                                         }
+                                        if let content = item.content?.trimmingCharacters(in: .whitespacesAndNewlines),
+                                           item.type == .url || item.type == .text {
+                                            if let link = URL(string: content), let scheme = link.scheme, ["http", "https"].contains(scheme) {
+                                                Button {
+                                                    NSWorkspace.shared.open(link)
+                                                } label: {
+                                                    Label("Open Link", systemImage: "safari")
+                                                }
+                                            } else if !content.isEmpty, content.count <= 200 {
+                                                Button {
+                                                    QuickCommand.webSearch(content).run()
+                                                } label: {
+                                                    Label("Search the Web", systemImage: "magnifyingglass")
+                                                }
+                                            }
+                                        }
                                         if item.type == .image, let data = item.loadImageData(), let image = NSImage(data: data) {
                                             Button {
                                                 FloatingPinController.shared.pin(.image(image))

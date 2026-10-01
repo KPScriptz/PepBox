@@ -141,12 +141,12 @@ enum QuickLookups {
                                              kind: .answer(summary), customSymbol: "textformat.123"))
         }
 
-        results += assistantCommands(text)
+        results += assistantCommands(text, late: late)
         return results
     }
 
     /// "note …", "todo …", "remind … in …", "join", "agenda", "weather", media keys, "force quit"/"hide".
-    private static func assistantCommands(_ text: String) -> [QuickSearchResult] {
+    private static func assistantCommands(_ text: String, late: @escaping ([QuickSearchResult]) -> Void) -> [QuickSearchResult] {
         let lower = text.lowercased().trimmingCharacters(in: .whitespaces)
         var results: [QuickSearchResult] = []
 
@@ -304,6 +304,26 @@ enum QuickLookups {
                                   subtitle: "\(session.agent.rawValue) · \(session.toolCount) calls · \(session.editCount) edits",
                                   kind: .action {}, customSymbol: session.state == .waiting ? "hand.raised.fill" : "sparkle")
             }
+        case "stopwatch", "stop watch", "lap":
+            let stopwatch = StopwatchManager.shared
+            results.append(QuickSearchResult(id: "stopwatch", title: stopwatch.isRunning ? "Stop Stopwatch at \(StopwatchManager.format(stopwatch.elapsed))" : "Start Stopwatch",
+                                             subtitle: stopwatch.isRunning ? "Copies the time" : "Counts up beside the notch",
+                                             kind: .action { stopwatch.toggle() }, customSymbol: "stopwatch"))
+        case "sunrise", "sunset", "sun", "daylight":
+            let weather = UpNextWeather.shared
+            weather.refresh()
+            if let sun = weather.current?.sun {
+                let formatter = DateFormatter()
+                formatter.timeStyle = .short
+                let length = sun.set.timeIntervalSince(sun.rise)
+                let summary = "Sunrise \(formatter.string(from: sun.rise)) · Sunset \(formatter.string(from: sun.set))"
+                results.append(QuickSearchResult(id: "sun", title: summary,
+                                                 subtitle: "\(Int(length) / 3600)h \((Int(length) % 3600) / 60)m of daylight in \(weather.city ?? "")",
+                                                 kind: .answer(summary), customSymbol: "sunrise.fill"))
+            } else {
+                results.append(QuickSearchResult(id: "sun-setup", title: "Set your city in the Up Next panel", subtitle: "Sunrise and sunset",
+                                                 kind: .action {}, customSymbol: "sunrise"))
+            }
         case "clear clipboard", "empty clipboard":
             results.append(QuickSearchResult(id: "clear-clipboard", title: "Clear Clipboard", subtitle: "History is kept",
                                              kind: .action { NSPasteboard.general.clearContents() }, customSymbol: "clipboard"))
@@ -313,6 +333,71 @@ enum QuickLookups {
                                              customSymbol: "eyedropper"))
         default:
             break
+        }
+
+        if let level = QuickTools.levelCommand(text) {
+            switch level {
+            case .volume(let value):
+                results.append(QuickSearchResult(id: "volume", title: "Set Volume to \(Int(value * 100))%", subtitle: "Sound",
+                                                 kind: .action { Task { @MainActor in VolumeManager.shared.setAbsolute(value) } },
+                                                 customSymbol: "speaker.wave.2.fill"))
+            case .brightness(let value):
+                results.append(QuickSearchResult(id: "brightness", title: "Set Brightness to \(Int(value * 100))%", subtitle: "Display",
+                                                 kind: .action { BrightnessManager.shared.setAbsolute(value: value) }, customSymbol: "sun.max.fill"))
+            case .mute, .unmute:
+                let wantMuted = level == .mute
+                results.append(QuickSearchResult(id: "mute", title: wantMuted ? "Mute" : "Unmute", subtitle: "Sound",
+                                                 kind: .action { Task { @MainActor in
+                                                     if VolumeManager.shared.isMuted != wantMuted { VolumeManager.shared.toggleMute() }
+                                                 } }, customSymbol: wantMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"))
+            }
+        }
+
+        // Clipboard transforms: "upper", "json", "slug", … applied to what's on the clipboard
+        let transformWords: [String: TextTransform] = [
+            "upper": .uppercase, "uppercase": .uppercase, "lower": .lowercase, "lowercase": .lowercase,
+            "title": .titleCase, "title case": .titleCase, "sentence": .sentenceCase, "trim": .trim,
+            "oneline": .singleLine, "one line": .singleLine, "sort lines": .sortLines, "dedupe": .uniqueLines,
+            "json": .prettyJSON, "pretty json": .prettyJSON, "slug": .slug, "markdown link": .markdownLink, "md link": .markdownLink
+        ]
+        if let transform = transformWords[lower], let clip = NSPasteboard.general.string(forType: .string) {
+            if let result = transform.apply(clip) {
+                let preview = result.replacingOccurrences(of: "\n", with: " ")
+                results.append(QuickSearchResult(id: "transform-\(transform.rawValue)", title: String(preview.prefix(80)),
+                                                 subtitle: "Clipboard → \(transform.rawValue) · Enter to copy", kind: .answer(result),
+                                                 customSymbol: "wand.and.stars"))
+            } else {
+                results.append(QuickSearchResult(id: "transform-none", title: "Clipboard isn't \(transform == .prettyJSON ? "JSON" : "a link")",
+                                                 subtitle: transform.rawValue, kind: .action {}, customSymbol: "wand.and.stars"))
+            }
+        }
+
+        // DNS: "dns github.com"
+        if let host = QuickTools.argument(text, after: ["dns", "nslookup", "resolve"]) {
+            DispatchQueue.global(qos: .userInitiated).async {
+                var hints = addrinfo(ai_flags: 0, ai_family: AF_UNSPEC, ai_socktype: SOCK_STREAM, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+                var info: UnsafeMutablePointer<addrinfo>?
+                var addresses: [String] = []
+                if getaddrinfo(host, nil, &hints, &info) == 0, let first = info {
+                    var pointer: UnsafeMutablePointer<addrinfo>? = first
+                    while let current = pointer {
+                        var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                        if getnameinfo(current.pointee.ai_addr, current.pointee.ai_addrlen, &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 {
+                            let address = String(cString: buffer)
+                            if !addresses.contains(address) { addresses.append(address) }
+                        }
+                        pointer = current.pointee.ai_next
+                    }
+                    freeaddrinfo(info)
+                }
+                let found = addresses.prefix(6).map { address in
+                    QuickSearchResult(id: "dns-\(address)", title: address, subtitle: "\(host) · \(address.contains(":") ? "IPv6" : "IPv4") · Enter to copy",
+                                      kind: .answer(address), customSymbol: "network")
+                }
+                DispatchQueue.main.async {
+                    late(found.isEmpty ? [QuickSearchResult(id: "dns-none", title: "No addresses for \(host)", subtitle: "DNS", kind: .action {}, customSymbol: "network.slash")] : Array(found))
+                }
+            }
         }
 
         let music = MusicManager.shared

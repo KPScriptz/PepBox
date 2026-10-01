@@ -150,6 +150,11 @@ final class UpNextWeather {
         let code: Int
         /// The next few hours: (hour start, temperature, weather code).
         var hourly: [Hour] = []
+        var sun: (rise: Date, set: Date)? = nil
+
+        static func == (lhs: Current, rhs: Current) -> Bool {
+            lhs.temperature == rhs.temperature && lhs.code == rhs.code && lhs.hourly == rhs.hourly && lhs.high == rhs.high
+        }
     }
 
     struct Hour: Equatable {
@@ -217,7 +222,7 @@ final class UpNextWeather {
                 URLQueryItem(name: "latitude", value: String(latitude)),
                 URLQueryItem(name: "longitude", value: String(longitude)),
                 URLQueryItem(name: "current", value: "temperature_2m,weather_code"),
-                URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min"),
+                URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,sunrise,sunset"),
                 URLQueryItem(name: "hourly", value: "temperature_2m,weather_code"),
                 URLQueryItem(name: "forecast_hours", value: "7"),
                 URLQueryItem(name: "timeformat", value: "unixtime"),
@@ -246,7 +251,11 @@ final class UpNextWeather {
                     .map { Hour(time: Date(timeIntervalSince1970: $0), temperature: $1.0, code: $1.1) }
                     .filter { $0.time > Date() }
             }
-            current = Current(temperature: temperature, high: high, low: low, code: code, hourly: Array(hours.prefix(5)))
+            var sun: (rise: Date, set: Date)?
+            if let rise = (daily["sunrise"] as? [Double])?.first, let set = (daily["sunset"] as? [Double])?.first {
+                sun = (Date(timeIntervalSince1970: rise), Date(timeIntervalSince1970: set))
+            }
+            current = Current(temperature: temperature, high: high, low: low, code: code, hourly: Array(hours.prefix(5)), sun: sun)
         }
     }
 

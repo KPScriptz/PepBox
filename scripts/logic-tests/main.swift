@@ -479,6 +479,68 @@ do {
     expect(SnippetEngine.expand("[{clipboard}]", clipboard: "x"), "[x]", "snippet clipboard placeholder")
 }
 
+// MARK: - Dev and designer tools
+
+do {
+    func dev(_ q: String) -> [String] { QuickTools.devTools(q, now: Date(timeIntervalSince1970: 1790776800), random: { 1 }).map(\.title) }
+    expect(dev("sha256 hello").first, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", "sha256 text")
+    expect(dev("md5 hello").first, "5d41402abc4b2a76b9719d911017c592", "md5 text")
+    let jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJleHAiOjE3MDAwMDAwMDB9.sig"
+    expect(dev("jwt " + jwt).first, #"{"exp":1700000000,"sub":"123"}"#, "jwt payload")
+    expect(dev(jwt).dropFirst().first, #"{"alg":"HS256","typ":"JWT"}"#, "jwt header bare token")
+    expect(dev(jwt).last?.hasPrefix("Expired"), true, "jwt expiry")
+    expect(dev("roman 2026").first, "MMXXVI", "to roman")
+    expect(dev("MMXXVI").first, "2026", "from roman")
+    expect(dev("MIX").first, "1009", "from roman subtractive")
+    expect(dev("OK"), [], "not roman")
+    expect(dev("char 65").first, "A", "char from code")
+    expect(dev("code A").first, "65 · U+0041", "code from char")
+    expect(dev("contrast #ffffff #000000").first, "21.00:1 · AAA", "contrast max")
+    expect(dev("contrast #777 #fff").first, "4.48:1 · AA large text only", "contrast borderline")
+    expect(dev("24px").first, "1.5rem", "px to rem")
+    expect(dev("2rem").first, "32px", "rem to px")
+    expect(dev("http 404").first, "404 Not Found", "http status")
+    expect(dev("chmod 755").first, "rwxr-xr-x", "chmod")
+    expect(dev("week").first, "Week 40", "iso week")
+    expect(dev("split 120 by 4").first, "30.00 each", "split by")
+    expect(dev("split $85.50 3 ways").first, "28.50 each", "split ways")
+    expect(dev("pick pizza, tacos, sushi").first, "🎯 tacos", "pick")
+    expect(dev("words the quick brown fox").first, "4 words · 19 characters", "word count")
+    expect(QuickTools.worldClocks(now: Date(timeIntervalSince1970: 1790776800)).first?.title, "New York  10:00 AM, Wed", "world clock")
+}
+
+// MARK: - Batch 4 helpers
+
+do {
+    expect(QuickTools.levelCommand("volume 50"), .volume(0.5), "volume command")
+    expect(QuickTools.levelCommand("vol 30%"), .volume(0.3), "volume percent")
+    expect(QuickTools.levelCommand("brightness 70"), .brightness(0.7), "brightness command")
+    expect(QuickTools.levelCommand("mute"), .mute, "mute")
+    expect(QuickTools.levelCommand("volume 150"), nil, "volume range")
+    expect(TextTransform.markdownLink.apply("https://www.github.com/KPScriptz"), "[github.com](https://www.github.com/KPScriptz)", "markdown link")
+    expect(TextTransform.markdownLink.apply("hello"), nil, "markdown link needs URL")
+    expect(SnippetEngine.expand("{weekday} {year}", now: Date(timeIntervalSince1970: 1790776800), locale: Locale(identifier: "en_US")), "Wednesday 2026", "snippet weekday/year")
+    expect(UUID(uuidString: SnippetEngine.expand("{uuid}")) != nil, true, "snippet uuid")
+
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pepbox-edit-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let ctx = CGContext(data: nil, width: 40, height: 20, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.setFillColor(CGColor(red: 1, green: 0, blue: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: 10, height: 20))  // red stripe on the left
+    let png = dir.appendingPathComponent("pic.png")
+    try? NSBitmapImageRep(cgImage: ctx.makeImage()!).representation(using: .png, properties: [:])?.write(to: png)
+    func info(_ url: URL?) -> (Int, Int, CGFloat)? {
+        guard let url, let rep = NSBitmapImageRep(data: (try? Data(contentsOf: url)) ?? Data()) else { return nil }
+        return (rep.pixelsWide, rep.pixelsHigh, rep.colorAt(x: 2, y: 10)?.redComponent ?? -1)
+    }
+    let left = info(FileTools.editImage(png, .rotateLeft, into: dir))
+    expect(left.map { [$0.0, $0.1] }, [20, 40], "rotate swaps size")
+    let flipped = info(FileTools.editImage(png, .flipHorizontal, into: dir))
+    expect(flipped.map { $0.2 < 0.5 }, true, "flip moves the red stripe right")
+    let gray = FileTools.editImage(png, .grayscale, into: dir).flatMap { NSBitmapImageRep(data: (try? Data(contentsOf: $0)) ?? Data()) }
+    expect(gray?.samplesPerPixel, 1, "grayscale has one channel")
+}
+
 // MARK: - Currency conversion
 
 let rates: [String: Double] = ["USD": 1, "EUR": 0.5, "GBP": 0.25, "JPY": 150, "CAD": 1.25]
