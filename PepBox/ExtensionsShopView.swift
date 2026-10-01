@@ -1277,6 +1277,24 @@ struct ExtensionsShopView: View {
                 ))
             },
             ExtensionListItem(
+                id: "convertRing",
+                iconPlaceholder: "arrow.triangle.2.circlepath.circle",
+                iconPlaceholderColor: .orange,
+                title: "Convert Ring",
+                subtitle: "Shift-drag files to convert them",
+                category: .productivity,
+                isInstalled: UtilityExtensionKind.convertRing.isInstalled,
+                analyticsKey: "convertRing",
+                extensionType: .convertRing
+            ) {
+                AnyView(ExtensionInfoView(
+                    extensionType: .convertRing,
+                    onAction: { UtilityExtensionKind.convertRing.install() },
+                    installCount: extensionCounts["convertRing"],
+                    rating: extensionRatings["convertRing"]
+                ))
+            },
+            ExtensionListItem(
                 id: "menuBarManager",
                 iconURL: "pepbox-media://icons/menubarmanager.png",
                 title: "Menu Bar Manager",

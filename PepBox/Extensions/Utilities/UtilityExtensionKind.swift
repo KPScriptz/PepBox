@@ -19,6 +19,7 @@ enum UtilityExtensionKind: String, CaseIterable {
     case downloadsActivity
     case localSend
     case snippets
+    case convertRing
 
     init?(extensionType: ExtensionType) {
         guard let kind = Self.allCases.first(where: { $0.extensionType == extensionType }) else { return nil }
@@ -36,6 +37,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .downloadsActivity: return .downloadsActivity
         case .localSend: return .localSend
         case .snippets: return .snippets
+        case .convertRing: return .convertRing
         }
     }
 
@@ -65,6 +67,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .downloadsActivity: DownloadsWatcher.shared.setEnabled(isAvailable)
         case .localSend: LocalSendReceiver.shared.setEnabled(isAvailable)
         case .snippets: SnippetController.shared.setEnabled(isAvailable)
+        case .convertRing: ConvertRingController.shared.setEnabled(isAvailable)
         }
     }
 
@@ -79,6 +82,7 @@ enum UtilityExtensionKind: String, CaseIterable {
         case .downloadsActivity: DownloadsWatcher.shared.setEnabled(false)
         case .localSend: LocalSendReceiver.shared.setEnabled(false)
         case .snippets: SnippetController.shared.setEnabled(false)
+        case .convertRing: ConvertRingController.shared.setEnabled(false)
         }
     }
 

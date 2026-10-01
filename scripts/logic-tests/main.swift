@@ -755,5 +755,54 @@ expect(lrc.line(at: 30), "Chorus", "LRC: first chorus")
 expect(lrc.line(at: 62.5), "Chorus", "LRC: repeated chorus timestamp")
 expect(lrc.line(at: 80), "Late line", "LRC: m:ss.s timestamps")
 
+
+// MARK: - Convert Ring
+
+do {
+    func ids(_ t: [RingTarget]) -> [String] { t.map(\.title) }
+    expect(ConvertKind.common(["JPG", "heic"]), .image, "ring: images share a kind")
+    expect(ConvertKind.common(["jpg", "mp3"]), nil, "ring: a mix has no kind")
+    expect(ids(ConvertRing.formatTargets(for: ["jpeg"], ffmpeg: false)).contains("JPG"), false, "ring: jpeg isn't offered JPG")
+    expect(ids(ConvertRing.formatTargets(for: ["png"], ffmpeg: false)).contains("WEBP"), false, "ring: webp needs ffmpeg")
+    expect(ids(ConvertRing.formatTargets(for: ["png"], ffmpeg: true)).contains("WEBP"), true, "ring: webp with ffmpeg")
+    expect(ids(ConvertRing.formatTargets(for: ["png", "jpg"], ffmpeg: false)).contains("PNG"), true, "ring: mixed images keep every format")
+    expect(ConvertRing.formatTargets(for: ["png", "mp3"], ffmpeg: true).isEmpty, true, "ring: no formats for a mix")
+    expect(ids(ConvertRing.formatTargets(for: ["mp3"], ffmpeg: false)), ["M4A", "WAV", "FLAC", "AIFF"], "ring: audio without ffmpeg")
+    expect(ids(ConvertRing.formatTargets(for: ["srt"], ffmpeg: false)), ["VTT"], "ring: srt -> vtt")
+    expect(ConvertRing.formatTargets(for: ["mov"], ffmpeg: true).count <= ConvertRing.maxSegments, true, "ring: capped segments")
+    expect(ConvertRing.formatTargets(for: ["zzz"], ffmpeg: true).isEmpty, true, "ring: unknown type")
+    expect(ids(ConvertRing.toolTargets(for: ["zzz"])), ["Zip"], "ring tools: anything can be zipped")
+    expect(ids(ConvertRing.toolTargets(for: ["pdf", "pdf"])).contains("Merge"), true, "ring tools: merge several PDFs")
+    expect(ids(ConvertRing.toolTargets(for: ["pdf"])).contains("Merge"), false, "ring tools: no merge for one")
+    expect(ConvertRing.toolTargets(for: []).isEmpty, true, "ring tools: nothing dragged")
+
+    let seg = { (x: CGFloat, y: CGFloat, n: Int) in ConvertRing.segment(at: CGPoint(x: x, y: y), count: n, innerRadius: 30, outerRadius: 120) }
+    expect(seg(0, 80, 4), 0, "ring: 12 o'clock is segment 0")
+    expect(seg(80, 0, 4), 1, "ring: 3 o'clock")
+    expect(seg(0, -80, 4), 2, "ring: 6 o'clock")
+    expect(seg(-80, 0, 4), 3, "ring: 9 o'clock")
+    expect(seg(-10, 80, 4), 0, "ring: just left of 12 still segment 0")
+    expect(seg(5, 5, 4), nil, "ring: the hole cancels")
+    expect(seg(200, 0, 4), nil, "ring: outside")
+    expect(seg(0, 80, 0), nil, "ring: empty")
+    expect(seg(-1, 80, 7).map { $0 >= 0 && $0 < 7 }, true, "ring: never out of range")
+
+    expect(ConvertRing.outputName(for: "Photo.HEIC", ext: "jpg", taken: []), "Photo.jpg", "ring name")
+    expect(ConvertRing.outputName(for: "Photo.HEIC", ext: "jpg", taken: ["photo.JPG"]), "Photo 2.jpg", "ring name: taken, case-insensitive")
+    expect(ConvertRing.outputName(for: "a.png", ext: "png", taken: []), "a 2.png", "ring name: never the source")
+    expect(ConvertRing.outputName(for: "v.1.mov", ext: "mp4", taken: ["v.1.mp4", "v.1 2.mp4"]), "v.1 3.mp4", "ring name: dots in name")
+
+    let srt = "\u{FEFF}1\r\n00:00:01,500 --> 00:00:03,000\r\nHello\r\n\r\n2\r\n00:01:00,000 --> 00:01:02,250\r\nTwo\r\nlines\r\n"
+    let vtt = ConvertRing.srtToVTT(srt)
+    expect(vtt.hasPrefix("WEBVTT\n\n00:00:01.500 --> 00:00:03.000\nHello\n"), true, "srt -> vtt")
+    expect(vtt.contains("\n2\n"), false, "srt -> vtt drops cue numbers")
+    expect(ConvertRing.vttToSRT(vtt), "1\n00:00:01,500 --> 00:00:03,000\nHello\n\n2\n00:01:00,000 --> 00:01:02,250\nTwo\nlines\n", "vtt -> srt round trip")
+    expect(ConvertRing.vttToSRT("WEBVTT\n\nNOTE hi\n\nintro\n01:02.5 --> 01:04.000 align:start\nHey\n"), "1\n00:01:02,500 --> 00:01:04,000\nHey\n", "vtt: short times, settings, notes, cue ids")
+    expect(ConvertRing.vttToSRT("WEBVTT\n\nbad --> worse\nx\n"), "", "vtt: bad timing skipped")
+
+    expect(ConvertRing.ffmpegArguments(input: "/a/in.wav", output: "/a/out.mp3").suffix(5), ["-codec:a", "libmp3lame", "-q:a", "2", "/a/out.mp3"], "ffmpeg mp3")
+    expect(ConvertRing.ffmpegArguments(input: "/a/in.mov", output: "/a/out.MKV").contains("copy"), true, "ffmpeg mkv remux, case-insensitive")
+}
+
 print(failures == 0 ? "OK \(checks) checks passed" : "\(failures) of \(checks) checks failed")
 exit(failures == 0 ? 0 : 1)
