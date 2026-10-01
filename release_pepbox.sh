@@ -115,7 +115,7 @@ step "Set MARKETING_VERSION = $VERSION"
 info "Compiling Binary"
 APP_BUILD_PATH="$MAIN_REPO/build"
 rm -rf "$APP_BUILD_PATH"
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme PepBox -configuration Release -derivedDataPath "$APP_BUILD_PATH" -destination 'generic/platform=macOS' ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM_ID" -quiet || error "Build failed"
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme PepBox -configuration Release -derivedDataPath "$APP_BUILD_PATH" -destination 'generic/platform=macOS' -skipPackagePluginValidation -skipMacroValidation ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM_ID" -quiet || error "Build failed"
 step "Build Successful"
 
 # Build and Bundle Helper
@@ -433,7 +433,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     step "Pushing Main Repo..."
     git pull --ff-only origin main --quiet
     git rm --ignore-unmatch PepBox*.dmg PepBox*.zip --quiet 2>/dev/null || true
-    git add "$DMG_NAME"
+    # The DMG is attached to the GitHub release, not committed (*.dmg is gitignored).
     git add .
     git commit -m "Release v$VERSION" --quiet
     git tag "v$VERSION"
