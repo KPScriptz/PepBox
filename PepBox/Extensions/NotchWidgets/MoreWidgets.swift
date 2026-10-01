@@ -550,6 +550,8 @@ private struct RecentFilesView: View {
         let urls = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.addedToDirectoryDateKey, .creationDateKey], options: [.skipsHiddenFiles])) ?? []
         files = urls
             .filter { url in
+                // Files only (a folder named "Screenshots" isn't a screenshot).
+                guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) != true || !onlyScreenshots else { return false }
                 guard onlyScreenshots else { return true }
                 let name = url.lastPathComponent.lowercased()
                 return name.hasPrefix("screenshot") || name.hasPrefix("screen shot") || name.hasPrefix("screen recording")
